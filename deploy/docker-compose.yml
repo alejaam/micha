@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16
+    container_name: micha-db
+    environment:
+      POSTGRES_DB: micha
+      POSTGRES_USER: micha
+      POSTGRES_PASSWORD: micha_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U micha -d micha"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: golang:1.23
+    container_name: micha-api
+    working_dir: /app
+    volumes:
+      - ../backend:/app
+    command: sh -c "go run ./cmd/api"
+    environment:
+      HTTP_PORT: "8080"
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
