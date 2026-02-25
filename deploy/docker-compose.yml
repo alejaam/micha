@@ -17,7 +17,7 @@ services:
       retries: 5
 
   api:
-    image: golang:1.23
+    image: golang:1.24
     container_name: micha-api
     working_dir: /app
     volumes:
@@ -25,6 +25,7 @@ services:
     command: sh -c "go run ./cmd/api"
     environment:
       HTTP_PORT: "8080"
+      DATABASE_URL: "postgres://micha:micha_dev_password@db:5432/micha?sslmode=disable"
     ports:
       - "8080:8080"
     depends_on:

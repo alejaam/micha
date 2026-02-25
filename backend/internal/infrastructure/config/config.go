@@ -1,16 +1,31 @@
 package config
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
+// Config holds all runtime configuration values.
 type Config struct {
-	HTTPPort string
+	HTTPPort    string
+	DatabaseURL string
 }
 
-func Load() Config {
+// Load reads configuration from environment variables.
+// Returns an error if required variables are missing.
+func Load() (Config, error) {
 	port := os.Getenv("HTTP_PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	return Config{HTTPPort: port}
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		return Config{}, fmt.Errorf("DATABASE_URL environment variable is required")
+	}
+
+	return Config{
+		HTTPPort:    port,
+		DatabaseURL: dbURL,
+	}, nil
 }
