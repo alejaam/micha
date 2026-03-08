@@ -3,6 +3,7 @@ package expenseapp_test
 import (
 	"context"
 	"sync"
+	"time"
 
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/shared"
@@ -79,4 +80,25 @@ func (m *mockRepo) Update(_ context.Context, e expense.Expense) error {
 	}
 	m.expenses[string(e.ID())] = e
 	return nil
+}
+
+func (m *mockRepo) ListByHouseholdAndPeriod(_ context.Context, householdID string, from, to time.Time) ([]expense.Expense, error) {
+	if m.listErr != nil {
+		return nil, m.listErr
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	result := make([]expense.Expense, 0)
+	for _, e := range m.expenses {
+		if e.HouseholdID() != householdID || e.DeletedAt() != nil {
+			continue
+		}
+		if e.CreatedAt().Before(from) || !e.CreatedAt().Before(to) {
+			continue
+		}
+		result = append(result, e)
+	}
+
+	return result, nil
 }

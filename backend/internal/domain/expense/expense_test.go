@@ -10,11 +10,15 @@ import (
 )
 
 var baseAttrs = expense.ExpenseAttributes{
-	ID:          expense.ID("id-1"),
-	HouseholdID: "hh-1",
-	AmountCents: 1000,
-	Description: "Taxi",
-	CreatedAt:   time.Now(),
+	ID:             expense.ID("id-1"),
+	HouseholdID:    "hh-1",
+	PaidByMemberID: "m-1",
+	AmountCents:    1000,
+	Description:    "Taxi",
+	IsShared:       true,
+	Currency:       "MXN",
+	PaymentMethod:  expense.PaymentMethodCard,
+	CreatedAt:      time.Now(),
 }
 
 func TestNew_ValidExpense(t *testing.T) {

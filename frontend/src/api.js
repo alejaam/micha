@@ -38,17 +38,41 @@ export async function listExpenses({ householdId, limit = 20, offset = 0 }) {
     return parseResponse(response)
 }
 
-export async function createExpense({ householdId, amountCents, description }) {
+export async function createExpense({ householdId, paidByMemberId, amountCents, description, isShared = true, currency = 'MXN', paymentMethod = 'cash' }) {
     const response = await fetch('/v1/expenses', {
         method: 'POST',
         headers: JSON_HEADERS,
         body: JSON.stringify({
             household_id: householdId,
+            paid_by_member_id: paidByMemberId,
             amount_cents: amountCents,
             description,
+            is_shared: isShared,
+            currency,
+            payment_method: paymentMethod,
         }),
     })
 
+    return parseResponse(response)
+}
+
+export async function getSettlement({ householdId, year, month }) {
+    const params = new URLSearchParams({
+        year: String(year),
+        month: String(month),
+    })
+
+    const response = await fetch(`/v1/households/${householdId}/settlement?${params.toString()}`)
+    return parseResponse(response)
+}
+
+export async function listMembers({ householdId, limit = 100, offset = 0 }) {
+    const params = new URLSearchParams({
+        limit: String(limit),
+        offset: String(offset),
+    })
+
+    const response = await fetch(`/v1/households/${householdId}/members?${params.toString()}`)
     return parseResponse(response)
 }
 

@@ -20,9 +20,13 @@ func TestRegisterExpense_Success(t *testing.T) {
 	uc := expenseapp.NewRegisterExpenseUseCase(repo, staticIDGen("exp-1"))
 
 	out, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
-		HouseholdID: "hh-1",
-		AmountCents: 1500,
-		Description: "Taxi",
+		HouseholdID:    "hh-1",
+		PaidByMemberID: "m-1",
+		AmountCents:    1500,
+		Description:    "Taxi",
+		IsShared:       true,
+		Currency:       "MXN",
+		PaymentMethod:  "cash",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -38,8 +42,12 @@ func TestRegisterExpense_InvalidMoney(t *testing.T) {
 	uc := expenseapp.NewRegisterExpenseUseCase(repo, staticIDGen("exp-1"))
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
-		HouseholdID: "hh-1",
-		AmountCents: 0,
+		HouseholdID:    "hh-1",
+		PaidByMemberID: "m-1",
+		AmountCents:    0,
+		IsShared:       true,
+		Currency:       "MXN",
+		PaymentMethod:  "cash",
 	})
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -248,7 +256,17 @@ func (s staticIDGen) NewID() string { return string(s) }
 
 func seedExpense(t *testing.T, repo *mockRepo, id, householdID string, amountCents int64) *expense.Expense {
 	t.Helper()
-	e, err := expense.New(expense.ID(id), householdID, amountCents, "seed", time.Now())
+	e, err := expense.NewFromAttributes(expense.ExpenseAttributes{
+		ID:             expense.ID(id),
+		HouseholdID:    householdID,
+		PaidByMemberID: "m-1",
+		AmountCents:    amountCents,
+		Description:    "seed",
+		IsShared:       true,
+		Currency:       "MXN",
+		PaymentMethod:  expense.PaymentMethodCash,
+		CreatedAt:      time.Now(),
+	})
 	if err != nil {
 		t.Fatalf("seedExpense: %v", err)
 	}

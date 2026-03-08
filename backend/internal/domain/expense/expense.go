@@ -1,9 +1,28 @@
 package expense
 
 import (
+	"errors"
+	"strings"
 	"time"
 
 	"micha/backend/internal/domain/shared"
+)
+
+var (
+	ErrInvalidHouseholdID    = errors.New("invalid household id")
+	ErrInvalidPaidByMemberID = errors.New("invalid paid by member id")
+	ErrInvalidCurrency       = errors.New("invalid expense currency")
+	ErrInvalidPaymentMethod  = errors.New("invalid payment method")
+)
+
+// PaymentMethod defines how an expense was paid.
+type PaymentMethod string
+
+const (
+	PaymentMethodCash     PaymentMethod = "cash"
+	PaymentMethodCard     PaymentMethod = "card"
+	PaymentMethodTransfer PaymentMethod = "transfer"
+	PaymentMethodVoucher  PaymentMethod = "voucher"
 )
 
 // ID is the unique identifier type for an expense.
@@ -11,35 +30,47 @@ type ID string
 
 // ExpenseAttributes is the flat DTO used for construction and rehydration.
 type ExpenseAttributes struct {
-	ID          ID
-	HouseholdID string
-	AmountCents int64
-	Description string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   *time.Time
+	ID             ID
+	HouseholdID    string
+	PaidByMemberID string
+	AmountCents    int64
+	Description    string
+	IsShared       bool
+	Currency       string
+	PaymentMethod  PaymentMethod
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	DeletedAt      *time.Time
 }
 
 // Expense is the aggregate root for an expense record.
 type Expense struct {
-	id          ID
-	householdID string
-	amountCents int64
-	description string
-	createdAt   time.Time
-	updatedAt   time.Time
-	deletedAt   *time.Time
+	id             ID
+	householdID    string
+	paidByMemberID string
+	amountCents    int64
+	description    string
+	isShared       bool
+	currency       string
+	paymentMethod  PaymentMethod
+	createdAt      time.Time
+	updatedAt      time.Time
+	deletedAt      *time.Time
 }
 
 // New constructs an Expense from individual fields.
 func New(id ID, householdID string, amountCents int64, description string, createdAt time.Time) (Expense, error) {
 	return NewFromAttributes(ExpenseAttributes{
-		ID:          id,
-		HouseholdID: householdID,
-		AmountCents: amountCents,
-		Description: description,
-		CreatedAt:   createdAt,
-		UpdatedAt:   createdAt,
+		ID:             id,
+		HouseholdID:    householdID,
+		PaidByMemberID: "unassigned",
+		AmountCents:    amountCents,
+		Description:    description,
+		IsShared:       true,
+		Currency:       "MXN",
+		PaymentMethod:  PaymentMethodCash,
+		CreatedAt:      createdAt,
+		UpdatedAt:      createdAt,
 	})
 }
 
@@ -49,19 +80,45 @@ func NewFromAttributes(attrs ExpenseAttributes) (Expense, error) {
 		return Expense{}, shared.ErrInvalidMoney
 	}
 
+	if strings.TrimSpace(attrs.HouseholdID) == "" {
+		return Expense{}, ErrInvalidHouseholdID
+	}
+
+	paidByMemberID := strings.TrimSpace(attrs.PaidByMemberID)
+	if paidByMemberID == "" {
+		return Expense{}, ErrInvalidPaidByMemberID
+	}
+
+	currency := strings.ToUpper(strings.TrimSpace(attrs.Currency))
+	if len(currency) != 3 {
+		return Expense{}, ErrInvalidCurrency
+	}
+
+	paymentMethod := attrs.PaymentMethod
+	if paymentMethod == "" {
+		paymentMethod = PaymentMethodCash
+	}
+	if paymentMethod != PaymentMethodCash && paymentMethod != PaymentMethodCard && paymentMethod != PaymentMethodTransfer && paymentMethod != PaymentMethodVoucher {
+		return Expense{}, ErrInvalidPaymentMethod
+	}
+
 	updatedAt := attrs.UpdatedAt
 	if updatedAt.IsZero() {
 		updatedAt = attrs.CreatedAt
 	}
 
 	return Expense{
-		id:          attrs.ID,
-		householdID: attrs.HouseholdID,
-		amountCents: attrs.AmountCents,
-		description: attrs.Description,
-		createdAt:   attrs.CreatedAt,
-		updatedAt:   updatedAt,
-		deletedAt:   attrs.DeletedAt,
+		id:             attrs.ID,
+		householdID:    attrs.HouseholdID,
+		paidByMemberID: paidByMemberID,
+		amountCents:    attrs.AmountCents,
+		description:    attrs.Description,
+		isShared:       attrs.IsShared,
+		currency:       currency,
+		paymentMethod:  paymentMethod,
+		createdAt:      attrs.CreatedAt,
+		updatedAt:      updatedAt,
+		deletedAt:      attrs.DeletedAt,
 	}, nil
 }
 
@@ -95,20 +152,28 @@ func (e *Expense) SoftDelete() error {
 // Attributes returns a copy of all fields as a flat DTO.
 func (e Expense) Attributes() ExpenseAttributes {
 	return ExpenseAttributes{
-		ID:          e.id,
-		HouseholdID: e.householdID,
-		AmountCents: e.amountCents,
-		Description: e.description,
-		CreatedAt:   e.createdAt,
-		UpdatedAt:   e.updatedAt,
-		DeletedAt:   e.deletedAt,
+		ID:             e.id,
+		HouseholdID:    e.householdID,
+		PaidByMemberID: e.paidByMemberID,
+		AmountCents:    e.amountCents,
+		Description:    e.description,
+		IsShared:       e.isShared,
+		Currency:       e.currency,
+		PaymentMethod:  e.paymentMethod,
+		CreatedAt:      e.createdAt,
+		UpdatedAt:      e.updatedAt,
+		DeletedAt:      e.deletedAt,
 	}
 }
 
-func (e Expense) ID() ID                { return e.id }
-func (e Expense) HouseholdID() string   { return e.householdID }
-func (e Expense) AmountCents() int64    { return e.amountCents }
-func (e Expense) Description() string   { return e.description }
-func (e Expense) CreatedAt() time.Time  { return e.createdAt }
-func (e Expense) UpdatedAt() time.Time  { return e.updatedAt }
-func (e Expense) DeletedAt() *time.Time { return e.deletedAt }
+func (e Expense) ID() ID                       { return e.id }
+func (e Expense) HouseholdID() string          { return e.householdID }
+func (e Expense) PaidByMemberID() string       { return e.paidByMemberID }
+func (e Expense) AmountCents() int64           { return e.amountCents }
+func (e Expense) Description() string          { return e.description }
+func (e Expense) IsShared() bool               { return e.isShared }
+func (e Expense) Currency() string             { return e.currency }
+func (e Expense) PaymentMethod() PaymentMethod { return e.paymentMethod }
+func (e Expense) CreatedAt() time.Time         { return e.createdAt }
+func (e Expense) UpdatedAt() time.Time         { return e.updatedAt }
+func (e Expense) DeletedAt() *time.Time        { return e.deletedAt }

@@ -6,9 +6,10 @@ import (
 
 // ServerDependencies groups all resource-level dependencies for the HTTP server.
 type ServerDependencies struct {
-	Expense   ExpenseHandlerDeps
-	Household HouseholdHandlerDeps
-	Member    MemberHandlerDeps
+	Expense    ExpenseHandlerDeps
+	Household  HouseholdHandlerDeps
+	Member     MemberHandlerDeps
+	Settlement SettlementHandlerDeps
 }
 
 // Server is the primary HTTP adapter.
@@ -36,6 +37,9 @@ func NewServer(port string, deps ServerDependencies) Server {
 	mh := newMemberHandler(deps.Member)
 	mux.HandleFunc("POST /v1/households/{household_id}/members", mh.handleCreate)
 	mux.HandleFunc("GET /v1/households/{household_id}/members", mh.handleList)
+
+	sh := newSettlementHandler(deps.Settlement)
+	mux.HandleFunc("GET /v1/households/{household_id}/settlement", sh.handleGetMonthly)
 
 	return Server{port: port, mux: mux}
 }

@@ -117,10 +117,10 @@ func (m Member) Attributes() Attributes {
 	}
 }
 
-func (m Member) ID() ID                 { return m.id }
-func (m Member) HouseholdID() string    { return m.householdID }
-func (m Member) Name() string           { return m.name }
-func (m Member) Email() string          { return m.email }
+func (m Member) ID() ID                    { return m.id }
+func (m Member) HouseholdID() string       { return m.householdID }
+func (m Member) Name() string              { return m.name }
+func (m Member) Email() string             { return m.email }
 func (m Member) MonthlySalaryCents() int64 { return m.monthlySalaryCents }
-func (m Member) CreatedAt() time.Time   { return m.createdAt }
-func (m Member) UpdatedAt() time.Time   { return m.updatedAt }
+func (m Member) CreatedAt() time.Time      { return m.createdAt }
+func (m Member) UpdatedAt() time.Time      { return m.updatedAt }

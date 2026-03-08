@@ -30,13 +30,19 @@ func NewRegisterExpenseUseCase(repo outbound.ExpenseRepository, idGenerator IDGe
 }
 
 func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.RegisterExpenseInput) (inbound.RegisterExpenseOutput, error) {
-	e, err := expense.New(
-		expense.ID(u.idGenerator.NewID()),
-		input.HouseholdID,
-		input.AmountCents,
-		input.Description,
-		u.now(),
-	)
+	now := u.now()
+	e, err := expense.NewFromAttributes(expense.ExpenseAttributes{
+		ID:             expense.ID(u.idGenerator.NewID()),
+		HouseholdID:    input.HouseholdID,
+		PaidByMemberID: input.PaidByMemberID,
+		AmountCents:    input.AmountCents,
+		Description:    input.Description,
+		IsShared:       input.IsShared,
+		Currency:       input.Currency,
+		PaymentMethod:  expense.PaymentMethod(input.PaymentMethod),
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	})
 	if err != nil {
 		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
 	}

@@ -119,9 +119,9 @@ func (h Household) Attributes() Attributes {
 	}
 }
 
-func (h Household) ID() ID                     { return h.id }
-func (h Household) Name() string               { return h.name }
+func (h Household) ID() ID                         { return h.id }
+func (h Household) Name() string                   { return h.name }
 func (h Household) SettlementMode() SettlementMode { return h.settlementMode }
-func (h Household) Currency() string           { return h.currency }
-func (h Household) CreatedAt() time.Time       { return h.createdAt }
-func (h Household) UpdatedAt() time.Time       { return h.updatedAt }
+func (h Household) Currency() string               { return h.currency }
+func (h Household) CreatedAt() time.Time           { return h.createdAt }
+func (h Household) UpdatedAt() time.Time           { return h.updatedAt }

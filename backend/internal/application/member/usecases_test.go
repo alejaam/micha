@@ -66,6 +66,19 @@ func (m *mockMemberRepo) Update(_ context.Context, item member.Member) error {
 	return nil
 }
 
+func (m *mockMemberRepo) ListAllByHousehold(_ context.Context, householdID string) ([]member.Member, error) {
+	if m.listErr != nil {
+		return nil, m.listErr
+	}
+	result := make([]member.Member, 0, len(m.members))
+	for _, item := range m.members {
+		if item.HouseholdID() == householdID {
+			result = append(result, item)
+		}
+	}
+	return result, nil
+}
+
 func TestRegisterMember_Success(t *testing.T) {
 	t.Parallel()
 	repo := newMockMemberRepo()

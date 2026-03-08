@@ -29,8 +29,8 @@ Se actualiza al cierre de cada iteración.
 ## Estado global del roadmap
 
 - Fecha de arranque: 2026-03-07
-- Fase actual: `Phase 1` (en progreso)
-- Última fase cerrada: `Phase 0`
+- Fase actual: `Phase 4` (pendiente)
+- Última fase cerrada: `Phase 3`
 - Estrategia de entrega: incremental por iteraciones cortas
 - Estado general: en progreso
 
@@ -332,6 +332,99 @@ Eliminar fricción de captura y acelerar resumen mensual.
   - falta wiring en `cmd/api` para nuevos casos de uso.
   - falta adapter Postgres para household/member.
   - falta exposición de endpoints HTTP.
+
+### Iteración 003 — Settlement mensual (equal/proportional)
+- Fecha: 2026-03-08
+- Fase: Phase 3
+- Objetivo:
+  - habilitar cálculo mensual de settlement por hogar y exponerlo en API/UI.
+- MEM:
+  - settlement depende de `paid_by_member_id`, `is_shared`, `currency` y `payment_method` en gastos.
+  - política definida para sueldos cero en modo proporcional: fallback a `equal` con razón explícita.
+- SEQ:
+  - Domain (`expense` + `settlement`) -> ports -> use case -> adapters HTTP/Postgres -> wiring -> frontend.
+- THINK:
+  - Hipótesis:
+    - encapsular cálculo en dominio permite probar reglas de reparto sin acoplar a DB/HTTP.
+  - Validación ejecutada:
+    - `cd backend && go test ./...` ✅
+    - `cd frontend && npm run build` ✅
+  - Resultado:
+    - ✅ endpoint de settlement mensual operativo.
+    - ✅ exclusión de `payment_method=voucher` del pool compartido.
+    - ✅ vista frontend básica de transferencias sugeridas.
+  - Decisión siguiente:
+    - fortalecer UX de selección de miembros (evitar captura manual de IDs) y ampliar pruebas de adapters HTTP.
+- Cambios por capa:
+  - Domain:
+    - nueva lógica pura `internal/domain/settlement/settlement.go`.
+    - `expense` enriquecido con `paid_by_member_id`, `is_shared`, `currency`, `payment_method`.
+  - Application:
+    - nuevo use case `CalculateSettlement` mensual.
+  - Ports:
+    - inbound `CalculateSettlementUseCase`.
+    - outbound: `ListByHouseholdAndPeriod` (expenses), `ListAllByHousehold` (members).
+  - Adapters:
+    - endpoint `GET /v1/households/{household_id}/settlement`.
+    - repositorio Postgres de gastos actualizado con nuevos campos y query por periodo.
+  - DB/Migrations:
+    - `005_alter_expenses_add_payment_method.sql`.
+  - Frontend:
+    - formulario de gasto con `paid_by_member_id`, `is_shared`, `payment_method`.
+    - panel de settlement mensual.
+- Archivos clave:
+  - `backend/internal/domain/settlement/settlement.go`
+  - `backend/internal/application/settlement/calculate_settlement.go`
+  - `backend/internal/adapters/http/settlement_handler.go`
+  - `backend/internal/adapters/postgres/expense_repository.go`
+  - `backend/internal/domain/expense/expense.go`
+  - `backend/internal/ports/inbound/settlement_usecases.go`
+  - `frontend/src/App.jsx`
+  - `frontend/src/api.js`
+- Riesgos / deuda:
+  - falta suite de tests de handlers HTTP para settlement.
+
+### Iteración 004 — Cierre UX de Phase 3 (selector de miembro)
+- Fecha: 2026-03-08
+- Fase: Phase 3
+- Objetivo:
+  - eliminar captura manual de `member_id` en alta de gasto para cerrar phase 3.
+- MEM:
+  - el formulario de gastos depende del listado de miembros por household.
+- SEQ:
+  - API client frontend -> estado/carga en `App` -> dropdown en `ExpenseForm` -> build.
+- THINK:
+  - Hipótesis:
+    - un selector de miembros reduce errores de captura y cierra la deuda UX de settlement.
+  - Validación ejecutada:
+    - `cd frontend && npm run build` ✅
+  - Resultado:
+    - ✅ `ExpenseForm` usa selector real de miembros.
+    - ✅ alta de gasto bloqueada cuando no hay miembros disponibles.
+    - ✅ deuda UX principal de phase 3 cerrada.
+  - Decisión siguiente:
+    - abrir `Phase 4` con modelo de recurrentes.
+- Cambios por capa:
+  - Domain:
+    - sin cambios.
+  - Application:
+    - sin cambios.
+  - Ports:
+    - sin cambios.
+  - Adapters:
+    - sin cambios en backend.
+  - DB/Migrations:
+    - sin cambios.
+  - Frontend:
+    - `listMembers` en cliente API.
+    - carga de miembros por household en `App`.
+    - selector de miembro y estado vacío en `ExpenseForm`.
+- Archivos clave:
+  - `frontend/src/api.js`
+  - `frontend/src/App.jsx`
+  - `frontend/src/components/ExpenseForm.jsx`
+- Riesgos / deuda:
+  - falta suite de tests de handlers HTTP para settlement.
 
 ---
 

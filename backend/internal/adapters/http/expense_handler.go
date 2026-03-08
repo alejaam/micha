@@ -37,18 +37,41 @@ func newExpenseHandler(deps ExpenseHandlerDeps) expenseHandler {
 // handleCreate handles POST /v1/expenses.
 func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		HouseholdID string `json:"household_id"`
-		AmountCents int64  `json:"amount_cents"`
-		Description string `json:"description"`
+		HouseholdID    string `json:"household_id"`
+		PaidByMemberID string `json:"paid_by_member_id"`
+		AmountCents    int64  `json:"amount_cents"`
+		Description    string `json:"description"`
+		IsShared       *bool  `json:"is_shared"`
+		Currency       string `json:"currency"`
+		PaymentMethod  string `json:"payment_method"`
 	}
 	if err := decodeJSON(r, w, &body); err != nil {
 		return
 	}
 
+	isShared := true
+	if body.IsShared != nil {
+		isShared = *body.IsShared
+	}
+
+	currency := body.Currency
+	if currency == "" {
+		currency = "MXN"
+	}
+
+	paymentMethod := body.PaymentMethod
+	if paymentMethod == "" {
+		paymentMethod = "cash"
+	}
+
 	input := inbound.RegisterExpenseInput{
-		HouseholdID: body.HouseholdID,
-		AmountCents: body.AmountCents,
-		Description: body.Description,
+		HouseholdID:    body.HouseholdID,
+		PaidByMemberID: body.PaidByMemberID,
+		AmountCents:    body.AmountCents,
+		Description:    body.Description,
+		IsShared:       isShared,
+		Currency:       currency,
+		PaymentMethod:  paymentMethod,
 	}
 
 	out, err := h.deps.Register.Execute(r.Context(), input)
@@ -153,12 +176,16 @@ func (h expenseHandler) handleDelete(w http.ResponseWriter, r *http.Request) {
 func expenseJSON(e expense.Expense) map[string]any {
 	attrs := e.Attributes()
 	m := map[string]any{
-		"id":           string(attrs.ID),
-		"household_id": attrs.HouseholdID,
-		"amount_cents": attrs.AmountCents,
-		"description":  attrs.Description,
-		"created_at":   attrs.CreatedAt,
-		"updated_at":   attrs.UpdatedAt,
+		"id":                string(attrs.ID),
+		"household_id":      attrs.HouseholdID,
+		"paid_by_member_id": attrs.PaidByMemberID,
+		"amount_cents":      attrs.AmountCents,
+		"description":       attrs.Description,
+		"is_shared":         attrs.IsShared,
+		"currency":          attrs.Currency,
+		"payment_method":    attrs.PaymentMethod,
+		"created_at":        attrs.CreatedAt,
+		"updated_at":        attrs.UpdatedAt,
 	}
 	if attrs.DeletedAt != nil {
 		m["deleted_at"] = attrs.DeletedAt
@@ -228,6 +255,14 @@ func writeErrorFromDomain(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusNotFound, "NOT_FOUND", "the requested resource was not found")
 	case errors.Is(err, shared.ErrInvalidMoney):
 		writeError(w, http.StatusBadRequest, "INVALID_MONEY", "amount_cents must be greater than zero")
+	case errors.Is(err, expense.ErrInvalidHouseholdID):
+		writeError(w, http.StatusBadRequest, "INVALID_HOUSEHOLD_ID", "household_id is required")
+	case errors.Is(err, expense.ErrInvalidPaidByMemberID):
+		writeError(w, http.StatusBadRequest, "INVALID_PAID_BY_MEMBER_ID", "paid_by_member_id is required")
+	case errors.Is(err, expense.ErrInvalidCurrency):
+		writeError(w, http.StatusBadRequest, "INVALID_CURRENCY", "currency must be a 3-letter code")
+	case errors.Is(err, expense.ErrInvalidPaymentMethod):
+		writeError(w, http.StatusBadRequest, "INVALID_PAYMENT_METHOD", "payment_method must be cash, card, transfer or voucher")
 	case errors.Is(err, shared.ErrAlreadyDeleted):
 		writeError(w, http.StatusBadRequest, "ALREADY_DELETED", "expense has already been deleted")
 	default:

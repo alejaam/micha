@@ -18,6 +18,7 @@ import (
 	expenseapp "micha/backend/internal/application/expense"
 	householdapp "micha/backend/internal/application/household"
 	memberapp "micha/backend/internal/application/member"
+	settlementapp "micha/backend/internal/application/settlement"
 	"micha/backend/internal/infrastructure/config"
 )
 
@@ -79,6 +80,9 @@ func main() {
 		Expense:   expenseDeps,
 		Household: householdDeps,
 		Member:    memberDeps,
+		Settlement: httpadapter.SettlementHandlerDeps{
+			Calculate: settlementapp.NewCalculateSettlementUseCase(householdRepo, memberRepo, expenseRepo),
+		},
 	}
 
 	srv := httpadapter.NewServer(cfg.HTTPPort, serverDeps)

@@ -9,13 +9,18 @@ import { dollarsToCents } from '../utils'
  * @param {(data:{amountCents:number,description:string})=>Promise<void>} onSubmit
  * @param {boolean} isSubmitting - Disables the form while a request is in-flight
  */
-export function ExpenseForm({ onSubmit, isSubmitting }) {
-  const [amount, setAmount]           = useState('')
-  const [description, setDescription] = useState('')
+export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMembers = false }) {
+  const [amount, setAmount]                 = useState('')
+  const [description, setDescription]       = useState('')
+  const [paidByMemberId, setPaidByMemberId] = useState('')
+  const [isShared, setIsShared]             = useState(true)
+  const [paymentMethod, setPaymentMethod]   = useState('cash')
+
+  const hasMembers = Array.isArray(members) && members.length > 0
 
   const isValid = useMemo(
-    () => description.trim() !== '' && dollarsToCents(amount) !== null,
-    [amount, description],
+    () => hasMembers && description.trim() !== '' && paidByMemberId.trim() !== '' && dollarsToCents(amount) !== null,
+    [amount, description, paidByMemberId, hasMembers],
   )
 
   async function handleSubmit(event) {
@@ -24,11 +29,20 @@ export function ExpenseForm({ onSubmit, isSubmitting }) {
     const amountCents = dollarsToCents(amount)
     if (amountCents === null) return
 
-    await onSubmit({ amountCents, description: description.trim() })
+    await onSubmit({
+      amountCents,
+      description: description.trim(),
+      paidByMemberId: paidByMemberId.trim(),
+      isShared,
+      paymentMethod,
+    })
 
     // Reset on successful submit (parent resolves the promise)
     setAmount('')
     setDescription('')
+    setPaidByMemberId('')
+    setIsShared(true)
+    setPaymentMethod('cash')
   }
 
   return (
@@ -67,10 +81,59 @@ export function ExpenseForm({ onSubmit, isSubmitting }) {
           />
         </FormField>
 
+        <FormField label="Paid by" htmlFor="newPaidByMemberId">
+          <select
+            id="newPaidByMemberId"
+            className="input"
+            value={paidByMemberId}
+            onChange={(e) => setPaidByMemberId(e.target.value)}
+            disabled={isSubmitting || isLoadingMembers || !hasMembers}
+          >
+            <option value="">
+              {isLoadingMembers ? 'Loading members...' : hasMembers ? 'Select a member' : 'No members available'}
+            </option>
+            {members.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.name}
+              </option>
+            ))}
+          </select>
+        </FormField>
+
+        {!isLoadingMembers && !hasMembers ? (
+          <p className="brandTagline">Create at least one member in this household before adding expenses.</p>
+        ) : null}
+
+        <FormField label="Payment method" htmlFor="newPaymentMethod">
+          <select
+            id="newPaymentMethod"
+            className="input"
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            disabled={isSubmitting}
+          >
+            <option value="cash">cash</option>
+            <option value="card">card</option>
+            <option value="transfer">transfer</option>
+            <option value="voucher">voucher</option>
+          </select>
+        </FormField>
+
+        <label className="householdLabel" htmlFor="newIsShared" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            id="newIsShared"
+            type="checkbox"
+            checked={isShared}
+            onChange={(e) => setIsShared(e.target.checked)}
+            disabled={isSubmitting}
+          />
+          Shared expense
+        </label>
+
         <button
           type="submit"
           className="btn btnPrimary btnFull"
-          disabled={!isValid || isSubmitting}
+          disabled={!isValid || isSubmitting || isLoadingMembers}
         >
           {isSubmitting ? (
             <>

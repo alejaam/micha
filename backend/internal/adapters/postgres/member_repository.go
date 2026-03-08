@@ -90,6 +90,35 @@ func (r MemberRepository) ListByHousehold(ctx context.Context, householdID strin
 	return members, nil
 }
 
+// ListAllByHousehold returns all members for a household ordered by created_at ASC.
+func (r MemberRepository) ListAllByHousehold(ctx context.Context, householdID string) ([]member.Member, error) {
+	rows, err := r.db.Query(ctx,
+		`SELECT id, household_id, name, email, monthly_salary_cents, created_at, updated_at
+			FROM members
+			WHERE household_id = $1
+			ORDER BY created_at ASC`,
+		householdID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("member repository listAllByHousehold: %w", err)
+	}
+	defer rows.Close()
+
+	members := make([]member.Member, 0)
+	for rows.Next() {
+		m, scanErr := scanMember(rows)
+		if scanErr != nil {
+			return nil, fmt.Errorf("member repository listAllByHousehold: scan: %w", scanErr)
+		}
+		members = append(members, m)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("member repository listAllByHousehold: rows: %w", err)
+	}
+
+	return members, nil
+}
+
 // Update persists changes to an existing member.
 func (r MemberRepository) Update(ctx context.Context, m member.Member) error {
 	attrs := m.Attributes()
