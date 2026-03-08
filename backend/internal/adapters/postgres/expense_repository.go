@@ -10,12 +10,12 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	expenseapp "micha/backend/internal/application/expense"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/shared"
+	"micha/backend/internal/ports/outbound"
 )
 
-// ExpenseRepository fulfils expenseapp.ExpenseRepository using PostgreSQL.
+// ExpenseRepository fulfils outbound.ExpenseRepository using PostgreSQL.
 type ExpenseRepository struct {
 	db *pgxpool.Pool
 }
@@ -118,7 +118,7 @@ func (r ExpenseRepository) Update(ctx context.Context, e expense.Expense) error 
 }
 
 // ensure interface compliance at compile time.
-var _ expenseapp.ExpenseRepository = ExpenseRepository{}
+var _ outbound.ExpenseRepository = ExpenseRepository{}
 
 // row is the minimal interface shared by pgx.Row and pgx.Rows.
 type row interface {

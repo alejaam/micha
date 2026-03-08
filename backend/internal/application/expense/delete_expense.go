@@ -4,15 +4,17 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+
+	"micha/backend/internal/ports/outbound"
 )
 
 // DeleteExpenseUseCase soft-deletes an expense by ID.
 type DeleteExpenseUseCase struct {
-	repo ExpenseRepository
+	repo outbound.ExpenseRepository
 }
 
 // NewDeleteExpenseUseCase constructs a DeleteExpenseUseCase.
-func NewDeleteExpenseUseCase(repo ExpenseRepository) DeleteExpenseUseCase {
+func NewDeleteExpenseUseCase(repo outbound.ExpenseRepository) DeleteExpenseUseCase {
 	return DeleteExpenseUseCase{repo: repo}
 }
 

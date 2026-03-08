@@ -6,6 +6,8 @@ import (
 	"log/slog"
 
 	"micha/backend/internal/domain/expense"
+	"micha/backend/internal/ports/inbound"
+	"micha/backend/internal/ports/outbound"
 )
 
 const (
@@ -15,15 +17,15 @@ const (
 
 // ListExpensesUseCase lists non-deleted expenses for a household with pagination.
 type ListExpensesUseCase struct {
-	repo ExpenseRepository
+	repo outbound.ExpenseRepository
 }
 
 // NewListExpensesUseCase constructs a ListExpensesUseCase.
-func NewListExpensesUseCase(repo ExpenseRepository) ListExpensesUseCase {
+func NewListExpensesUseCase(repo outbound.ExpenseRepository) ListExpensesUseCase {
 	return ListExpensesUseCase{repo: repo}
 }
 
-func (u ListExpensesUseCase) Execute(ctx context.Context, query ListExpensesQuery) ([]expense.Expense, error) {
+func (u ListExpensesUseCase) Execute(ctx context.Context, query inbound.ListExpensesQuery) ([]expense.Expense, error) {
 	if query.HouseholdID == "" {
 		return nil, fmt.Errorf("list expenses: household_id is required")
 	}

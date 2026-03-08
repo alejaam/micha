@@ -9,6 +9,7 @@ import (
 	expenseapp "micha/backend/internal/application/expense"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/shared"
+	"micha/backend/internal/ports/inbound"
 )
 
 // --- RegisterExpenseUseCase -------------------------------------------------
@@ -18,7 +19,7 @@ func TestRegisterExpense_Success(t *testing.T) {
 	repo := newMockRepo()
 	uc := expenseapp.NewRegisterExpenseUseCase(repo, staticIDGen("exp-1"))
 
-	out, err := uc.Execute(context.Background(), expenseapp.RegisterExpenseInput{
+	out, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID: "hh-1",
 		AmountCents: 1500,
 		Description: "Taxi",
@@ -36,7 +37,7 @@ func TestRegisterExpense_InvalidMoney(t *testing.T) {
 	repo := newMockRepo()
 	uc := expenseapp.NewRegisterExpenseUseCase(repo, staticIDGen("exp-1"))
 
-	_, err := uc.Execute(context.Background(), expenseapp.RegisterExpenseInput{
+	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID: "hh-1",
 		AmountCents: 0,
 	})
@@ -96,7 +97,7 @@ func TestListExpenses_Success(t *testing.T) {
 	seedExpense(t, repo, "exp-2", "hh-1", 2000)
 	uc := expenseapp.NewListExpensesUseCase(repo)
 
-	expenses, err := uc.Execute(context.Background(), expenseapp.ListExpensesQuery{
+	expenses, err := uc.Execute(context.Background(), inbound.ListExpensesQuery{
 		HouseholdID: "hh-1",
 		Limit:       10,
 		Offset:      0,
@@ -114,7 +115,7 @@ func TestListExpenses_MissingHouseholdID(t *testing.T) {
 	repo := newMockRepo()
 	uc := expenseapp.NewListExpensesUseCase(repo)
 
-	_, err := uc.Execute(context.Background(), expenseapp.ListExpensesQuery{Limit: 10})
+	_, err := uc.Execute(context.Background(), inbound.ListExpensesQuery{Limit: 10})
 	if err == nil {
 		t.Fatal("expected error for empty household_id")
 	}
@@ -125,7 +126,7 @@ func TestListExpenses_DefaultLimit(t *testing.T) {
 	repo := newMockRepo()
 	uc := expenseapp.NewListExpensesUseCase(repo)
 
-	_, err := uc.Execute(context.Background(), expenseapp.ListExpensesQuery{
+	_, err := uc.Execute(context.Background(), inbound.ListExpensesQuery{
 		HouseholdID: "hh-1",
 		Limit:       0,
 	})
@@ -139,7 +140,7 @@ func TestListExpenses_MaxLimitClamped(t *testing.T) {
 	repo := newMockRepo()
 	uc := expenseapp.NewListExpensesUseCase(repo)
 
-	_, err := uc.Execute(context.Background(), expenseapp.ListExpensesQuery{
+	_, err := uc.Execute(context.Background(), inbound.ListExpensesQuery{
 		HouseholdID: "hh-1",
 		Limit:       9999,
 	})
@@ -157,7 +158,7 @@ func TestPatchExpense_Success(t *testing.T) {
 	uc := expenseapp.NewPatchExpenseUseCase(repo)
 
 	newAmt := int64(2000)
-	e, err := uc.Execute(context.Background(), expenseapp.PatchExpenseCommand{
+	e, err := uc.Execute(context.Background(), inbound.PatchExpenseCommand{
 		ID:          "exp-1",
 		AmountCents: &newAmt,
 	})
@@ -174,7 +175,7 @@ func TestPatchExpense_NotFound(t *testing.T) {
 	repo := newMockRepo()
 	uc := expenseapp.NewPatchExpenseUseCase(repo)
 
-	_, err := uc.Execute(context.Background(), expenseapp.PatchExpenseCommand{ID: "missing"})
+	_, err := uc.Execute(context.Background(), inbound.PatchExpenseCommand{ID: "missing"})
 	if !errors.Is(err, shared.ErrNotFound) {
 		t.Errorf("want ErrNotFound, got %v", err)
 	}
@@ -187,7 +188,7 @@ func TestPatchExpense_InvalidAmount(t *testing.T) {
 	uc := expenseapp.NewPatchExpenseUseCase(repo)
 
 	bad := int64(-1)
-	_, err := uc.Execute(context.Background(), expenseapp.PatchExpenseCommand{
+	_, err := uc.Execute(context.Background(), inbound.PatchExpenseCommand{
 		ID:          "exp-1",
 		AmountCents: &bad,
 	})

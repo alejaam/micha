@@ -1,7 +1,7 @@
 # Checklist Arquitectónico
 
-- [ ] El dominio no importa paquetes de infraestructura.
-- [ ] Los casos de uso no dependen del framework HTTP.
-- [ ] Los handlers HTTP solo orquestan entrada/salida.
-- [ ] Los repositorios concretos implementan puertos de salida.
-- [ ] La inyección de dependencias ocurre en `cmd/api`.
+- [x] El dominio no importa paquetes de infraestructura.
+- [x] Los casos de uso no dependen del framework HTTP.
+- [x] Los handlers HTTP solo orquestan entrada/salida.
+- [x] Los repositorios concretos implementan puertos de salida.
+- [x] La inyección de dependencias ocurre en `cmd/api`.

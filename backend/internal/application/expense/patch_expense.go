@@ -6,19 +6,21 @@ import (
 	"log/slog"
 
 	"micha/backend/internal/domain/expense"
+	"micha/backend/internal/ports/inbound"
+	"micha/backend/internal/ports/outbound"
 )
 
 // PatchExpenseUseCase applies a partial update to an expense.
 type PatchExpenseUseCase struct {
-	repo ExpenseRepository
+	repo outbound.ExpenseRepository
 }
 
 // NewPatchExpenseUseCase constructs a PatchExpenseUseCase.
-func NewPatchExpenseUseCase(repo ExpenseRepository) PatchExpenseUseCase {
+func NewPatchExpenseUseCase(repo outbound.ExpenseRepository) PatchExpenseUseCase {
 	return PatchExpenseUseCase{repo: repo}
 }
 
-func (u PatchExpenseUseCase) Execute(ctx context.Context, cmd PatchExpenseCommand) (expense.Expense, error) {
+func (u PatchExpenseUseCase) Execute(ctx context.Context, cmd inbound.PatchExpenseCommand) (expense.Expense, error) {
 	e, err := u.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return expense.Expense{}, fmt.Errorf("patch expense: %w", err)

@@ -1,18 +1,10 @@
-package expenseapp
+package inbound
 
 import (
 	"context"
 
 	"micha/backend/internal/domain/expense"
 )
-
-// ExpenseRepository defines the persistence contract required by expense use cases.
-type ExpenseRepository interface {
-	Save(ctx context.Context, e expense.Expense) error
-	FindByID(ctx context.Context, id string) (expense.Expense, error)
-	List(ctx context.Context, householdID string, limit, offset int) ([]expense.Expense, error)
-	Update(ctx context.Context, e expense.Expense) error
-}
 
 // RegisterExpenseInput contains required data to register an expense.
 type RegisterExpenseInput struct {
@@ -39,4 +31,24 @@ type PatchExpenseCommand struct {
 	ID          string
 	Description *string
 	AmountCents *int64
+}
+
+type RegisterExpenseUseCase interface {
+	Execute(ctx context.Context, input RegisterExpenseInput) (RegisterExpenseOutput, error)
+}
+
+type GetExpenseUseCase interface {
+	Execute(ctx context.Context, id string) (expense.Expense, error)
+}
+
+type ListExpensesUseCase interface {
+	Execute(ctx context.Context, query ListExpensesQuery) ([]expense.Expense, error)
+}
+
+type PatchExpenseUseCase interface {
+	Execute(ctx context.Context, cmd PatchExpenseCommand) (expense.Expense, error)
+}
+
+type DeleteExpenseUseCase interface {
+	Execute(ctx context.Context, id string) error
 }

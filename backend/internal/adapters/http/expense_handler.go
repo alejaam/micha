@@ -9,20 +9,20 @@ import (
 
 	"github.com/google/uuid"
 
-	expenseapp "micha/backend/internal/application/expense"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/shared"
+	"micha/backend/internal/ports/inbound"
 )
 
 const maxRequestBytes = 1 << 20 // 1 MB
 
 // ExpenseHandlerDeps groups all use case dependencies for the expense resource.
 type ExpenseHandlerDeps struct {
-	Register expenseapp.RegisterExpenseUseCase
-	Get      expenseapp.GetExpenseUseCase
-	List     expenseapp.ListExpensesUseCase
-	Patch    expenseapp.PatchExpenseUseCase
-	Delete   expenseapp.DeleteExpenseUseCase
+	Register inbound.RegisterExpenseUseCase
+	Get      inbound.GetExpenseUseCase
+	List     inbound.ListExpensesUseCase
+	Patch    inbound.PatchExpenseUseCase
+	Delete   inbound.DeleteExpenseUseCase
 }
 
 // expenseHandler handles HTTP requests for the expense resource.
@@ -45,7 +45,7 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input := expenseapp.RegisterExpenseInput{
+	input := inbound.RegisterExpenseInput{
 		HouseholdID: body.HouseholdID,
 		AmountCents: body.AmountCents,
 		Description: body.Description,
@@ -89,7 +89,7 @@ func (h expenseHandler) handleList(w http.ResponseWriter, r *http.Request) {
 	limit := queryInt(r, "limit", 20)
 	offset := queryInt(r, "offset", 0)
 
-	expenses, err := h.deps.List.Execute(r.Context(), expenseapp.ListExpensesQuery{
+	expenses, err := h.deps.List.Execute(r.Context(), inbound.ListExpensesQuery{
 		HouseholdID: householdID,
 		Limit:       limit,
 		Offset:      offset,
@@ -121,7 +121,7 @@ func (h expenseHandler) handlePatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	e, err := h.deps.Patch.Execute(r.Context(), expenseapp.PatchExpenseCommand{
+	e, err := h.deps.Patch.Execute(r.Context(), inbound.PatchExpenseCommand{
 		ID:          id,
 		Description: body.Description,
 		AmountCents: body.AmountCents,

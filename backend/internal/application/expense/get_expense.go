@@ -7,15 +7,16 @@ import (
 
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/shared"
+	"micha/backend/internal/ports/outbound"
 )
 
 // GetExpenseUseCase retrieves a single non-deleted expense by ID.
 type GetExpenseUseCase struct {
-	repo ExpenseRepository
+	repo outbound.ExpenseRepository
 }
 
 // NewGetExpenseUseCase constructs a GetExpenseUseCase.
-func NewGetExpenseUseCase(repo ExpenseRepository) GetExpenseUseCase {
+func NewGetExpenseUseCase(repo outbound.ExpenseRepository) GetExpenseUseCase {
 	return GetExpenseUseCase{repo: repo}
 }
 
