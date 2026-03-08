@@ -16,6 +16,8 @@ import (
 	httpadapter "micha/backend/internal/adapters/http"
 	"micha/backend/internal/adapters/postgres"
 	expenseapp "micha/backend/internal/application/expense"
+	householdapp "micha/backend/internal/application/household"
+	memberapp "micha/backend/internal/application/member"
 	"micha/backend/internal/infrastructure/config"
 )
 
@@ -46,21 +48,37 @@ func main() {
 		os.Exit(1)
 	}
 
-	repo := postgres.NewExpenseRepository(pool)
+	expenseRepo := postgres.NewExpenseRepository(pool)
+	householdRepo := postgres.NewHouseholdRepository(pool)
+	memberRepo := postgres.NewMemberRepository(pool)
 	idGen := uuidGenerator{}
 
 	// Expense use cases and handler dependencies.
 	expenseDeps := httpadapter.ExpenseHandlerDeps{
-		Register: expenseapp.NewRegisterExpenseUseCase(repo, idGen),
-		Get:      expenseapp.NewGetExpenseUseCase(repo),
-		List:     expenseapp.NewListExpensesUseCase(repo),
-		Patch:    expenseapp.NewPatchExpenseUseCase(repo),
-		Delete:   expenseapp.NewDeleteExpenseUseCase(repo),
+		Register: expenseapp.NewRegisterExpenseUseCase(expenseRepo, idGen),
+		Get:      expenseapp.NewGetExpenseUseCase(expenseRepo),
+		List:     expenseapp.NewListExpensesUseCase(expenseRepo),
+		Patch:    expenseapp.NewPatchExpenseUseCase(expenseRepo),
+		Delete:   expenseapp.NewDeleteExpenseUseCase(expenseRepo),
+	}
+
+	// Household use cases and handler dependencies.
+	householdDeps := httpadapter.HouseholdHandlerDeps{
+		Register: householdapp.NewRegisterHouseholdUseCase(householdRepo, idGen),
+		List:     householdapp.NewListHouseholdsUseCase(householdRepo),
+	}
+
+	// Member use cases and handler dependencies.
+	memberDeps := httpadapter.MemberHandlerDeps{
+		Register: memberapp.NewRegisterMemberUseCase(memberRepo, idGen),
+		List:     memberapp.NewListMembersUseCase(memberRepo),
 	}
 
 	// Server dependencies grouped by resource.
 	serverDeps := httpadapter.ServerDependencies{
-		Expense: expenseDeps,
+		Expense:   expenseDeps,
+		Household: householdDeps,
+		Member:    memberDeps,
 	}
 
 	srv := httpadapter.NewServer(cfg.HTTPPort, serverDeps)

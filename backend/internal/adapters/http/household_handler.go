@@ -1,0 +1,92 @@
+package httpadapter
+
+import (
+	"errors"
+	"log/slog"
+	"net/http"
+
+	"micha/backend/internal/domain/household"
+	"micha/backend/internal/ports/inbound"
+)
+
+// HouseholdHandlerDeps groups all use case dependencies for the household resource.
+type HouseholdHandlerDeps struct {
+	Register inbound.RegisterHouseholdUseCase
+	List     inbound.ListHouseholdsUseCase
+}
+
+// householdHandler handles HTTP requests for the household resource.
+type householdHandler struct {
+	deps HouseholdHandlerDeps
+}
+
+func newHouseholdHandler(deps HouseholdHandlerDeps) householdHandler {
+	return householdHandler{deps: deps}
+}
+
+// handleCreate handles POST /v1/households.
+func (h householdHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Name           string `json:"name"`
+		SettlementMode string `json:"settlement_mode"`
+		Currency       string `json:"currency"`
+	}
+	if err := decodeJSON(r, w, &body); err != nil {
+		return
+	}
+
+	out, err := h.deps.Register.Execute(r.Context(), inbound.RegisterHouseholdInput{
+		Name:           body.Name,
+		SettlementMode: household.SettlementMode(body.SettlementMode),
+		Currency:       body.Currency,
+	})
+	if err != nil {
+		writeErrorFromHouseholdDomain(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, map[string]any{
+		"data": map[string]string{"household_id": out.HouseholdID},
+	})
+}
+
+// handleList handles GET /v1/households?limit=&offset=.
+func (h householdHandler) handleList(w http.ResponseWriter, r *http.Request) {
+	households, err := h.deps.List.Execute(r.Context(), inbound.ListHouseholdsQuery{
+		Limit:  queryInt(r, "limit", 20),
+		Offset: queryInt(r, "offset", 0),
+	})
+	if err != nil {
+		writeErrorFromHouseholdDomain(w, err)
+		return
+	}
+
+	items := make([]map[string]any, 0, len(households))
+	for _, item := range households {
+		attrs := item.Attributes()
+		items = append(items, map[string]any{
+			"id":              string(attrs.ID),
+			"name":            attrs.Name,
+			"settlement_mode": attrs.SettlementMode,
+			"currency":        attrs.Currency,
+			"created_at":      attrs.CreatedAt,
+			"updated_at":      attrs.UpdatedAt,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"data": items})
+}
+
+func writeErrorFromHouseholdDomain(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, household.ErrInvalidName):
+		writeError(w, http.StatusBadRequest, "INVALID_NAME", "household name is required")
+	case errors.Is(err, household.ErrInvalidSettlementMode):
+		writeError(w, http.StatusBadRequest, "INVALID_SETTLEMENT_MODE", "settlement_mode must be equal or proportional")
+	case errors.Is(err, household.ErrInvalidCurrency):
+		writeError(w, http.StatusBadRequest, "INVALID_CURRENCY", "currency must be a 3-letter code")
+	default:
+		slog.Error("household handler: internal error", "error", err)
+		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "an internal error occurred")
+	}
+}

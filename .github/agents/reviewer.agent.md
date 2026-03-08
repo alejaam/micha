@@ -1,10 +1,7 @@
 ---
 name: reviewer
 description: Senior-level code reviewer for the micha project. Reviews Go code, DDD boundaries, HTTP adapters, use cases, and domain invariants. Produces prioritized, actionable feedback. Read-only — use the default agent to apply changes.
-tools:
-  - read/readFile
-  - search
-  - web/fetch
+tools: [read/readFile, 'sequentialthinking/*', search, web/fetch]
 agents: []
 handoffs:
   - label: Apply changes
