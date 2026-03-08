@@ -101,7 +101,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
         </FormField>
 
         {!isLoadingMembers && !hasMembers ? (
-          <p className="brandTagline">Create at least one member in this household before adding expenses.</p>
+          <p className="formHint">Create at least one member before adding expenses.</p>
         ) : null}
 
         <FormField label="Payment method" htmlFor="newPaymentMethod">

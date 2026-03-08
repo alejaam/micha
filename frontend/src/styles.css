@@ -57,6 +57,17 @@
     --dur-fast: 120ms;
     --dur-base: 200ms;
     --dur-slow: 320ms;
+
+    /* Typography weights */
+    --fw-medium: 600;
+    --fw-bold: 700;
+
+    /* Spacing scale */
+    --sp-xs: 4px;
+    --sp-sm: 8px;
+    --sp-md: 12px;
+    --sp-lg: 16px;
+    --sp-xl: 24px;
 }
 
 /* ─── Reset ────────────────────────────────────────────────────────────────── */
@@ -151,7 +162,7 @@ ul {
 
 .brandName {
     font-size: 1.3rem;
-    font-weight: 800;
+    font-weight: var(--fw-bold);
     letter-spacing: -0.03em;
     color: var(--color-text-1);
     line-height: 1;
@@ -159,7 +170,7 @@ ul {
 
 .brandTagline {
     font-size: 0.75rem;
-    color: var(--color-text-4);
+    color: var(--color-text-3);
     margin-top: 3px;
 }
 
@@ -184,7 +195,9 @@ ul {
 }
 
 .householdInput {
-    width: 130px;
+    min-width: 100px;
+    max-width: 180px;
+    flex: 1 1 auto;
     padding: 6px 10px;
     font: inherit;
     font-size: 0.85rem;
@@ -233,7 +246,6 @@ ul {
 .pillOk::before {
     background: var(--color-green-600);
     box-shadow: 0 0 0 2px rgba(5, 150, 105, .2);
-    animation: pulse 2s ease infinite;
 }
 
 .pillOff {
@@ -375,7 +387,7 @@ ul {
 }
 
 .input::placeholder {
-    color: var(--color-text-4);
+    color: var(--color-text-3);
 }
 
 .input:disabled {
@@ -407,6 +419,12 @@ ul {
 
 .inputWithPrefix {
     padding-left: 24px;
+}
+
+.formHint {
+    font-size: 0.8rem;
+    color: var(--color-text-3);
+    line-height: 1.4;
 }
 
 /* ─── Section title ─────────────────────────────────────────────────────────── */
@@ -513,7 +531,7 @@ ul {
 
 .listCount {
     font-size: 0.78rem;
-    color: var(--color-text-4);
+    color: var(--color-text-3);
     font-weight: 500;
 }
 
@@ -607,6 +625,7 @@ ul {
     flex: 1;
     display: grid;
     gap: 10px;
+    animation: slideDown var(--dur-base) var(--ease-out);
 }
 
 .editFields {
@@ -655,6 +674,86 @@ ul {
 
 .emptyHint {
     font-size: 0.8rem;
+}
+
+/* ─── Settlement card ───────────────────────────────────────────────────────── */
+.settlementControls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.settlementFallback {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: var(--color-amber-700);
+    background: var(--color-amber-50);
+    border: 1px solid var(--color-amber-100);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    font-weight: var(--fw-medium);
+}
+
+.settlementStats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 12px 0;
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--color-border-soft);
+}
+
+.settlementStat {
+    display: flex;
+    gap: 4px;
+}
+
+.settlementStatLabel {
+    color: var(--color-text-3);
+}
+
+.settlementStatValue {
+    font-weight: var(--fw-medium);
+    color: var(--color-text-1);
+}
+
+.transferList {
+    display: grid;
+    gap: 6px;
+}
+
+.transferItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-soft);
+    font-size: 0.875rem;
+    gap: 8px;
+}
+
+.transferNames {
+    color: var(--color-text-1);
+    font-weight: var(--fw-medium);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.transferArrow {
+    color: var(--color-text-3);
+}
+
+.transferAmount {
+    font-weight: var(--fw-bold);
+    color: var(--color-brand-700);
+    flex-shrink: 0;
 }
 
 /* ─── Spin animation ────────────────────────────────────────────────────────── */
@@ -718,6 +817,12 @@ ul {
 }
 
 /* ─── Responsive ──────────────────────────────────────────────────────────────── */
+@media (min-width: 741px) and (max-width: 1040px) {
+    .pageGrid {
+        grid-template-columns: 280px 1fr;
+    }
+}
+
 @media (max-width: 740px) {
     .page {
         padding: 18px 12px 36px;
@@ -750,5 +855,14 @@ ul {
 
     .editFields {
         grid-template-columns: 1fr;
+    }
+
+    .settlementControls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .householdInput {
+        max-width: 100%;
     }
 }

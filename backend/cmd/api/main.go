@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	memberapp "micha/backend/internal/application/member"
 	settlementapp "micha/backend/internal/application/settlement"
 	"micha/backend/internal/infrastructure/config"
+	"micha/backend/internal/infrastructure/migrations"
 )
 
 // uuidGenerator implements expenseapp.IDGenerator using UUID v4.
@@ -46,6 +48,17 @@ func main() {
 
 	if err := pool.Ping(ctx); err != nil {
 		slog.Error("database unreachable", "error", err)
+		os.Exit(1)
+	}
+
+	migrationsDir, err := resolveMigrationsDir()
+	if err != nil {
+		slog.Error("failed to locate migrations directory", "error", err)
+		os.Exit(1)
+	}
+
+	if err := migrations.Apply(ctx, pool, migrationsDir); err != nil {
+		slog.Error("failed to apply migrations", "error", err)
 		os.Exit(1)
 	}
 
@@ -112,4 +125,25 @@ func main() {
 	}
 
 	slog.Info("server stopped")
+}
+
+func resolveMigrationsDir() (string, error) {
+	candidates := []string{
+		"migrations",
+		"backend/migrations",
+		"../migrations",
+	}
+
+	for _, dir := range candidates {
+		info, err := os.Stat(dir)
+		if err == nil && info.IsDir() {
+			abs, absErr := filepath.Abs(dir)
+			if absErr != nil {
+				return "", absErr
+			}
+			return abs, nil
+		}
+	}
+
+	return "", errors.New("migrations directory not found")
 }

@@ -2,7 +2,7 @@
  * AppHeader — top bar with brand identity, household selector, reload
  * action, and backend health indicator.
  */
-export function AppHeader({ health, householdId, onHouseholdChange, onReload, isLoading }) {
+export function AppHeader({ health, householdId, onHouseholdChange, onReload, isLoading, households = [] }) {
   const isLive = health === 'ok'
 
   return (
@@ -23,16 +23,20 @@ export function AppHeader({ health, householdId, onHouseholdChange, onReload, is
           <label htmlFor="householdInput" className="householdLabel">
             Household
           </label>
-          <input
+          <select
             id="householdInput"
             className="householdInput"
             value={householdId}
             onChange={(e) => onHouseholdChange(e.target.value)}
-            placeholder="home-main"
-            spellCheck={false}
-            autoComplete="off"
             aria-label="Household ID"
-          />
+          >
+            <option value="">Select household</option>
+            {households.map((household) => (
+              <option key={household.id} value={household.id}>
+                {household.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Reload */}
