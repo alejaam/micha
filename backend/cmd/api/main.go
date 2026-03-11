@@ -16,10 +16,12 @@ import (
 
 	httpadapter "micha/backend/internal/adapters/http"
 	"micha/backend/internal/adapters/postgres"
+	authapp "micha/backend/internal/application/auth"
 	expenseapp "micha/backend/internal/application/expense"
 	householdapp "micha/backend/internal/application/household"
 	memberapp "micha/backend/internal/application/member"
 	settlementapp "micha/backend/internal/application/settlement"
+	infraauth "micha/backend/internal/infrastructure/auth"
 	"micha/backend/internal/infrastructure/config"
 	"micha/backend/internal/infrastructure/migrations"
 )
@@ -65,7 +67,18 @@ func main() {
 	expenseRepo := postgres.NewExpenseRepository(pool)
 	householdRepo := postgres.NewHouseholdRepository(pool)
 	memberRepo := postgres.NewMemberRepository(pool)
+	userRepo := postgres.NewUserRepository(pool)
 	idGen := uuidGenerator{}
+
+	hasher := infraauth.NewBcryptHasher()
+	signer := infraauth.NewJWTSigner(cfg.JWTSecret)
+	validator := infraauth.NewJWTValidator(cfg.JWTSecret)
+
+	// Auth use cases and handler dependencies.
+	authDeps := httpadapter.AuthHandlerDeps{
+		Register: authapp.NewRegisterUserUseCase(userRepo, idGen, hasher),
+		Login:    authapp.NewLoginUseCase(userRepo, hasher, signer),
+	}
 
 	// Expense use cases and handler dependencies.
 	expenseDeps := httpadapter.ExpenseHandlerDeps{
@@ -90,12 +103,14 @@ func main() {
 
 	// Server dependencies grouped by resource.
 	serverDeps := httpadapter.ServerDependencies{
+		Auth:      authDeps,
 		Expense:   expenseDeps,
 		Household: householdDeps,
 		Member:    memberDeps,
 		Settlement: httpadapter.SettlementHandlerDeps{
 			Calculate: settlementapp.NewCalculateSettlementUseCase(householdRepo, memberRepo, expenseRepo),
 		},
+		JWTValidator: validator,
 	}
 
 	srv := httpadapter.NewServer(cfg.HTTPPort, serverDeps)
