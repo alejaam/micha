@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { FormField } from '../ui/FormField'
-import { dollarsToCents, formatDollars, formatRelativeDate } from '../utils'
+import { dollarsToCents, formatCurrency, formatRelativeDate } from '../utils'
 
 /**
  * ExpenseItem — a single row in the expense list.
@@ -13,7 +13,7 @@ import { dollarsToCents, formatDollars, formatRelativeDate } from '../utils'
  * @param {({id,amountCents,description})=>void} onSave
  * @param {number} animIndex     - Staggered entrance delay index
  */
-export function ExpenseItem({ item, isDeleting, isSaving, onDelete, onSave, animIndex }) {
+export function ExpenseItem({ item, isDeleting, isSaving, onDelete, onSave, animIndex, currency = 'MXN' }) {
   const [editing, setEditing]         = useState(false)
   const [draftAmount, setDraftAmount] = useState('')
   const [draftDesc, setDraftDesc]     = useState('')
@@ -60,7 +60,7 @@ export function ExpenseItem({ item, isDeleting, isSaving, onDelete, onSave, anim
           </div>
 
           <div className="expenseRight">
-            <span className="expenseAmount">{formatDollars(item.amount_cents)}</span>
+            <span className="expenseAmount">{formatCurrency(item.amount_cents, item.currency || currency)}</span>
             <div className="expenseActions">
               <button
                 type="button"

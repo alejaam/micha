@@ -2,7 +2,10 @@ const JSON_HEADERS = {
     'Content-Type': 'application/json',
 }
 
-let authToken = ''
+let authToken =
+    typeof window !== 'undefined'
+        ? (window.localStorage.getItem('micha_token') ?? '').trim()
+        : ''
 
 export function setAuthToken(token) {
     authToken = typeof token === 'string' ? token.trim() : ''

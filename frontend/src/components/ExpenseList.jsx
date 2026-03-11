@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { formatDollars } from '../utils'
+import { formatCurrency } from '../utils'
 import { ExpenseItem } from './ExpenseItem'
 
 /**
@@ -13,7 +13,7 @@ import { ExpenseItem } from './ExpenseItem'
  * @param {(id:string)=>void}     onDelete
  * @param {(data)=>void}          onSave
  */
-export function ExpenseList({ items, isLoading, deletingId, savingId, onDelete, onSave }) {
+export function ExpenseList({ items, isLoading, deletingId, savingId, onDelete, onSave, currency = 'MXN' }) {
   const totalCents = useMemo(
     () => items.reduce((sum, item) => sum + item.amount_cents, 0),
     [items],
@@ -30,7 +30,7 @@ export function ExpenseList({ items, isLoading, deletingId, savingId, onDelete, 
             <span className="listCount">
               {items.length} item{items.length !== 1 ? 's' : ''}
             </span>
-            <span className="totalBadge">{formatDollars(totalCents)}</span>
+            <span className="totalBadge">{formatCurrency(totalCents, currency)}</span>
           </div>
         )}
       </div>
@@ -65,6 +65,7 @@ export function ExpenseList({ items, isLoading, deletingId, savingId, onDelete, 
               isSaving={savingId === item.id}
               onDelete={onDelete}
               onSave={onSave}
+              currency={currency}
             />
           ))}
         </ul>

@@ -254,7 +254,8 @@ ul {
     transition: border-color var(--dur-base), box-shadow var(--dur-base);
 }
 
-.householdInput:focus {
+.householdInput:focus,
+.householdInput:focus-visible {
     outline: none;
     border-color: var(--color-brand-500);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, .18);
@@ -333,6 +334,11 @@ ul {
     cursor: not-allowed;
     transform: none !important;
     box-shadow: none !important;
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
 }
 
 /* Primary / filled */
@@ -426,7 +432,8 @@ ul {
     transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
 }
 
-.input:focus {
+.input:focus,
+.input:focus-visible {
     outline: none;
     border-color: var(--color-brand-500);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, .18);
@@ -919,5 +926,27 @@ ul {
 
     .householdInput {
         max-width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .spinIcon,
+    .slideUp {
+        animation: none !important;
+    }
+
+    .slideUp {
+        opacity: 1;
+        transform: none;
     }
 }

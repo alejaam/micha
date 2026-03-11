@@ -1,13 +1,20 @@
 /**
- * Format an amount in cents as a localized USD currency string.
- * e.g. 4250 → "$42.50"
+ * Format an amount in cents as a localized currency string.
+ * e.g. 4250, MXN -> "$42.50"
  */
-export function formatDollars(amountCents) {
-    return new Intl.NumberFormat('en-US', {
+export function formatCurrency(amountCents, currency = 'MXN') {
+    return new Intl.NumberFormat(undefined, {
         style: 'currency',
-        currency: 'USD',
+        currency,
         minimumFractionDigits: 2,
     }).format(amountCents / 100)
+}
+
+/**
+ * Backward-compatible alias used by existing components.
+ */
+export function formatDollars(amountCents) {
+    return formatCurrency(amountCents, 'USD')
 }
 
 /**
