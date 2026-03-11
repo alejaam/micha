@@ -1,6 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { createExpense, createHousehold, createMember, deleteExpense, getHealth, getSettlement, listExpenses, listHouseholds, listMembers, patchExpense } from './api'
+import {
+    createExpense,
+    createHousehold,
+    createMember,
+    deleteExpense,
+    getHealth,
+    getSettlement,
+    listExpenses,
+    listHouseholds,
+    listMembers,
+    loginUser,
+    patchExpense,
+    registerUser,
+    setAuthToken,
+} from './api'
 import { AppHeader } from './components/AppHeader'
+import { AuthPanel } from './components/AuthPanel'
 import { ExpenseForm } from './components/ExpenseForm'
 import { ExpenseList } from './components/ExpenseList'
 import { Banner } from './ui/Banner'
@@ -17,6 +32,8 @@ const SETTLEMENT_MONTHS = [
   { value: 11, label: '11 · Nov' }, { value: 12, label: '12 · Dec' },
 ]
 
+const AUTH_STORAGE_KEY = 'micha_token'
+
 function isExpectedSettlementOnboardingError(err) {
   return err?.code === 'NO_MEMBERS' || String(err?.message || '').toLowerCase().includes('at least one member')
 }
@@ -28,6 +45,14 @@ function isExpectedSettlementOnboardingError(err) {
  * UI sub-trees are handled by their respective components.
  */
 function App() {
+  const [token, setToken] = useState(() => localStorage.getItem(AUTH_STORAGE_KEY) ?? '')
+  const [authMode, setAuthMode] = useState('login')
+  const [authBusy, setAuthBusy] = useState(false)
+  const [authError, setAuthError] = useState('')
+  const [authMessage, setAuthMessage] = useState('')
+
+  const isAuthenticated = token.trim() !== ''
+
   // ── Server state ────────────────────────────────────────────────────────
   const [health, setHealth] = useState('checking…')
   const [items, setItems]   = useState([])
@@ -63,6 +88,86 @@ function App() {
     () => Object.fromEntries(members.map((m) => [m.id, m.name])),
     [members],
   )
+
+  const resetProtectedState = useCallback(() => {
+    setHouseholdId('')
+    setItems([])
+    setHouseholds([])
+    setMembers([])
+    setSettlement(null)
+    setMessage('')
+    setError('')
+    setLoadingHouseholds(false)
+    setLoadingList(false)
+    setLoadingMembers(false)
+    setLoadingSettlement(false)
+    setSubmittingCreate(false)
+    setSubmittingHousehold(false)
+    setSubmittingMember(false)
+    setSavingId('')
+    setDeletingId('')
+  }, [])
+
+  const handleLogout = useCallback((reason = '') => {
+    localStorage.removeItem(AUTH_STORAGE_KEY)
+    setToken('')
+    setAuthToken('')
+    setAuthMode('login')
+    setAuthBusy(false)
+    setAuthMessage('')
+    setAuthError(reason)
+    resetProtectedState()
+  }, [resetProtectedState])
+
+  const handleProtectedError = useCallback((err) => {
+    if (err?.code === 'UNAUTHORIZED') {
+      handleLogout('Session expired. Sign in again.')
+      return true
+    }
+
+    setError(err.message)
+    return false
+  }, [handleLogout])
+
+  useEffect(() => {
+    setAuthToken(token)
+  }, [token])
+
+  async function handleLogin({ email, password }) {
+    setAuthBusy(true)
+    setAuthError('')
+    setAuthMessage('')
+    try {
+      const out = await loginUser({ email, password })
+      const nextToken = out?.token ?? ''
+      if (!nextToken) {
+        throw new Error('login succeeded but token was not returned')
+      }
+
+      localStorage.setItem(AUTH_STORAGE_KEY, nextToken)
+      setToken(nextToken)
+      setAuthError('')
+    } catch (err) {
+      setAuthError(err.message)
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
+  async function handleRegister({ email, password }) {
+    setAuthBusy(true)
+    setAuthError('')
+    setAuthMessage('')
+    try {
+      await registerUser({ email, password })
+      setAuthMode('login')
+      setAuthMessage('Account created. Sign in with your credentials.')
+    } catch (err) {
+      setAuthError(err.message)
+    } finally {
+      setAuthBusy(false)
+    }
+  }
   // ── Health check ──────────────────────────────────────────────────────
   useEffect(() => {
     let active = true
@@ -73,6 +178,10 @@ function App() {
   }, [])
 
   const loadHouseholds = useCallback(async () => {
+    if (!isAuthenticated) {
+      return
+    }
+
     setLoadingHouseholds(true)
     try {
       const data = await listHouseholds({ limit: 100, offset: 0 })
@@ -91,17 +200,23 @@ function App() {
         }
       }
     } catch (err) {
-      setError(err.message)
+      handleProtectedError(err)
     } finally {
       setLoadingHouseholds(false)
     }
-  }, [householdId])
+  }, [handleProtectedError, householdId, isAuthenticated])
 
-  useEffect(() => { loadHouseholds() }, [loadHouseholds])
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return
+    }
+
+    loadHouseholds()
+  }, [isAuthenticated, loadHouseholds])
 
   // ── Load expenses ─────────────────────────────────────────────────────
   const loadExpenses = useCallback(async () => {
-    if (!householdId.trim()) {
+    if (!isAuthenticated || !householdId.trim()) {
       setItems([])
       return
     }
@@ -111,16 +226,22 @@ function App() {
       const data = await listExpenses({ householdId: householdId.trim(), limit: 50, offset: 0 })
       setItems(Array.isArray(data) ? data : [])
     } catch (err) {
-      setError(err.message)
+      handleProtectedError(err)
     } finally {
       setLoadingList(false)
     }
-  }, [householdId])
+  }, [handleProtectedError, householdId, isAuthenticated])
 
-  useEffect(() => { loadExpenses() }, [loadExpenses])
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return
+    }
+
+    loadExpenses()
+  }, [isAuthenticated, loadExpenses])
 
   const loadSettlement = useCallback(async () => {
-    if (!householdId.trim()) {
+    if (!isAuthenticated || !householdId.trim()) {
       setSettlement(null)
       return
     }
@@ -134,18 +255,29 @@ function App() {
       setSettlement(data)
     } catch (err) {
       setSettlement(null)
+      if (err?.code === 'UNAUTHORIZED') {
+        handleProtectedError(err)
+        return
+      }
+
       if (!isExpectedSettlementOnboardingError(err)) {
         setError(err.message)
       }
     } finally {
       setLoadingSettlement(false)
     }
-  }, [householdId, settlementMonth, settlementYear])
+  }, [handleProtectedError, householdId, isAuthenticated, settlementMonth, settlementYear])
 
-  useEffect(() => { loadSettlement() }, [loadSettlement])
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return
+    }
+
+    loadSettlement()
+  }, [isAuthenticated, loadSettlement])
 
   const loadMembers = useCallback(async () => {
-    if (!householdId.trim()) {
+    if (!isAuthenticated || !householdId.trim()) {
       setMembers([])
       return
     }
@@ -156,16 +288,23 @@ function App() {
       setMembers(Array.isArray(data) ? data : [])
     } catch (err) {
       setMembers([])
-      setError(err.message)
+      handleProtectedError(err)
     } finally {
       setLoadingMembers(false)
     }
-  }, [householdId])
+  }, [handleProtectedError, householdId, isAuthenticated])
 
-  useEffect(() => { loadMembers() }, [loadMembers])
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return
+    }
+
+    loadMembers()
+  }, [isAuthenticated, loadMembers])
 
   async function handleCreateHousehold(event) {
     event.preventDefault()
+    if (!isAuthenticated) return
     if (!newHouseholdName.trim()) return
 
     setSubmittingHousehold(true)
@@ -185,7 +324,7 @@ function App() {
         setHouseholdId(out.household_id)
       }
     } catch (err) {
-      setError(err.message)
+      handleProtectedError(err)
     } finally {
       setSubmittingHousehold(false)
     }
@@ -193,6 +332,7 @@ function App() {
 
   async function handleCreateMember(event) {
     event.preventDefault()
+    if (!isAuthenticated) return
     if (!householdId || !newMemberName.trim() || !newMemberEmail.trim()) return
 
     setSubmittingMember(true)
@@ -212,13 +352,17 @@ function App() {
       await loadMembers()
       await loadSettlement()
     } catch (err) {
-      setError(err.message)
+      handleProtectedError(err)
     } finally {
       setSubmittingMember(false)
     }
   }
 
   async function handleReloadAll() {
+    if (!isAuthenticated) {
+      return
+    }
+
     await loadHouseholds()
     await loadMembers()
     await loadExpenses()
@@ -227,6 +371,7 @@ function App() {
 
   // ── Create ────────────────────────────────────────────────────────────
   async function handleCreate({ amountCents, description, paidByMemberId, isShared, paymentMethod }) {
+    if (!isAuthenticated) return
     setMessage('')
     setError('')
     setSubmittingCreate(true)
@@ -243,7 +388,7 @@ function App() {
       await loadExpenses()
       await loadSettlement()
     } catch (err) {
-      setError(err.message)
+      handleProtectedError(err)
     } finally {
       setSubmittingCreate(false)
     }
@@ -251,6 +396,7 @@ function App() {
 
   // ── Save (patch) ──────────────────────────────────────────────────────
   async function handleSave({ id, amountCents, description }) {
+    if (!isAuthenticated) return
     setMessage('')
     setError('')
     setSavingId(id)
@@ -260,7 +406,7 @@ function App() {
       await loadExpenses()
       await loadSettlement()
     } catch (err) {
-      setError(err.message)
+      handleProtectedError(err)
     } finally {
       setSavingId('')
     }
@@ -268,6 +414,7 @@ function App() {
 
   // ── Delete ────────────────────────────────────────────────────────────
   async function handleDelete(id) {
+    if (!isAuthenticated) return
     setMessage('')
     setError('')
     setDeletingId(id)
@@ -277,7 +424,7 @@ function App() {
       await loadExpenses()
       await loadSettlement()
     } catch (err) {
-      setError(err.message)
+      handleProtectedError(err)
     } finally {
       setDeletingId('')
     }
@@ -288,6 +435,28 @@ function App() {
   const hasHouseholds = households.length > 0
   const hasMembers = members.length > 0
 
+  function handleAuthModeChange(nextMode) {
+    setAuthMode(nextMode)
+    setAuthError('')
+    setAuthMessage('')
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <main className="authShell">
+        <AuthPanel
+          mode={authMode}
+          onModeChange={handleAuthModeChange}
+          onLogin={handleLogin}
+          onRegister={handleRegister}
+          isSubmitting={authBusy}
+          error={authError}
+          message={authMessage}
+        />
+      </main>
+    )
+  }
+
   return (
     <div className="page">
       <AppHeader
@@ -295,6 +464,7 @@ function App() {
         householdId={householdId}
         onHouseholdChange={setHouseholdId}
         onReload={handleReloadAll}
+        onLogout={handleLogout}
         isLoading={isBusy}
         households={households}
       />

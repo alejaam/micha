@@ -2,6 +2,23 @@ const JSON_HEADERS = {
     'Content-Type': 'application/json',
 }
 
+let authToken = ''
+
+export function setAuthToken(token) {
+    authToken = typeof token === 'string' ? token.trim() : ''
+}
+
+function buildProtectedHeaders() {
+    if (!authToken) {
+        return JSON_HEADERS
+    }
+
+    return {
+        ...JSON_HEADERS,
+        Authorization: `Bearer ${authToken}`,
+    }
+}
+
 async function parseResponse(response) {
     if (response.status === 204) {
         return null
@@ -36,7 +53,9 @@ export async function listExpenses({ householdId, limit = 20, offset = 0 }) {
         offset: String(offset),
     })
 
-    const response = await fetch(`/v1/expenses?${params.toString()}`)
+    const response = await fetch(`/v1/expenses?${params.toString()}`, {
+        headers: buildProtectedHeaders(),
+    })
     return parseResponse(response)
 }
 
@@ -46,14 +65,36 @@ export async function listHouseholds({ limit = 100, offset = 0 } = {}) {
         offset: String(offset),
     })
 
-    const response = await fetch(`/v1/households?${params.toString()}`)
+    const response = await fetch(`/v1/households?${params.toString()}`, {
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
+export async function registerUser({ email, password }) {
+    const response = await fetch('/v1/auth/register', {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ email, password }),
+    })
+
+    return parseResponse(response)
+}
+
+export async function loginUser({ email, password }) {
+    const response = await fetch('/v1/auth/login', {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ email, password }),
+    })
+
     return parseResponse(response)
 }
 
 export async function createHousehold({ name, settlementMode = 'equal', currency = 'MXN' }) {
     const response = await fetch('/v1/households', {
         method: 'POST',
-        headers: JSON_HEADERS,
+        headers: buildProtectedHeaders(),
         body: JSON.stringify({
             name,
             settlement_mode: settlementMode,
@@ -67,7 +108,7 @@ export async function createHousehold({ name, settlementMode = 'equal', currency
 export async function createMember({ householdId, name, email, monthlySalaryCents = 0 }) {
     const response = await fetch(`/v1/households/${householdId}/members`, {
         method: 'POST',
-        headers: JSON_HEADERS,
+        headers: buildProtectedHeaders(),
         body: JSON.stringify({
             name,
             email,
@@ -81,7 +122,7 @@ export async function createMember({ householdId, name, email, monthlySalaryCent
 export async function createExpense({ householdId, paidByMemberId, amountCents, description, isShared = true, currency = 'MXN', paymentMethod = 'cash' }) {
     const response = await fetch('/v1/expenses', {
         method: 'POST',
-        headers: JSON_HEADERS,
+        headers: buildProtectedHeaders(),
         body: JSON.stringify({
             household_id: householdId,
             paid_by_member_id: paidByMemberId,
@@ -102,7 +143,9 @@ export async function getSettlement({ householdId, year, month }) {
         month: String(month),
     })
 
-    const response = await fetch(`/v1/households/${householdId}/settlement?${params.toString()}`)
+    const response = await fetch(`/v1/households/${householdId}/settlement?${params.toString()}`, {
+        headers: buildProtectedHeaders(),
+    })
     return parseResponse(response)
 }
 
@@ -112,7 +155,9 @@ export async function listMembers({ householdId, limit = 100, offset = 0 }) {
         offset: String(offset),
     })
 
-    const response = await fetch(`/v1/households/${householdId}/members?${params.toString()}`)
+    const response = await fetch(`/v1/households/${householdId}/members?${params.toString()}`, {
+        headers: buildProtectedHeaders(),
+    })
     return parseResponse(response)
 }
 
@@ -129,7 +174,7 @@ export async function patchExpense({ id, amountCents, description }) {
 
     const response = await fetch(`/v1/expenses/${id}`, {
         method: 'PATCH',
-        headers: JSON_HEADERS,
+        headers: buildProtectedHeaders(),
         body: JSON.stringify(body),
     })
 
@@ -139,6 +184,7 @@ export async function patchExpense({ id, amountCents, description }) {
 export async function deleteExpense(id) {
     const response = await fetch(`/v1/expenses/${id}`, {
         method: 'DELETE',
+        headers: buildProtectedHeaders(),
     })
 
     return parseResponse(response)

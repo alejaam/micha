@@ -2,7 +2,7 @@
  * AppHeader — top bar with brand identity, household selector, reload
  * action, and backend health indicator.
  */
-export function AppHeader({ health, householdId, onHouseholdChange, onReload, isLoading, households = [] }) {
+export function AppHeader({ health, householdId, onHouseholdChange, onReload, onLogout, isLoading, households = [] }) {
   const isLive = health === 'ok'
 
   return (
@@ -49,6 +49,16 @@ export function AppHeader({ health, householdId, onHouseholdChange, onReload, is
         >
           <span className={isLoading ? 'spinIcon' : ''} aria-hidden>⟳</span>
           {isLoading ? 'Loading…' : 'Reload'}
+        </button>
+
+        <button
+          type="button"
+          className="btn btnGhostDanger btnSm"
+          onClick={() => onLogout()}
+          disabled={isLoading}
+          aria-label="Sign out"
+        >
+          Sign out
         </button>
 
         {/* Health */}
