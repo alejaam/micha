@@ -55,6 +55,7 @@ export function ExpenseItem({ item, isDeleting, isSaving, onDelete, onSave, anim
             <span className="expenseMeta">
               {formatRelativeDate(item.created_at)}
               {item.created_at && ' · '}
+              {item.expense_type ? `${item.expense_type} · ` : ''}
               <span className="expenseId">{item.id.slice(0, 8)}…</span>
             </span>
           </div>

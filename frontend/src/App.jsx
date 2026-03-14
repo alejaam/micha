@@ -292,7 +292,7 @@ function App() {
     await loadSettlement()
   }
 
-  async function handleCreate({ amountCents, description, paidByMemberId, isShared, paymentMethod }) {
+  async function handleCreate({ amountCents, description, paidByMemberId, isShared, paymentMethod, expenseType }) {
     if (!isAuthenticated) {
       return
     }
@@ -309,6 +309,7 @@ function App() {
         isShared,
         currency: activeCurrency,
         paymentMethod,
+        expenseType,
       })
       setMessage('Expense added.')
       await loadExpenses()

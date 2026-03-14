@@ -18,6 +18,7 @@ var baseAttrs = expense.ExpenseAttributes{
 	IsShared:       true,
 	Currency:       "MXN",
 	PaymentMethod:  expense.PaymentMethodCard,
+	ExpenseType:    expense.ExpenseTypeVariable,
 	CreatedAt:      time.Now(),
 }
 
@@ -102,6 +103,32 @@ func TestPatch(t *testing.T) {
 			t.Errorf("UpdatedAt did not advance: before=%v after=%v", before, e.UpdatedAt())
 		}
 	})
+}
+
+func TestNew_ExpenseTypeDefaultsToVariable(t *testing.T) {
+	t.Parallel()
+	attrs := baseAttrs
+	attrs.ExpenseType = ""
+
+	e, err := expense.NewFromAttributes(attrs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if e.ExpenseType() != expense.ExpenseTypeVariable {
+		t.Errorf("ExpenseType = %q; want %q", e.ExpenseType(), expense.ExpenseTypeVariable)
+	}
+}
+
+func TestNew_InvalidExpenseType(t *testing.T) {
+	t.Parallel()
+	attrs := baseAttrs
+	attrs.ExpenseType = expense.ExpenseType("unknown")
+
+	_, err := expense.NewFromAttributes(attrs)
+	if !errors.Is(err, expense.ErrInvalidExpenseType) {
+		t.Errorf("want ErrInvalidExpenseType, got %v", err)
+	}
 }
 
 func TestSoftDelete(t *testing.T) {

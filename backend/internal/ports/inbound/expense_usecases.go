@@ -15,6 +15,7 @@ type RegisterExpenseInput struct {
 	IsShared       bool
 	Currency       string
 	PaymentMethod  string
+	ExpenseType    string
 }
 
 // RegisterExpenseOutput contains created expense identifiers.

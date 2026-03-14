@@ -13,6 +13,7 @@ var (
 	ErrInvalidPaidByMemberID = errors.New("invalid paid by member id")
 	ErrInvalidCurrency       = errors.New("invalid expense currency")
 	ErrInvalidPaymentMethod  = errors.New("invalid payment method")
+	ErrInvalidExpenseType    = errors.New("invalid expense type")
 )
 
 // PaymentMethod defines how an expense was paid.
@@ -23,6 +24,15 @@ const (
 	PaymentMethodCard     PaymentMethod = "card"
 	PaymentMethodTransfer PaymentMethod = "transfer"
 	PaymentMethodVoucher  PaymentMethod = "voucher"
+)
+
+// ExpenseType defines the planning category of an expense.
+type ExpenseType string
+
+const (
+	ExpenseTypeFixed    ExpenseType = "fixed"
+	ExpenseTypeVariable ExpenseType = "variable"
+	ExpenseTypeMSI      ExpenseType = "msi"
 )
 
 // ID is the unique identifier type for an expense.
@@ -38,6 +48,7 @@ type ExpenseAttributes struct {
 	IsShared       bool
 	Currency       string
 	PaymentMethod  PaymentMethod
+	ExpenseType    ExpenseType
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	DeletedAt      *time.Time
@@ -53,6 +64,7 @@ type Expense struct {
 	isShared       bool
 	currency       string
 	paymentMethod  PaymentMethod
+	expenseType    ExpenseType
 	createdAt      time.Time
 	updatedAt      time.Time
 	deletedAt      *time.Time
@@ -69,6 +81,7 @@ func New(id ID, householdID string, amountCents int64, description string, creat
 		IsShared:       true,
 		Currency:       "MXN",
 		PaymentMethod:  PaymentMethodCash,
+		ExpenseType:    ExpenseTypeVariable,
 		CreatedAt:      createdAt,
 		UpdatedAt:      createdAt,
 	})
@@ -102,6 +115,14 @@ func NewFromAttributes(attrs ExpenseAttributes) (Expense, error) {
 		return Expense{}, ErrInvalidPaymentMethod
 	}
 
+	expenseType := attrs.ExpenseType
+	if expenseType == "" {
+		expenseType = ExpenseTypeVariable
+	}
+	if expenseType != ExpenseTypeFixed && expenseType != ExpenseTypeVariable && expenseType != ExpenseTypeMSI {
+		return Expense{}, ErrInvalidExpenseType
+	}
+
 	updatedAt := attrs.UpdatedAt
 	if updatedAt.IsZero() {
 		updatedAt = attrs.CreatedAt
@@ -116,6 +137,7 @@ func NewFromAttributes(attrs ExpenseAttributes) (Expense, error) {
 		isShared:       attrs.IsShared,
 		currency:       currency,
 		paymentMethod:  paymentMethod,
+		expenseType:    expenseType,
 		createdAt:      attrs.CreatedAt,
 		updatedAt:      updatedAt,
 		deletedAt:      attrs.DeletedAt,
@@ -160,6 +182,7 @@ func (e Expense) Attributes() ExpenseAttributes {
 		IsShared:       e.isShared,
 		Currency:       e.currency,
 		PaymentMethod:  e.paymentMethod,
+		ExpenseType:    e.expenseType,
 		CreatedAt:      e.createdAt,
 		UpdatedAt:      e.updatedAt,
 		DeletedAt:      e.deletedAt,
@@ -174,6 +197,7 @@ func (e Expense) Description() string          { return e.description }
 func (e Expense) IsShared() bool               { return e.isShared }
 func (e Expense) Currency() string             { return e.currency }
 func (e Expense) PaymentMethod() PaymentMethod { return e.paymentMethod }
+func (e Expense) ExpenseType() ExpenseType      { return e.expenseType }
 func (e Expense) CreatedAt() time.Time         { return e.createdAt }
 func (e Expense) UpdatedAt() time.Time         { return e.updatedAt }
 func (e Expense) DeletedAt() *time.Time        { return e.deletedAt }

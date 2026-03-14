@@ -27,6 +27,7 @@ func TestRegisterExpense_Success(t *testing.T) {
 		IsShared:       true,
 		Currency:       "MXN",
 		PaymentMethod:  "cash",
+		ExpenseType:    "variable",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -48,9 +49,30 @@ func TestRegisterExpense_InvalidMoney(t *testing.T) {
 		IsShared:       true,
 		Currency:       "MXN",
 		PaymentMethod:  "cash",
+		ExpenseType:    "variable",
 	})
 	if err == nil {
 		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestRegisterExpense_InvalidExpenseType(t *testing.T) {
+	t.Parallel()
+	repo := newMockRepo()
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, staticIDGen("exp-1"))
+
+	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
+		HouseholdID:    "hh-1",
+		PaidByMemberID: "m-1",
+		AmountCents:    1500,
+		Description:    "Taxi",
+		IsShared:       true,
+		Currency:       "MXN",
+		PaymentMethod:  "cash",
+		ExpenseType:    "weird",
+	})
+	if !errors.Is(err, expense.ErrInvalidExpenseType) {
+		t.Errorf("want ErrInvalidExpenseType, got %v", err)
 	}
 }
 
@@ -265,6 +287,7 @@ func seedExpense(t *testing.T, repo *mockRepo, id, householdID string, amountCen
 		IsShared:       true,
 		Currency:       "MXN",
 		PaymentMethod:  expense.PaymentMethodCash,
+		ExpenseType:    expense.ExpenseTypeVariable,
 		CreatedAt:      time.Now(),
 	})
 	if err != nil {

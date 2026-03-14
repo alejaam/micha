@@ -44,6 +44,7 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		IsShared       *bool  `json:"is_shared"`
 		Currency       string `json:"currency"`
 		PaymentMethod  string `json:"payment_method"`
+		ExpenseType    string `json:"expense_type"`
 	}
 	if err := decodeJSON(r, w, &body); err != nil {
 		return
@@ -64,6 +65,11 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		paymentMethod = "cash"
 	}
 
+	expenseType := body.ExpenseType
+	if expenseType == "" {
+		expenseType = "variable"
+	}
+
 	input := inbound.RegisterExpenseInput{
 		HouseholdID:    body.HouseholdID,
 		PaidByMemberID: body.PaidByMemberID,
@@ -72,6 +78,7 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		IsShared:       isShared,
 		Currency:       currency,
 		PaymentMethod:  paymentMethod,
+		ExpenseType:    expenseType,
 	}
 
 	out, err := h.deps.Register.Execute(r.Context(), input)
@@ -184,6 +191,7 @@ func expenseJSON(e expense.Expense) map[string]any {
 		"is_shared":         attrs.IsShared,
 		"currency":          attrs.Currency,
 		"payment_method":    attrs.PaymentMethod,
+		"expense_type":      attrs.ExpenseType,
 		"created_at":        attrs.CreatedAt,
 		"updated_at":        attrs.UpdatedAt,
 	}
@@ -263,6 +271,8 @@ func writeErrorFromDomain(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, "INVALID_CURRENCY", "currency must be a 3-letter code")
 	case errors.Is(err, expense.ErrInvalidPaymentMethod):
 		writeError(w, http.StatusBadRequest, "INVALID_PAYMENT_METHOD", "payment_method must be cash, card, transfer or voucher")
+	case errors.Is(err, expense.ErrInvalidExpenseType):
+		writeError(w, http.StatusBadRequest, "INVALID_EXPENSE_TYPE", "expense_type must be fixed, variable or msi")
 	case errors.Is(err, shared.ErrAlreadyDeleted):
 		writeError(w, http.StatusBadRequest, "ALREADY_DELETED", "expense has already been deleted")
 	default:

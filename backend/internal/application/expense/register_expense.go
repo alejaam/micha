@@ -40,6 +40,7 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		IsShared:       input.IsShared,
 		Currency:       input.Currency,
 		PaymentMethod:  expense.PaymentMethod(input.PaymentMethod),
+		ExpenseType:    expense.ExpenseType(input.ExpenseType),
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	})

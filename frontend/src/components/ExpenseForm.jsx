@@ -15,6 +15,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
   const [paidByMemberId, setPaidByMemberId] = useState('')
   const [isShared, setIsShared]             = useState(true)
   const [paymentMethod, setPaymentMethod]   = useState('cash')
+  const [expenseType, setExpenseType]       = useState('variable')
 
   const hasMembers = Array.isArray(members) && members.length > 0
 
@@ -35,6 +36,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
       paidByMemberId: paidByMemberId.trim(),
       isShared,
       paymentMethod,
+      expenseType,
     })
 
     // Reset on successful submit (parent resolves the promise)
@@ -43,6 +45,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
     setPaidByMemberId('')
     setIsShared(true)
     setPaymentMethod('cash')
+    setExpenseType('variable')
   }
 
   return (
@@ -116,6 +119,20 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
             <option value="card">card</option>
             <option value="transfer">transfer</option>
             <option value="voucher">voucher</option>
+          </select>
+        </FormField>
+
+        <FormField label="Expense type" htmlFor="newExpenseType">
+          <select
+            id="newExpenseType"
+            className="input"
+            value={expenseType}
+            onChange={(e) => setExpenseType(e.target.value)}
+            disabled={isSubmitting}
+          >
+            <option value="variable">variable</option>
+            <option value="fixed">fixed</option>
+            <option value="msi">msi</option>
           </select>
         </FormField>
 
