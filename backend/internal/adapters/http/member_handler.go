@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -27,6 +28,8 @@ func newMemberHandler(deps MemberHandlerDeps) memberHandler {
 }
 
 // handleCreate handles POST /v1/households/{household_id}/members.
+// If the authenticated user's email matches the new member's email, the user_id
+// is automatically linked to the member.
 func (h memberHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 	householdID, ok := parseHouseholdID(w, r)
 	if !ok {
@@ -42,11 +45,20 @@ func (h memberHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Auto-link user_id when the authenticated user's email matches the member email.
+	userID, _ := r.Context().Value(contextKeyUserID).(string)
+	authEmail, _ := r.Context().Value(contextKeyEmail).(string)
+	linkedUserID := ""
+	if userID != "" && strings.EqualFold(strings.TrimSpace(authEmail), strings.TrimSpace(body.Email)) {
+		linkedUserID = userID
+	}
+
 	out, err := h.deps.Register.Execute(r.Context(), inbound.RegisterMemberInput{
 		HouseholdID:        householdID,
 		Name:               body.Name,
 		Email:              body.Email,
 		MonthlySalaryCents: body.MonthlySalaryCents,
+		UserID:             linkedUserID,
 	})
 	if err != nil {
 		writeErrorFromMemberDomain(w, err)
@@ -84,6 +96,7 @@ func (h memberHandler) handleList(w http.ResponseWriter, r *http.Request) {
 			"name":                 attrs.Name,
 			"email":                attrs.Email,
 			"monthly_salary_cents": attrs.MonthlySalaryCents,
+			"user_id":              attrs.UserID,
 			"created_at":           attrs.CreatedAt,
 			"updated_at":           attrs.UpdatedAt,
 		})

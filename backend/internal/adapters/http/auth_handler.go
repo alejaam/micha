@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	authapp "micha/backend/internal/application/auth"
 	"micha/backend/internal/domain/shared"
@@ -62,6 +63,25 @@ func (h authHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{"data": map[string]string{"token": out.Token}})
+}
+
+// handleMe handles GET /v1/auth/me — returns the authenticated user's profile
+// extracted from the JWT claims injected by AuthMiddleware.
+func (h authHandler) handleMe(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(contextKeyUserID).(string)
+	if !ok || strings.TrimSpace(userID) == "" {
+		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing or invalid authorization header")
+		return
+	}
+
+	email, _ := r.Context().Value(contextKeyEmail).(string)
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"data": map[string]string{
+			"user_id": userID,
+			"email":   email,
+		},
+	})
 }
 
 func writeAuthError(w http.ResponseWriter, err error) {

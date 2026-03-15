@@ -35,6 +35,9 @@ func NewServer(port string, deps ServerDependencies) Server {
 	// Protected routes — all wrapped with JWT auth middleware.
 	protect := AuthMiddleware(deps.JWTValidator)
 
+	// Protected auth routes.
+	mux.Handle("GET /v1/auth/me", protect(http.HandlerFunc(ah.handleMe)))
+
 	eh := newExpenseHandler(deps.Expense)
 	mux.Handle("POST /v1/expenses", protect(http.HandlerFunc(eh.handleCreate)))
 	mux.Handle("GET /v1/expenses/{id}", protect(http.HandlerFunc(eh.handleGet)))

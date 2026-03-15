@@ -138,6 +138,9 @@ func (m *memberMock) ListAllByHousehold(_ context.Context, householdID string) (
 func (m *memberMock) ListByHousehold(context.Context, string, int, int) ([]member.Member, error) {
 	return m.members, nil
 }
+func (m *memberMock) FindByUserID(_ context.Context, householdID, userID string) (member.Member, error) {
+	return member.Member{}, shared.ErrNotFound
+}
 func (m *memberMock) Update(context.Context, member.Member) error { return nil }
 
 type expenseMock struct {

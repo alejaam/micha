@@ -22,8 +22,10 @@ type Attributes struct {
 	Name               string
 	Email              string
 	MonthlySalaryCents int64
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
+	// UserID links this member to an authenticated user. Empty string means unlinked.
+	UserID    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // Member is the aggregate root for household members.
@@ -33,8 +35,10 @@ type Member struct {
 	name               string
 	email              string
 	monthlySalaryCents int64
-	createdAt          time.Time
-	updatedAt          time.Time
+	// userID is the linked authenticated user. Empty means no link.
+	userID    string
+	createdAt time.Time
+	updatedAt time.Time
 }
 
 // New constructs a Member from individual fields.
@@ -45,6 +49,20 @@ func New(id ID, householdID, name, email string, monthlySalaryCents int64, creat
 		Name:               name,
 		Email:              email,
 		MonthlySalaryCents: monthlySalaryCents,
+		CreatedAt:          createdAt,
+		UpdatedAt:          createdAt,
+	})
+}
+
+// NewWithUserID constructs a Member linked to an authenticated user.
+func NewWithUserID(id ID, householdID, name, email, userID string, monthlySalaryCents int64, createdAt time.Time) (Member, error) {
+	return NewFromAttributes(Attributes{
+		ID:                 id,
+		HouseholdID:        householdID,
+		Name:               name,
+		Email:              email,
+		MonthlySalaryCents: monthlySalaryCents,
+		UserID:             userID,
 		CreatedAt:          createdAt,
 		UpdatedAt:          createdAt,
 	})
@@ -77,6 +95,7 @@ func NewFromAttributes(attrs Attributes) (Member, error) {
 		name:               name,
 		email:              strings.ToLower(email),
 		monthlySalaryCents: attrs.MonthlySalaryCents,
+		userID:             attrs.UserID,
 		createdAt:          attrs.CreatedAt,
 		updatedAt:          updatedAt,
 	}, nil
@@ -90,6 +109,7 @@ func (m *Member) UpdateProfile(name, email string, monthlySalaryCents int64) err
 		Name:               name,
 		Email:              email,
 		MonthlySalaryCents: monthlySalaryCents,
+		UserID:             m.userID,
 		CreatedAt:          m.createdAt,
 		UpdatedAt:          time.Now(),
 	})
@@ -104,6 +124,12 @@ func (m *Member) UpdateProfile(name, email string, monthlySalaryCents int64) err
 	return nil
 }
 
+// LinkUser associates an authenticated user ID with this member.
+func (m *Member) LinkUser(userID string) {
+	m.userID = userID
+	m.updatedAt = time.Now()
+}
+
 // Attributes returns a copy of all fields as a flat DTO.
 func (m Member) Attributes() Attributes {
 	return Attributes{
@@ -112,6 +138,7 @@ func (m Member) Attributes() Attributes {
 		Name:               m.name,
 		Email:              m.email,
 		MonthlySalaryCents: m.monthlySalaryCents,
+		UserID:             m.userID,
 		CreatedAt:          m.createdAt,
 		UpdatedAt:          m.updatedAt,
 	}
@@ -122,5 +149,6 @@ func (m Member) HouseholdID() string       { return m.householdID }
 func (m Member) Name() string              { return m.name }
 func (m Member) Email() string             { return m.email }
 func (m Member) MonthlySalaryCents() int64 { return m.monthlySalaryCents }
+func (m Member) UserID() string            { return m.userID }
 func (m Member) CreatedAt() time.Time      { return m.createdAt }
 func (m Member) UpdatedAt() time.Time      { return m.updatedAt }

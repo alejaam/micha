@@ -109,16 +109,13 @@ ul {
 .page {
     max-width: 1040px;
     margin: 0 auto;
-    padding: 28px 20px 56px;
     display: grid;
     gap: 18px;
 }
 
 .authShell {
     min-height: 100dvh;
-    padding: 28px 20px 40px;
     display: grid;
-    align-items: center;
     justify-items: center;
 }
 
@@ -869,63 +866,330 @@ ul {
     animation: slideUp var(--dur-slow) var(--ease-out) forwards;
 }
 
-/* ─── Responsive ──────────────────────────────────────────────────────────────── */
-@media (min-width: 741px) and (max-width: 1040px) {
+/* ─── Modal ─────────────────────────────────────────────────────────────────── */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, .45);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 100;
+    padding: 0;
+    animation: fadeIn var(--dur-base) var(--ease-out);
+}
+
+@media (min-width: 640px) {
+    .modalOverlay {
+        align-items: center;
+        padding: 20px;
+    }
+}
+
+.modalPanel {
+    width: 100%;
+    max-width: 480px;
+    max-height: 90dvh;
+    overflow-y: auto;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    animation: slideUp var(--dur-slow) var(--ease-spring) forwards;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (min-width: 640px) {
+    .modalPanel {
+        border-radius: var(--radius-lg);
+        animation: slideDown var(--dur-base) var(--ease-out);
+    }
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.modalTitle {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-text-1);
+    letter-spacing: -0.01em;
+}
+
+.modalActions {
+    display: grid;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+/* ─── FAB ────────────────────────────────────────────────────────────────────── */
+.fab {
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(160deg, var(--color-brand-500), var(--color-brand-600));
+    color: #fff;
+    border: none;
+    font-size: 1.6rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(79, 70, 229, .42);
+    transition:
+        transform var(--dur-fast) var(--ease-spring),
+        box-shadow var(--dur-fast);
+    z-index: 50;
+}
+
+.fab:hover {
+    transform: scale(1.08) translateY(-2px);
+    box-shadow: 0 8px 24px rgba(79, 70, 229, .48);
+}
+
+.fab:active {
+    transform: scale(0.96);
+}
+
+.fab:focus-visible {
+    outline: 3px solid var(--color-brand-400);
+    outline-offset: 3px;
+}
+
+/* ─── Summary strip ─────────────────────────────────────────────────────────── */
+.summaryStrip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.summaryStripEmpty {
+    padding: 12px 0;
+}
+
+.summaryMetric {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.summaryMetricValue {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--color-text-1);
+    line-height: 1;
+}
+
+.summaryMetricLabel {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-3);
+}
+
+.summaryDivider {
+    width: 1px;
+    align-self: stretch;
+    background: var(--color-border);
+    flex-shrink: 0;
+}
+
+.summaryMemberList {
+    display: grid;
+    gap: 4px;
+    flex: 1;
+    min-width: 180px;
+}
+
+.summaryMemberRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+}
+
+.summaryMemberName {
+    color: var(--color-text-2);
+    font-weight: 600;
+}
+
+.summaryMemberBalance {
+    font-weight: 700;
+    color: var(--color-red-600);
+}
+
+.summaryMemberBalance[data-positive="true"] {
+    color: var(--color-green-600);
+}
+
+.dashboardSummaryCard {
+    border-left: 3px solid var(--color-brand-500);
+}
+
+/* ─── Onboarding ─────────────────────────────────────────────────────────────── */
+.dashboardOnboarding {
+    display: grid;
+    justify-items: center;
+    padding: 20px 0;
+}
+
+.onboardingCard {
+    width: min(480px, 100%);
+    display: grid;
+    gap: 16px;
+}
+
+.onboardingHeader {
+    display: grid;
+    gap: 8px;
+}
+
+/* ─── Advanced toggle ────────────────────────────────────────────────────────── */
+.advancedToggle {
+    align-self: flex-start;
+    font-size: 0.78rem;
+    color: var(--color-text-3);
+}
+
+.advancedSection {
+    padding: 14px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-soft);
+}
+
+/* ─── Keyframe additions ─────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ─── Responsive — mobile-first ──────────────────────────────────────────────── */
+
+/* Mobile base (default — no media query needed) */
+.page {
+    padding: 16px 12px 100px; /* extra bottom for FAB */
+}
+
+.authShell {
+    padding: 16px 12px 28px;
+    align-items: start;
+}
+
+.authTitle {
+    font-size: 1.35rem;
+}
+
+.pageGrid {
+    grid-template-columns: 1fr;
+}
+
+.appHeader {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.headerControls {
+    width: 100%;
+}
+
+.expenseItem {
+    flex-wrap: wrap;
+}
+
+.expenseRight {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.editFields {
+    grid-template-columns: 1fr;
+}
+
+.settlementControls {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.householdInput {
+    max-width: 100%;
+}
+
+/* Tablet+ */
+@media (min-width: 640px) {
+    .page {
+        padding: 22px 20px 80px;
+    }
+
+    .authShell {
+        padding: 28px 20px 40px;
+        align-items: center;
+    }
+
+    .authTitle {
+        font-size: 1.6rem;
+    }
+
+    .appHeader {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .headerControls {
+        width: auto;
+    }
+
+    .expenseItem {
+        flex-wrap: nowrap;
+    }
+
+    .expenseRight {
+        flex-direction: column;
+        align-items: flex-end;
+        width: auto;
+    }
+
+    .editFields {
+        grid-template-columns: 140px 1fr;
+    }
+
+    .settlementControls {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .householdInput {
+        max-width: 180px;
+    }
+}
+
+/* Desktop */
+@media (min-width: 880px) {
+    .page {
+        padding: 28px 20px 56px;
+    }
+
     .pageGrid {
         grid-template-columns: 280px 1fr;
     }
 }
 
-@media (max-width: 740px) {
-    .page {
-        padding: 18px 12px 36px;
-    }
-
-    .authShell {
-        padding: 16px 12px 28px;
-        align-items: start;
-    }
-
-    .authTitle {
-        font-size: 1.35rem;
-    }
-
+@media (min-width: 1040px) {
     .pageGrid {
-        grid-template-columns: 1fr;
-    }
-
-    .appHeader {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .headerControls {
-        width: 100%;
-    }
-
-    .expenseItem {
-        flex-wrap: wrap;
-    }
-
-    .expenseRight {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        flex-wrap: wrap;
-    }
-
-    .editFields {
-        grid-template-columns: 1fr;
-    }
-
-    .settlementControls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .householdInput {
-        max-width: 100%;
+        grid-template-columns: 320px 1fr;
     }
 }
 

@@ -28,10 +28,14 @@ func NewMemberRepository(db *pgxpool.Pool) MemberRepository {
 // Save persists a new member record.
 func (r MemberRepository) Save(ctx context.Context, m member.Member) error {
 	attrs := m.Attributes()
+	var userID *string
+	if attrs.UserID != "" {
+		userID = &attrs.UserID
+	}
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO members (id, household_id, name, email, monthly_salary_cents, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		string(attrs.ID), attrs.HouseholdID, attrs.Name, attrs.Email, attrs.MonthlySalaryCents, attrs.CreatedAt, attrs.UpdatedAt,
+		`INSERT INTO members (id, household_id, name, email, monthly_salary_cents, user_id, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+		string(attrs.ID), attrs.HouseholdID, attrs.Name, attrs.Email, attrs.MonthlySalaryCents, userID, attrs.CreatedAt, attrs.UpdatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("member repository save: %w", err)
@@ -43,7 +47,7 @@ func (r MemberRepository) Save(ctx context.Context, m member.Member) error {
 // FindByID retrieves a member by ID.
 func (r MemberRepository) FindByID(ctx context.Context, id string) (member.Member, error) {
 	row := r.db.QueryRow(ctx,
-		`SELECT id, household_id, name, email, monthly_salary_cents, created_at, updated_at
+		`SELECT id, household_id, name, email, monthly_salary_cents, user_id, created_at, updated_at
 			FROM members
 			WHERE id = $1`,
 		id,
@@ -60,10 +64,31 @@ func (r MemberRepository) FindByID(ctx context.Context, id string) (member.Membe
 	return m, nil
 }
 
+// FindByUserID returns the member linked to the given user within a household.
+func (r MemberRepository) FindByUserID(ctx context.Context, householdID, userID string) (member.Member, error) {
+	row := r.db.QueryRow(ctx,
+		`SELECT id, household_id, name, email, monthly_salary_cents, user_id, created_at, updated_at
+			FROM members
+			WHERE household_id = $1 AND user_id = $2
+			LIMIT 1`,
+		householdID, userID,
+	)
+
+	m, err := scanMember(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return member.Member{}, shared.ErrNotFound
+	}
+	if err != nil {
+		return member.Member{}, fmt.Errorf("member repository findByUserID: %w", err)
+	}
+
+	return m, nil
+}
+
 // ListByHousehold returns members for a household ordered by created_at DESC.
 func (r MemberRepository) ListByHousehold(ctx context.Context, householdID string, limit, offset int) ([]member.Member, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, household_id, name, email, monthly_salary_cents, created_at, updated_at
+		`SELECT id, household_id, name, email, monthly_salary_cents, user_id, created_at, updated_at
 			FROM members
 			WHERE household_id = $1
 			ORDER BY created_at DESC
@@ -93,7 +118,7 @@ func (r MemberRepository) ListByHousehold(ctx context.Context, householdID strin
 // ListAllByHousehold returns all members for a household ordered by created_at ASC.
 func (r MemberRepository) ListAllByHousehold(ctx context.Context, householdID string) ([]member.Member, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, household_id, name, email, monthly_salary_cents, created_at, updated_at
+		`SELECT id, household_id, name, email, monthly_salary_cents, user_id, created_at, updated_at
 			FROM members
 			WHERE household_id = $1
 			ORDER BY created_at ASC`,
@@ -122,14 +147,19 @@ func (r MemberRepository) ListAllByHousehold(ctx context.Context, householdID st
 // Update persists changes to an existing member.
 func (r MemberRepository) Update(ctx context.Context, m member.Member) error {
 	attrs := m.Attributes()
+	var userID *string
+	if attrs.UserID != "" {
+		userID = &attrs.UserID
+	}
 	tag, err := r.db.Exec(ctx,
 		`UPDATE members
 			SET name = $1,
 				email = $2,
 				monthly_salary_cents = $3,
-				updated_at = $4
-			WHERE id = $5`,
-		attrs.Name, attrs.Email, attrs.MonthlySalaryCents, attrs.UpdatedAt, string(attrs.ID),
+				user_id = $4,
+				updated_at = $5
+			WHERE id = $6`,
+		attrs.Name, attrs.Email, attrs.MonthlySalaryCents, userID, attrs.UpdatedAt, string(attrs.ID),
 	)
 	if err != nil {
 		return fmt.Errorf("member repository update: %w", err)
@@ -151,12 +181,18 @@ func scanMember(r row) (member.Member, error) {
 		name               string
 		email              string
 		monthlySalaryCents int64
+		userID             *string
 		createdAt          time.Time
 		updatedAt          time.Time
 	)
 
-	if err := r.Scan(&id, &householdID, &name, &email, &monthlySalaryCents, &createdAt, &updatedAt); err != nil {
+	if err := r.Scan(&id, &householdID, &name, &email, &monthlySalaryCents, &userID, &createdAt, &updatedAt); err != nil {
 		return member.Member{}, err
+	}
+
+	resolvedUserID := ""
+	if userID != nil {
+		resolvedUserID = *userID
 	}
 
 	return member.NewFromAttributes(member.Attributes{
@@ -165,6 +201,7 @@ func scanMember(r row) (member.Member, error) {
 		Name:               name,
 		Email:              email,
 		MonthlySalaryCents: monthlySalaryCents,
+		UserID:             resolvedUserID,
 		CreatedAt:          createdAt,
 		UpdatedAt:          updatedAt,
 	})

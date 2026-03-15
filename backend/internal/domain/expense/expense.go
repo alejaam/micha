@@ -197,7 +197,7 @@ func (e Expense) Description() string          { return e.description }
 func (e Expense) IsShared() bool               { return e.isShared }
 func (e Expense) Currency() string             { return e.currency }
 func (e Expense) PaymentMethod() PaymentMethod { return e.paymentMethod }
-func (e Expense) ExpenseType() ExpenseType      { return e.expenseType }
+func (e Expense) ExpenseType() ExpenseType     { return e.expenseType }
 func (e Expense) CreatedAt() time.Time         { return e.createdAt }
 func (e Expense) UpdatedAt() time.Time         { return e.updatedAt }
 func (e Expense) DeletedAt() *time.Time        { return e.deletedAt }

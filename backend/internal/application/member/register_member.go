@@ -34,14 +34,15 @@ func NewRegisterMemberUseCase(repo outbound.MemberRepository, idGenerator IDGene
 
 // Execute creates a member and stores it.
 func (u RegisterMemberUseCase) Execute(ctx context.Context, input inbound.RegisterMemberInput) (inbound.RegisterMemberOutput, error) {
-	m, err := member.New(
-		member.ID(u.idGenerator.NewID()),
-		input.HouseholdID,
-		input.Name,
-		input.Email,
-		input.MonthlySalaryCents,
-		u.now(),
-	)
+	m, err := member.NewFromAttributes(member.Attributes{
+		ID:                 member.ID(u.idGenerator.NewID()),
+		HouseholdID:        input.HouseholdID,
+		Name:               input.Name,
+		Email:              input.Email,
+		MonthlySalaryCents: input.MonthlySalaryCents,
+		UserID:             input.UserID,
+		CreatedAt:          u.now(),
+	})
 	if err != nil {
 		return inbound.RegisterMemberOutput{}, fmt.Errorf("register member: %w", err)
 	}
@@ -50,6 +51,6 @@ func (u RegisterMemberUseCase) Execute(ctx context.Context, input inbound.Regist
 		return inbound.RegisterMemberOutput{}, fmt.Errorf("register member: %w", err)
 	}
 
-	slog.InfoContext(ctx, "register member", "member_id", string(m.ID()), "household_id", m.HouseholdID())
+	slog.InfoContext(ctx, "register member", "member_id", string(m.ID()), "household_id", m.HouseholdID(), "user_linked", m.UserID() != "")
 	return inbound.RegisterMemberOutput{MemberID: string(m.ID())}, nil
 }

@@ -61,3 +61,53 @@ func TestNewFromAttributes_Invalid(t *testing.T) {
 		})
 	}
 }
+
+func TestNewWithUserID_LinksUser(t *testing.T) {
+	t.Parallel()
+	now := time.Now()
+	m, err := member.NewWithUserID(member.ID("m-1"), "hh-1", "Ale", "ale@mail.com", "user-99", 100000, now)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if m.UserID() != "user-99" {
+		t.Errorf("UserID = %q; want %q", m.UserID(), "user-99")
+	}
+}
+
+func TestNewFromAttributes_UserIDPreserved(t *testing.T) {
+	t.Parallel()
+	m, err := member.NewFromAttributes(member.Attributes{
+		ID:                 member.ID("m-1"),
+		HouseholdID:        "hh-1",
+		Name:               "Ale",
+		Email:              "ale@mail.com",
+		MonthlySalaryCents: 0,
+		UserID:             "user-42",
+		CreatedAt:          time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if m.UserID() != "user-42" {
+		t.Errorf("UserID = %q; want %q", m.UserID(), "user-42")
+	}
+	attrs := m.Attributes()
+	if attrs.UserID != "user-42" {
+		t.Errorf("Attributes().UserID = %q; want %q", attrs.UserID, "user-42")
+	}
+}
+
+func TestLinkUser_SetsUserID(t *testing.T) {
+	t.Parallel()
+	m, err := member.New(member.ID("m-1"), "hh-1", "Ale", "ale@mail.com", 0, time.Now())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if m.UserID() != "" {
+		t.Errorf("expected empty UserID before linking, got %q", m.UserID())
+	}
+	m.LinkUser("user-77")
+	if m.UserID() != "user-77" {
+		t.Errorf("UserID after LinkUser = %q; want %q", m.UserID(), "user-77")
+	}
+}

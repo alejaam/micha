@@ -12,6 +12,8 @@ type RegisterMemberInput struct {
 	Name               string
 	Email              string
 	MonthlySalaryCents int64
+	// UserID optionally links the new member to an authenticated user. Empty means no link.
+	UserID string
 }
 
 // RegisterMemberOutput contains created member identifiers.

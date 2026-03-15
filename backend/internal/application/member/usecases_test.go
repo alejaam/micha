@@ -61,6 +61,15 @@ func (m *mockMemberRepo) ListByHousehold(_ context.Context, householdID string, 
 	return result[offset:end], nil
 }
 
+func (m *mockMemberRepo) FindByUserID(_ context.Context, householdID, userID string) (member.Member, error) {
+	for _, item := range m.members {
+		if item.HouseholdID() == householdID && item.UserID() == userID {
+			return item, nil
+		}
+	}
+	return member.Member{}, errors.New("not found")
+}
+
 func (m *mockMemberRepo) Update(_ context.Context, item member.Member) error {
 	m.members[string(item.ID())] = item
 	return nil

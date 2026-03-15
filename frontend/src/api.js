@@ -193,3 +193,10 @@ export async function deleteExpense(id) {
 
     return parseResponse(response)
 }
+
+export async function getMe() {
+    const response = await fetch('/v1/auth/me', {
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
