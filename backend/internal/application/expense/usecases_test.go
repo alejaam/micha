@@ -17,7 +17,10 @@ import (
 func TestRegisterExpense_Success(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, staticIDGen("exp-1"))
+	hhRepo := newMockHouseholdRepo("hh-1")
+	mRepo := newMockMemberRepo()
+	mRepo.seedMember("m-1", "hh-1")
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, staticIDGen("exp-1"))
 
 	out, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
@@ -40,7 +43,10 @@ func TestRegisterExpense_Success(t *testing.T) {
 func TestRegisterExpense_InvalidMoney(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, staticIDGen("exp-1"))
+	hhRepo := newMockHouseholdRepo("hh-1")
+	mRepo := newMockMemberRepo()
+	mRepo.seedMember("m-1", "hh-1")
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, staticIDGen("exp-1"))
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
@@ -59,7 +65,10 @@ func TestRegisterExpense_InvalidMoney(t *testing.T) {
 func TestRegisterExpense_InvalidExpenseType(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, staticIDGen("exp-1"))
+	hhRepo := newMockHouseholdRepo("hh-1")
+	mRepo := newMockMemberRepo()
+	mRepo.seedMember("m-1", "hh-1")
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, staticIDGen("exp-1"))
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",

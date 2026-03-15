@@ -4,9 +4,9 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strings"
 
 	"micha/backend/internal/domain/shared"
+	"micha/backend/internal/domain/user"
 	"micha/backend/internal/ports/inbound"
 )
 
@@ -67,13 +67,13 @@ func (h authHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 // handleMe handles GET /v1/auth/me — returns the authenticated user's profile
 // extracted from the JWT claims injected by AuthMiddleware.
 func (h authHandler) handleMe(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(contextKeyUserID).(string)
-	if !ok || strings.TrimSpace(userID) == "" {
+	userID, ok := UserIDFromContext(r.Context())
+	if !ok {
 		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing or invalid authorization header")
 		return
 	}
 
-	email, _ := r.Context().Value(contextKeyEmail).(string)
+	email, _ := EmailFromContext(r.Context())
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"data": map[string]string{
@@ -89,6 +89,10 @@ func writeAuthError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusUnauthorized, "INVALID_CREDENTIALS", "email or password is incorrect")
 	case errors.Is(err, shared.ErrAlreadyExists):
 		writeError(w, http.StatusConflict, "EMAIL_TAKEN", "an account with this email already exists")
+	case errors.Is(err, user.ErrInvalidEmail):
+		writeError(w, http.StatusBadRequest, "INVALID_EMAIL", "email address is invalid")
+	case errors.Is(err, user.ErrWeakPassword):
+		writeError(w, http.StatusBadRequest, "WEAK_PASSWORD", "password is too weak")
 	default:
 		slog.Error("auth handler: internal error", "error", err)
 		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "an internal error occurred")

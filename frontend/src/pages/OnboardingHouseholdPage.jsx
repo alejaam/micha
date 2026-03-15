@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createHousehold } from '../api'
 import { useAuth } from '../context/AuthContext'
+import { useAppShell } from '../context/AppShellContext'
 import { FormField } from '../ui/FormField'
 import { Banner } from '../ui/Banner'
 
-export function OnboardingHouseholdPage({ loadHouseholds, setHouseholdId }) {
+export function OnboardingHouseholdPage() {
     const { handleProtectedError } = useAuth()
+    const { loadHouseholds, setHouseholdId } = useAppShell()
     const navigate = useNavigate()
     const [name, setName] = useState('')
     const [settlementMode, setSettlementMode] = useState('equal')

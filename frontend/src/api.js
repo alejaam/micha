@@ -43,7 +43,7 @@ export async function getHealth() {
     const response = await fetch('/health')
 
     if (!response.ok) {
-        throw new Error('backend no disponible')
+        throw new Error('backend unavailable')
     }
 
     return response.text()

@@ -1,14 +1,16 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useAppShell } from '../context/AppShellContext'
 import { AppHeader } from '../components/AppHeader'
 
 /**
  * AppLayout — wraps protected routes.
  * Redirects unauthenticated users to /login.
- * Provides the global header.
+ * Provides the global header, reading shared state from AppShellContext.
  */
-export function AppLayout({ health, householdId, households, onHouseholdChange, onReload, isLoading }) {
+export function AppLayout() {
     const { isAuthenticated, logout } = useAuth()
+    const { health, householdId, households, setHouseholdId, handleReload, loadingHouseholds } = useAppShell()
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />
@@ -20,10 +22,10 @@ export function AppLayout({ health, householdId, households, onHouseholdChange, 
                 health={health}
                 householdId={householdId}
                 households={households}
-                onHouseholdChange={onHouseholdChange}
-                onReload={onReload}
+                onHouseholdChange={setHouseholdId}
+                onReload={handleReload}
                 onLogout={logout}
-                isLoading={isLoading}
+                isLoading={loadingHouseholds}
             />
             <Outlet />
         </div>

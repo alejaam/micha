@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	appshared "micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/household"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
@@ -13,20 +14,15 @@ import (
 
 var _ inbound.RegisterHouseholdUseCase = RegisterHouseholdUseCase{}
 
-// IDGenerator abstracts id generation for testability.
-type IDGenerator interface {
-	NewID() string
-}
-
 // RegisterHouseholdUseCase creates a new household.
 type RegisterHouseholdUseCase struct {
 	repo        outbound.HouseholdRepository
-	idGenerator IDGenerator
+	idGenerator appshared.IDGenerator
 	now         func() time.Time
 }
 
 // NewRegisterHouseholdUseCase constructs RegisterHouseholdUseCase.
-func NewRegisterHouseholdUseCase(repo outbound.HouseholdRepository, idGenerator IDGenerator) RegisterHouseholdUseCase {
+func NewRegisterHouseholdUseCase(repo outbound.HouseholdRepository, idGenerator appshared.IDGenerator) RegisterHouseholdUseCase {
 	return RegisterHouseholdUseCase{repo: repo, idGenerator: idGenerator, now: time.Now}
 }
 

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useAppShell } from '../context/AppShellContext'
 import { useExpenses } from '../hooks/useExpenses'
 import { useMembers } from '../hooks/useMembers'
 import { useSettlement } from '../hooks/useSettlement'
@@ -25,8 +26,9 @@ function isExpectedSettlementOnboardingError(err) {
     return err?.code === 'NO_MEMBERS' || String(err?.message || '').toLowerCase().includes('at least one member')
 }
 
-export function DashboardPage({ householdId, selectedHousehold, loadHouseholds, setHouseholdId }) {
+export function DashboardPage() {
     const { isAuthenticated, handleProtectedError } = useAuth()
+    const { householdId, selectedHousehold, loadHouseholds, setHouseholdId } = useAppShell()
     const navigate = useNavigate()
 
     const [message, setMessage] = useState('')

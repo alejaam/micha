@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { AuthLayout } from './layouts/AuthLayout'
 import { AppLayout } from './layouts/AppLayout'
@@ -9,12 +9,37 @@ import { OnboardingHouseholdPage } from './pages/OnboardingHouseholdPage'
 import { OnboardingMemberPage } from './pages/OnboardingMemberPage'
 import { useHouseholds } from './hooks/useHouseholds'
 import { useAuth } from './context/AuthContext'
+import { AppShellContext } from './context/AppShellContext'
 import { getHealth } from './api'
-import { useEffect, useState } from 'react'
 
 /**
- * AppShell — holds shared state (households, health) that the layout and
- * pages both need. Rendered only when the router is mounted.
+ * Static router — created once at module level so React never tears down and
+ * recreates the router tree on state changes inside AppShell.
+ * Shared state is distributed via AppShellContext instead of router-element props.
+ */
+const router = createBrowserRouter([
+    {
+        path: '/',
+        element: <AppLayout />,
+        children: [
+            { index: true, element: <DashboardPage /> },
+            { path: 'onboarding/household', element: <OnboardingHouseholdPage /> },
+            { path: 'onboarding/member', element: <OnboardingMemberPage /> },
+        ],
+    },
+    {
+        element: <AuthLayout />,
+        children: [
+            { path: '/login', element: <LoginPage /> },
+            { path: '/register', element: <RegisterPage /> },
+        ],
+    },
+    { path: '*', element: <Navigate to="/" replace /> },
+])
+
+/**
+ * AppShell — holds shared state (households, health) and provides it through
+ * AppShellContext so layouts and pages can consume it without prop-drilling.
  */
 function AppShell() {
     const { isAuthenticated, handleProtectedError } = useAuth()
@@ -33,7 +58,6 @@ function AppShell() {
         households,
         loadingHouseholds,
         setHouseholdId,
-        setHouseholds,
         loadHouseholds,
     } = useHouseholds({ isAuthenticated, handleProtectedError })
 
@@ -46,61 +70,22 @@ function AppShell() {
         await loadHouseholds()
     }, [loadHouseholds])
 
-    const router = createBrowserRouter([
-        {
-            path: '/',
-            element: (
-                <AppLayout
-                    health={health}
-                    householdId={householdId}
-                    households={households}
-                    onHouseholdChange={setHouseholdId}
-                    onReload={handleReload}
-                    isLoading={loadingHouseholds}
-                />
-            ),
-            children: [
-                {
-                    index: true,
-                    element: (
-                        <DashboardPage
-                            householdId={householdId}
-                            selectedHousehold={selectedHousehold}
-                            loadHouseholds={loadHouseholds}
-                            setHouseholdId={setHouseholdId}
-                        />
-                    ),
-                },
-                {
-                    path: 'onboarding/household',
-                    element: (
-                        <OnboardingHouseholdPage
-                            loadHouseholds={loadHouseholds}
-                            setHouseholdId={setHouseholdId}
-                        />
-                    ),
-                },
-                {
-                    path: 'onboarding/member',
-                    element: (
-                        <OnboardingMemberPage
-                            householdId={householdId}
-                        />
-                    ),
-                },
-            ],
-        },
-        {
-            element: <AuthLayout />,
-            children: [
-                { path: '/login', element: <LoginPage /> },
-                { path: '/register', element: <RegisterPage /> },
-            ],
-        },
-        { path: '*', element: <Navigate to="/" replace /> },
-    ])
+    const shellValue = useMemo(() => ({
+        health,
+        householdId,
+        households,
+        loadingHouseholds,
+        selectedHousehold,
+        setHouseholdId,
+        loadHouseholds,
+        handleReload,
+    }), [health, householdId, households, loadingHouseholds, selectedHousehold, setHouseholdId, loadHouseholds, handleReload])
 
-    return <RouterProvider router={router} />
+    return (
+        <AppShellContext.Provider value={shellValue}>
+            <RouterProvider router={router} />
+        </AppShellContext.Provider>
+    )
 }
 
 export default AppShell

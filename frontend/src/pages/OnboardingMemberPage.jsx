@@ -1,18 +1,26 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createMember } from '../api'
 import { useAuth } from '../context/AuthContext'
+import { useAppShell } from '../context/AppShellContext'
 import { FormField } from '../ui/FormField'
 import { Banner } from '../ui/Banner'
 
-export function OnboardingMemberPage({ householdId }) {
+export function OnboardingMemberPage() {
     const { handleProtectedError } = useAuth()
+    const { householdId } = useAppShell()
     const navigate = useNavigate()
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [salary, setSalary] = useState('0')
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
+
+    useEffect(() => {
+        if (!householdId) {
+            navigate('/onboarding/household', { replace: true })
+        }
+    }, [householdId, navigate])
 
     async function handleSubmit(e) {
         e.preventDefault()

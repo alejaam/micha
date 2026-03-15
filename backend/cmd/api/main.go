@@ -71,8 +71,16 @@ func main() {
 	idGen := uuidGenerator{}
 
 	hasher := infraauth.NewBcryptHasher()
-	signer := infraauth.NewJWTSigner(cfg.JWTSecret)
-	validator := infraauth.NewJWTValidator(cfg.JWTSecret)
+	signer, err := infraauth.NewJWTSigner(cfg.JWTSecret)
+	if err != nil {
+		slog.Error("failed to create JWT signer", "error", err)
+		os.Exit(1)
+	}
+	validator, err := infraauth.NewJWTValidator(cfg.JWTSecret)
+	if err != nil {
+		slog.Error("failed to create JWT validator", "error", err)
+		os.Exit(1)
+	}
 
 	// Auth use cases and handler dependencies.
 	authDeps := httpadapter.AuthHandlerDeps{
@@ -82,7 +90,7 @@ func main() {
 
 	// Expense use cases and handler dependencies.
 	expenseDeps := httpadapter.ExpenseHandlerDeps{
-		Register: expenseapp.NewRegisterExpenseUseCase(expenseRepo, idGen),
+		Register: expenseapp.NewRegisterExpenseUseCase(expenseRepo, householdRepo, memberRepo, idGen),
 		Get:      expenseapp.NewGetExpenseUseCase(expenseRepo),
 		List:     expenseapp.NewListExpensesUseCase(expenseRepo),
 		Patch:    expenseapp.NewPatchExpenseUseCase(expenseRepo),

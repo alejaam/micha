@@ -2,6 +2,8 @@ package httpadapter
 
 import (
 	"net/http"
+
+	"micha/backend/internal/ports/outbound"
 )
 
 // ServerDependencies groups all resource-level dependencies for the HTTP server.
@@ -11,7 +13,7 @@ type ServerDependencies struct {
 	Household    HouseholdHandlerDeps
 	Member       MemberHandlerDeps
 	Settlement   SettlementHandlerDeps
-	JWTValidator TokenValidator
+	JWTValidator outbound.TokenValidator
 }
 
 // Server is the primary HTTP adapter.

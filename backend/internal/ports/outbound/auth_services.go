@@ -10,3 +10,8 @@ type PasswordHasher interface {
 type TokenSigner interface {
 	Sign(userID, email string) (string, error)
 }
+
+// TokenValidator validates a Bearer JWT and returns the embedded claims.
+type TokenValidator interface {
+	Validate(tokenString string) (userID, email string, err error)
+}
