@@ -115,6 +115,65 @@ func TestRegisterHousehold_InvalidName(t *testing.T) {
 	}
 }
 
+func TestUpdateSplitConfig_Success(t *testing.T) {
+	t.Parallel()
+	repo := newMockHouseholdRepo()
+	now := time.Now()
+	h, _ := household.New(household.ID("hh-1"), "Casa", household.SettlementModeEqual, "MXN", now)
+	_ = repo.Save(context.Background(), h)
+
+	uc := householdapp.NewUpdateSplitConfigUseCase(repo)
+	err := uc.Execute(context.Background(), inbound.UpdateSplitConfigInput{
+		HouseholdID: "hh-1",
+		Splits: []household.MemberSplit{
+			{MemberID: "m-1", Percentage: 60},
+			{MemberID: "m-2", Percentage: 40},
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	updated, _ := repo.FindByID(context.Background(), "hh-1")
+	if updated.SplitConfig().IsEmpty() {
+		t.Error("expected non-empty split config after update")
+	}
+}
+
+func TestUpdateSplitConfig_InvalidSum(t *testing.T) {
+	t.Parallel()
+	repo := newMockHouseholdRepo()
+	now := time.Now()
+	h, _ := household.New(household.ID("hh-1"), "Casa", household.SettlementModeEqual, "MXN", now)
+	_ = repo.Save(context.Background(), h)
+
+	uc := householdapp.NewUpdateSplitConfigUseCase(repo)
+	err := uc.Execute(context.Background(), inbound.UpdateSplitConfigInput{
+		HouseholdID: "hh-1",
+		Splits: []household.MemberSplit{
+			{MemberID: "m-1", Percentage: 50},
+			{MemberID: "m-2", Percentage: 30},
+		},
+	})
+	if !errors.Is(err, household.ErrInvalidSplitConfig) {
+		t.Errorf("want ErrInvalidSplitConfig, got %v", err)
+	}
+}
+
+func TestUpdateSplitConfig_HouseholdNotFound(t *testing.T) {
+	t.Parallel()
+	repo := newMockHouseholdRepo()
+	uc := householdapp.NewUpdateSplitConfigUseCase(repo)
+
+	err := uc.Execute(context.Background(), inbound.UpdateSplitConfigInput{
+		HouseholdID: "missing",
+		Splits:      []household.MemberSplit{{MemberID: "m-1", Percentage: 100}},
+	})
+	if err == nil {
+		t.Fatal("expected error for missing household, got nil")
+	}
+}
+
 func TestListHouseholds_Success(t *testing.T) {
 	t.Parallel()
 	repo := newMockHouseholdRepo()

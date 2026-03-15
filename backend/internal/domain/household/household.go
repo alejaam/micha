@@ -29,6 +29,7 @@ type Attributes struct {
 	Name           string
 	SettlementMode SettlementMode
 	Currency       string
+	SplitConfig    SplitConfig
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
@@ -39,6 +40,7 @@ type Household struct {
 	name           string
 	settlementMode SettlementMode
 	currency       string
+	splitConfig    SplitConfig
 	createdAt      time.Time
 	updatedAt      time.Time
 }
@@ -81,6 +83,7 @@ func NewFromAttributes(attrs Attributes) (Household, error) {
 		name:           name,
 		settlementMode: attrs.SettlementMode,
 		currency:       currency,
+		splitConfig:    attrs.SplitConfig,
 		createdAt:      attrs.CreatedAt,
 		updatedAt:      updatedAt,
 	}, nil
@@ -93,6 +96,7 @@ func (h *Household) UpdateConfig(name string, settlementMode SettlementMode, cur
 		Name:           name,
 		SettlementMode: settlementMode,
 		Currency:       currency,
+		SplitConfig:    h.splitConfig,
 		CreatedAt:      h.createdAt,
 		UpdatedAt:      time.Now(),
 	})
@@ -107,6 +111,12 @@ func (h *Household) UpdateConfig(name string, settlementMode SettlementMode, cur
 	return nil
 }
 
+// UpdateSplitConfig replaces the household's split configuration.
+func (h *Household) UpdateSplitConfig(sc SplitConfig) {
+	h.splitConfig = sc
+	h.updatedAt = time.Now()
+}
+
 // Attributes returns a copy of all fields as a flat DTO.
 func (h Household) Attributes() Attributes {
 	return Attributes{
@@ -114,6 +124,7 @@ func (h Household) Attributes() Attributes {
 		Name:           h.name,
 		SettlementMode: h.settlementMode,
 		Currency:       h.currency,
+		SplitConfig:    h.splitConfig,
 		CreatedAt:      h.createdAt,
 		UpdatedAt:      h.updatedAt,
 	}
@@ -123,5 +134,6 @@ func (h Household) ID() ID                         { return h.id }
 func (h Household) Name() string                   { return h.name }
 func (h Household) SettlementMode() SettlementMode { return h.settlementMode }
 func (h Household) Currency() string               { return h.currency }
+func (h Household) SplitConfig() SplitConfig       { return h.splitConfig }
 func (h Household) CreatedAt() time.Time           { return h.createdAt }
 func (h Household) UpdatedAt() time.Time           { return h.updatedAt }

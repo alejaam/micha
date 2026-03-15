@@ -15,6 +15,57 @@ import (
 	"micha/backend/internal/ports/outbound"
 )
 
+// loadSplitConfig retrieves the split configuration rows for a household.
+// Returns an empty SplitConfig (equal-split default) if no rows exist.
+func loadSplitConfig(ctx context.Context, db *pgxpool.Pool, householdID string) (household.SplitConfig, error) {
+	rows, err := db.Query(ctx,
+		`SELECT member_id, percentage FROM household_split_config WHERE household_id = $1 ORDER BY member_id`,
+		householdID,
+	)
+	if err != nil {
+		return household.SplitConfig{}, fmt.Errorf("load split config: %w", err)
+	}
+	defer rows.Close()
+
+	var splits []household.MemberSplit
+	for rows.Next() {
+		var memberID string
+		var pct int
+		if err := rows.Scan(&memberID, &pct); err != nil {
+			return household.SplitConfig{}, fmt.Errorf("load split config: scan: %w", err)
+		}
+		splits = append(splits, household.MemberSplit{MemberID: memberID, Percentage: pct})
+	}
+	if err := rows.Err(); err != nil {
+		return household.SplitConfig{}, fmt.Errorf("load split config: rows: %w", err)
+	}
+
+	if len(splits) == 0 {
+		return household.SplitConfig{}, nil
+	}
+	return household.NewSplitConfig(splits)
+}
+
+// saveSplitConfig replaces all split config rows for a household inside the given transaction.
+func saveSplitConfig(ctx context.Context, db *pgxpool.Pool, householdID string, sc household.SplitConfig) error {
+	if _, err := db.Exec(ctx,
+		`DELETE FROM household_split_config WHERE household_id = $1`,
+		householdID,
+	); err != nil {
+		return fmt.Errorf("save split config delete: %w", err)
+	}
+
+	for _, s := range sc.Splits() {
+		if _, err := db.Exec(ctx,
+			`INSERT INTO household_split_config (household_id, member_id, percentage) VALUES ($1, $2, $3)`,
+			householdID, s.MemberID, s.Percentage,
+		); err != nil {
+			return fmt.Errorf("save split config insert: %w", err)
+		}
+	}
+	return nil
+}
+
 // HouseholdRepository fulfils outbound.HouseholdRepository using PostgreSQL.
 type HouseholdRepository struct {
 	db *pgxpool.Pool
@@ -57,7 +108,13 @@ func (r HouseholdRepository) FindByID(ctx context.Context, id string) (household
 		return household.Household{}, fmt.Errorf("household repository findByID: %w", err)
 	}
 
-	return h, nil
+	sc, err := loadSplitConfig(ctx, r.db, id)
+	if err != nil {
+		return household.Household{}, fmt.Errorf("household repository findByID: %w", err)
+	}
+	attrs := h.Attributes()
+	attrs.SplitConfig = sc
+	return household.NewFromAttributes(attrs)
 }
 
 // List returns households ordered by created_at DESC.
@@ -106,6 +163,12 @@ func (r HouseholdRepository) Update(ctx context.Context, h household.Household) 
 	}
 	if tag.RowsAffected() == 0 {
 		return shared.ErrNotFound
+	}
+
+	if !attrs.SplitConfig.IsEmpty() {
+		if err := saveSplitConfig(ctx, r.db, string(attrs.ID), attrs.SplitConfig); err != nil {
+			return fmt.Errorf("household repository update: %w", err)
+		}
 	}
 
 	return nil

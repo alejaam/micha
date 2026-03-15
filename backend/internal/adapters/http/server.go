@@ -13,6 +13,8 @@ type ServerDependencies struct {
 	Household    HouseholdHandlerDeps
 	Member       MemberHandlerDeps
 	Settlement   SettlementHandlerDeps
+	Category     CategoryHandlerDeps
+	SplitConfig  SplitConfigHandlerDeps
 	JWTValidator outbound.TokenValidator
 	MemberRepo   outbound.MemberRepository
 }
@@ -62,6 +64,14 @@ func NewServer(port string, deps ServerDependencies) Server {
 
 	sh := newSettlementHandler(deps.Settlement)
 	mux.Handle("GET /v1/households/{household_id}/settlement", protectHousehold(http.HandlerFunc(sh.handleGetMonthly)))
+
+	ch := newCategoryHandler(deps.Category)
+	mux.Handle("POST /v1/households/{household_id}/categories", protectHousehold(http.HandlerFunc(ch.handleCreate)))
+	mux.Handle("GET /v1/households/{household_id}/categories", protectHousehold(http.HandlerFunc(ch.handleList)))
+	mux.Handle("DELETE /v1/households/{household_id}/categories/{category_id}", protectHousehold(http.HandlerFunc(ch.handleDelete)))
+
+	sch := newSplitConfigHandler(deps.SplitConfig)
+	mux.Handle("PUT /v1/households/{household_id}/split-config", protectHousehold(http.HandlerFunc(sch.handleUpdate)))
 
 	return Server{port: port, mux: mux}
 }

@@ -147,11 +147,12 @@ func NewFromAttributes(attrs ExpenseAttributes) (Expense, error) {
 	if category == "" {
 		category = CategoryOther
 	}
-	validCategories := map[Category]bool{
-		CategoryRent: true, CategoryAuto: true, CategoryStreaming: true,
-		CategoryFood: true, CategoryPersonal: true, CategorySavings: true, CategoryOther: true,
-	}
-	if !validCategories[category] {
+	// Category validation is intentionally permissive: the domain accepts any
+	// non-empty slug so that custom household categories (Phase 6) are supported
+	// without coupling the expense domain to the category repository.
+	// The HTTP layer is responsible for validating the slug against the
+	// household's category list before invoking the use case.
+	if strings.TrimSpace(string(category)) == "" {
 		return Expense{}, ErrInvalidCategory
 	}
 

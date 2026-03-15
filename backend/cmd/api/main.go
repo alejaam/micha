@@ -17,6 +17,7 @@ import (
 	httpadapter "micha/backend/internal/adapters/http"
 	"micha/backend/internal/adapters/postgres"
 	authapp "micha/backend/internal/application/auth"
+	categoryapp "micha/backend/internal/application/category"
 	expenseapp "micha/backend/internal/application/expense"
 	householdapp "micha/backend/internal/application/household"
 	memberapp "micha/backend/internal/application/member"
@@ -67,6 +68,7 @@ func main() {
 	expenseRepo := postgres.NewExpenseRepository(pool)
 	householdRepo := postgres.NewHouseholdRepository(pool)
 	memberRepo := postgres.NewMemberRepository(pool)
+	categoryRepo := postgres.NewCategoryRepository(pool)
 	userRepo := postgres.NewUserRepository(pool)
 	idGen := uuidGenerator{}
 
@@ -103,6 +105,18 @@ func main() {
 		List:     householdapp.NewListHouseholdsUseCase(householdRepo),
 	}
 
+	// Category use cases and handler dependencies.
+	categoryDeps := httpadapter.CategoryHandlerDeps{
+		Create: categoryapp.NewCreateCategoryUseCase(categoryRepo, idGen),
+		List:   categoryapp.NewListCategoriesUseCase(categoryRepo),
+		Delete: categoryapp.NewDeleteCategoryUseCase(categoryRepo),
+	}
+
+	// Split config use case.
+	splitConfigDeps := httpadapter.SplitConfigHandlerDeps{
+		Update: householdapp.NewUpdateSplitConfigUseCase(householdRepo),
+	}
+
 	// Member use cases and handler dependencies.
 	memberDeps := httpadapter.MemberHandlerDeps{
 		Register: memberapp.NewRegisterMemberUseCase(memberRepo, idGen),
@@ -118,6 +132,8 @@ func main() {
 		Settlement: httpadapter.SettlementHandlerDeps{
 			Calculate: settlementapp.NewCalculateSettlementUseCase(householdRepo, memberRepo, expenseRepo),
 		},
+		Category:     categoryDeps,
+		SplitConfig:  splitConfigDeps,
 		JWTValidator: validator,
 		MemberRepo:   memberRepo,
 	}
