@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"micha/backend/internal/domain/member"
+	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
 )
 
@@ -112,6 +113,8 @@ func parseHouseholdID(w http.ResponseWriter, r *http.Request) (string, bool) {
 
 func writeErrorFromMemberDomain(w http.ResponseWriter, err error) {
 	switch {
+	case errors.Is(err, shared.ErrNotFound):
+		writeError(w, http.StatusNotFound, "NOT_FOUND", "resource not found")
 	case errors.Is(err, member.ErrInvalidName):
 		writeError(w, http.StatusBadRequest, "INVALID_NAME", "member name is required")
 	case errors.Is(err, member.ErrInvalidEmail):
