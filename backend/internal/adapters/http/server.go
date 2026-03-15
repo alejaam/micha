@@ -14,6 +14,7 @@ type ServerDependencies struct {
 	Member       MemberHandlerDeps
 	Settlement   SettlementHandlerDeps
 	JWTValidator outbound.TokenValidator
+	MemberRepo   outbound.MemberRepository
 }
 
 // Server is the primary HTTP adapter.
@@ -32,8 +33,14 @@ func NewServer(port string, deps ServerDependencies) Server {
 	mux.HandleFunc("POST /v1/auth/register", ah.handleRegister)
 	mux.HandleFunc("POST /v1/auth/login", ah.handleLogin)
 
-	// Protected routes — all wrapped with JWT auth middleware.
+	// Protected routes — JWT auth middleware.
 	protect := AuthMiddleware(deps.JWTValidator)
+
+	// Protected routes that also require household membership — JWT + HouseholdAuthz.
+	householdAuthz := HouseholdAuthzMiddleware(deps.MemberRepo)
+	protectHousehold := func(h http.Handler) http.Handler {
+		return protect(householdAuthz(h))
+	}
 
 	// Protected auth routes.
 	mux.Handle("GET /v1/auth/me", protect(http.HandlerFunc(ah.handleMe)))
@@ -50,11 +57,11 @@ func NewServer(port string, deps ServerDependencies) Server {
 	mux.Handle("GET /v1/households", protect(http.HandlerFunc(hh.handleList)))
 
 	mh := newMemberHandler(deps.Member)
-	mux.Handle("POST /v1/households/{household_id}/members", protect(http.HandlerFunc(mh.handleCreate)))
-	mux.Handle("GET /v1/households/{household_id}/members", protect(http.HandlerFunc(mh.handleList)))
+	mux.Handle("POST /v1/households/{household_id}/members", protectHousehold(http.HandlerFunc(mh.handleCreate)))
+	mux.Handle("GET /v1/households/{household_id}/members", protectHousehold(http.HandlerFunc(mh.handleList)))
 
 	sh := newSettlementHandler(deps.Settlement)
-	mux.Handle("GET /v1/households/{household_id}/settlement", protect(http.HandlerFunc(sh.handleGetMonthly)))
+	mux.Handle("GET /v1/households/{household_id}/settlement", protectHousehold(http.HandlerFunc(sh.handleGetMonthly)))
 
 	return Server{port: port, mux: mux}
 }

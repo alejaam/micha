@@ -64,6 +64,24 @@ func (m *mockHouseholdRepo) Update(_ context.Context, h household.Household) err
 	return nil
 }
 
+func (m *mockHouseholdRepo) ListByUserID(_ context.Context, _ string, limit, offset int) ([]household.Household, error) {
+	if m.listErr != nil {
+		return nil, m.listErr
+	}
+	result := make([]household.Household, 0, len(m.households))
+	for _, h := range m.households {
+		result = append(result, h)
+	}
+	if offset >= len(result) {
+		return []household.Household{}, nil
+	}
+	end := offset + limit
+	if end > len(result) {
+		end = len(result)
+	}
+	return result[offset:end], nil
+}
+
 func TestRegisterHousehold_Success(t *testing.T) {
 	t.Parallel()
 	repo := newMockHouseholdRepo()

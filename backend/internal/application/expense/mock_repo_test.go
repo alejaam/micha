@@ -142,6 +142,9 @@ func (r *mockHouseholdRepo) Save(_ context.Context, _ household.Household) error
 func (r *mockHouseholdRepo) List(_ context.Context, _, _ int) ([]household.Household, error) {
 	return nil, nil
 }
+func (r *mockHouseholdRepo) ListByUserID(_ context.Context, _ string, _, _ int) ([]household.Household, error) {
+	return nil, nil
+}
 func (r *mockHouseholdRepo) Update(_ context.Context, _ household.Household) error { return nil }
 
 // mockMemberRepo is a minimal in-memory mock for outbound.MemberRepository.
@@ -180,6 +183,12 @@ func (r *mockMemberRepo) FindByID(_ context.Context, id string) (member.Member, 
 func (r *mockMemberRepo) Save(_ context.Context, _ member.Member) error { return nil }
 func (r *mockMemberRepo) FindByUserID(_ context.Context, _, _ string) (member.Member, error) {
 	return member.Member{}, shared.ErrNotFound
+}
+func (r *mockMemberRepo) FindByUserIDGlobal(_ context.Context, _ string) (member.Member, error) {
+	return member.Member{}, shared.ErrNotFound
+}
+func (r *mockMemberRepo) ListHouseholdIDsByUserID(_ context.Context, _ string) ([]string, error) {
+	return nil, nil
 }
 func (r *mockMemberRepo) ListAllByHousehold(_ context.Context, _ string) ([]member.Member, error) {
 	return nil, nil

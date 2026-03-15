@@ -35,7 +35,7 @@ func (u ListHouseholdsUseCase) Execute(ctx context.Context, query inbound.ListHo
 		offset = 0
 	}
 
-	households, err := u.repo.List(ctx, limit, offset)
+	households, err := u.repo.ListByUserID(ctx, query.UserID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("list households: %w", err)
 	}

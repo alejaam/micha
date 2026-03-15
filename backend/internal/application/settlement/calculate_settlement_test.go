@@ -100,6 +100,9 @@ func (m *householdMock) FindByID(_ context.Context, id string) (household.Househ
 func (m *householdMock) List(context.Context, int, int) ([]household.Household, error) {
 	return []household.Household{m.house}, nil
 }
+func (m *householdMock) ListByUserID(_ context.Context, _ string, _, _ int) ([]household.Household, error) {
+	return []household.Household{m.house}, nil
+}
 func (m *householdMock) Update(context.Context, household.Household) error { return nil }
 
 type memberMock struct {
@@ -140,6 +143,12 @@ func (m *memberMock) ListByHousehold(context.Context, string, int, int) ([]membe
 }
 func (m *memberMock) FindByUserID(_ context.Context, householdID, userID string) (member.Member, error) {
 	return member.Member{}, shared.ErrNotFound
+}
+func (m *memberMock) FindByUserIDGlobal(_ context.Context, _ string) (member.Member, error) {
+	return member.Member{}, shared.ErrNotFound
+}
+func (m *memberMock) ListHouseholdIDsByUserID(_ context.Context, _ string) ([]string, error) {
+	return nil, nil
 }
 func (m *memberMock) Update(context.Context, member.Member) error { return nil }
 

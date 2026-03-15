@@ -52,7 +52,14 @@ func (h householdHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 
 // handleList handles GET /v1/households?limit=&offset=.
 func (h householdHandler) handleList(w http.ResponseWriter, r *http.Request) {
+	userID, ok := UserIDFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing authentication")
+		return
+	}
+
 	households, err := h.deps.List.Execute(r.Context(), inbound.ListHouseholdsQuery{
+		UserID: userID,
 		Limit:  queryInt(r, "limit", 20),
 		Offset: queryInt(r, "offset", 0),
 	})

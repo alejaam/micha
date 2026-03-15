@@ -88,6 +88,25 @@ func (m *mockMemberRepo) ListAllByHousehold(_ context.Context, householdID strin
 	return result, nil
 }
 
+func (m *mockMemberRepo) FindByUserIDGlobal(_ context.Context, userID string) (member.Member, error) {
+	for _, item := range m.members {
+		if item.UserID() == userID {
+			return item, nil
+		}
+	}
+	return member.Member{}, errors.New("not found")
+}
+
+func (m *mockMemberRepo) ListHouseholdIDsByUserID(_ context.Context, userID string) ([]string, error) {
+	var ids []string
+	for _, item := range m.members {
+		if item.UserID() == userID {
+			ids = append(ids, item.HouseholdID())
+		}
+	}
+	return ids, nil
+}
+
 func TestRegisterMember_Success(t *testing.T) {
 	t.Parallel()
 	repo := newMockMemberRepo()

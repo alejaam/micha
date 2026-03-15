@@ -114,6 +114,37 @@ func (r HouseholdRepository) Update(ctx context.Context, h household.Household) 
 // ensure interface compliance at compile time.
 var _ outbound.HouseholdRepository = HouseholdRepository{}
 
+// ListByUserID returns households that the given user belongs to (via members table).
+func (r HouseholdRepository) ListByUserID(ctx context.Context, userID string, limit, offset int) ([]household.Household, error) {
+	rows, err := r.db.Query(ctx,
+		`SELECT h.id, h.name, h.settlement_mode, h.currency, h.created_at, h.updated_at
+			FROM households h
+			INNER JOIN members m ON m.household_id = h.id
+			WHERE m.user_id = $1
+			ORDER BY h.created_at DESC
+			LIMIT $2 OFFSET $3`,
+		userID, limit, offset,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("household repository listByUserID: %w", err)
+	}
+	defer rows.Close()
+
+	var households []household.Household
+	for rows.Next() {
+		h, err := scanHousehold(rows)
+		if err != nil {
+			return nil, fmt.Errorf("household repository listByUserID: scan: %w", err)
+		}
+		households = append(households, h)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("household repository listByUserID: rows: %w", err)
+	}
+
+	return households, nil
+}
+
 func scanHousehold(r row) (household.Household, error) {
 	var (
 		id             string

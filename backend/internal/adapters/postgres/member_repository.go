@@ -174,6 +174,53 @@ func (r MemberRepository) Update(ctx context.Context, m member.Member) error {
 // ensure interface compliance at compile time.
 var _ outbound.MemberRepository = MemberRepository{}
 
+// FindByUserIDGlobal returns any member record linked to the given user, regardless of household.
+func (r MemberRepository) FindByUserIDGlobal(ctx context.Context, userID string) (member.Member, error) {
+	row := r.db.QueryRow(ctx,
+		`SELECT id, household_id, name, email, monthly_salary_cents, user_id, created_at, updated_at
+			FROM members
+			WHERE user_id = $1
+			LIMIT 1`,
+		userID,
+	)
+
+	m, err := scanMember(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return member.Member{}, shared.ErrNotFound
+	}
+	if err != nil {
+		return member.Member{}, fmt.Errorf("member repository findByUserIDGlobal: %w", err)
+	}
+
+	return m, nil
+}
+
+// ListHouseholdIDsByUserID returns all household IDs the user belongs to.
+func (r MemberRepository) ListHouseholdIDsByUserID(ctx context.Context, userID string) ([]string, error) {
+	rows, err := r.db.Query(ctx,
+		`SELECT household_id FROM members WHERE user_id = $1`,
+		userID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("member repository listHouseholdIDsByUserID: %w", err)
+	}
+	defer rows.Close()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("member repository listHouseholdIDsByUserID: scan: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("member repository listHouseholdIDsByUserID: rows: %w", err)
+	}
+
+	return ids, nil
+}
+
 func scanMember(r row) (member.Member, error) {
 	var (
 		id                 string

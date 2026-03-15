@@ -119,6 +119,7 @@ func main() {
 			Calculate: settlementapp.NewCalculateSettlementUseCase(householdRepo, memberRepo, expenseRepo),
 		},
 		JWTValidator: validator,
+		MemberRepo:   memberRepo,
 	}
 
 	srv := httpadapter.NewServer(cfg.HTTPPort, serverDeps)

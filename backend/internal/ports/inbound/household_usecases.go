@@ -20,6 +20,8 @@ type RegisterHouseholdOutput struct {
 
 // ListHouseholdsQuery holds pagination for listing households.
 type ListHouseholdsQuery struct {
+	// UserID scopes the query to households the user belongs to.
+	UserID string
 	Limit  int
 	Offset int
 }
