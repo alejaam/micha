@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	authapp "micha/backend/internal/application/auth"
 	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
 )
@@ -86,7 +85,7 @@ func (h authHandler) handleMe(w http.ResponseWriter, r *http.Request) {
 
 func writeAuthError(w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, authapp.ErrInvalidCredentials):
+	case errors.Is(err, shared.ErrInvalidCredentials):
 		writeError(w, http.StatusUnauthorized, "INVALID_CREDENTIALS", "email or password is incorrect")
 	case errors.Is(err, shared.ErrAlreadyExists):
 		writeError(w, http.StatusConflict, "EMAIL_TAKEN", "an account with this email already exists")

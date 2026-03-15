@@ -9,6 +9,9 @@ import { ExpenseSummary } from '../components/ExpenseSummary'
 import { RecentExpenses } from '../components/RecentExpenses'
 import { ExpenseList } from '../components/ExpenseList'
 import { SettlementPanel } from '../components/SettlementPanel'
+import { IncomesPanel } from '../components/IncomesPanel'
+import { FixedExpensesPanel } from '../components/FixedExpensesPanel'
+import { CardExpensesPanel } from '../components/CardExpensesPanel'
 import { ExpenseModal } from '../components/ExpenseModal'
 import { FAB } from '../components/FAB'
 import { Banner } from '../ui/Banner'
@@ -123,7 +126,7 @@ export function DashboardPage({ householdId, selectedHousehold, loadHouseholds, 
         )
     }
 
-    async function handleCreate({ amountCents, description, paidByMemberId, isShared, paymentMethod, expenseType }) {
+    async function handleCreate({ amountCents, description, paidByMemberId, isShared, paymentMethod, expenseType, cardName, category }) {
         setMessage('')
         setError('')
         setSubmittingCreate(true)
@@ -137,6 +140,8 @@ export function DashboardPage({ householdId, selectedHousehold, loadHouseholds, 
                 currency: activeCurrency,
                 paymentMethod,
                 expenseType,
+                cardName,
+                category,
             })
             setMessage('Expense added.')
             setModalOpen(false)
@@ -186,6 +191,13 @@ export function DashboardPage({ householdId, selectedHousehold, loadHouseholds, 
             {error && <Banner type="error" onDismiss={() => setError('')}>{error}</Banner>}
             {message && <Banner type="ok" onDismiss={() => setMessage('')}>{message}</Banner>}
 
+            {/* Incomes */}
+            <IncomesPanel
+                members={members}
+                settlement={settlement}
+                currency={activeCurrency}
+            />
+
             {/* Summary strip */}
             <section className="card dashboardSummaryCard" aria-label="This month">
                 <h2 className="sectionTitle">
@@ -194,6 +206,33 @@ export function DashboardPage({ householdId, selectedHousehold, loadHouseholds, 
                 </h2>
                 <ExpenseSummary settlement={settlement} currency={activeCurrency} />
             </section>
+
+            {/* Fixed expenses breakdown */}
+            <FixedExpensesPanel
+                items={items}
+                members={members}
+                currency={activeCurrency}
+            />
+
+            {/* Card expenses breakdown */}
+            <CardExpensesPanel
+                items={items}
+                members={members}
+                currency={activeCurrency}
+            />
+
+            {/* Settlement */}
+            <SettlementPanel
+                settlement={settlement}
+                settlementYear={settlementYear}
+                settlementMonth={settlementMonth}
+                onSettlementYearChange={setSettlementYear}
+                onSettlementMonthChange={setSettlementMonth}
+                onRefresh={loadSettlement}
+                loadingSettlement={loadingSettlement}
+                memberIndex={memberIndex}
+                currency={activeCurrency}
+            />
 
             {/* Recent expenses */}
             <section className="card" aria-label="Recent expenses">
@@ -223,19 +262,6 @@ export function DashboardPage({ householdId, selectedHousehold, loadHouseholds, 
                     currency={activeCurrency}
                 />
             )}
-
-            {/* Settlement */}
-            <SettlementPanel
-                settlement={settlement}
-                settlementYear={settlementYear}
-                settlementMonth={settlementMonth}
-                onSettlementYearChange={setSettlementYear}
-                onSettlementMonthChange={setSettlementMonth}
-                onRefresh={loadSettlement}
-                loadingSettlement={loadingSettlement}
-                memberIndex={memberIndex}
-                currency={activeCurrency}
-            />
 
             {/* FAB + Modal */}
             <FAB onClick={() => setModalOpen(true)} />

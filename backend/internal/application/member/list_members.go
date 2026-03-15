@@ -4,14 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	appshared "micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/member"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
-)
-
-const (
-	defaultLimit = 20
-	maxLimit     = 100
 )
 
 // ListMembersUseCase lists members for a household with pagination.
@@ -32,10 +28,10 @@ func (u ListMembersUseCase) Execute(ctx context.Context, query inbound.ListMembe
 
 	limit := query.Limit
 	if limit <= 0 {
-		limit = defaultLimit
+		limit = appshared.DefaultLimit
 	}
-	if limit > maxLimit {
-		limit = maxLimit
+	if limit > appshared.MaxLimit {
+		limit = appshared.MaxLimit
 	}
 
 	offset := query.Offset
@@ -50,3 +46,5 @@ func (u ListMembersUseCase) Execute(ctx context.Context, query inbound.ListMembe
 
 	return members, nil
 }
+
+var _ inbound.ListMembersUseCase = ListMembersUseCase{}

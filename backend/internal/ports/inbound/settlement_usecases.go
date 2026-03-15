@@ -2,8 +2,16 @@ package inbound
 
 import (
 	"context"
+	"errors"
 
 	"micha/backend/internal/domain/household"
+)
+
+// Settlement validation sentinel errors.
+var (
+	ErrSettlementMissingHouseholdID = errors.New("household_id is required")
+	ErrSettlementYearOutOfRange     = errors.New("year is out of range")
+	ErrSettlementInvalidMonth       = errors.New("month must be between 1 and 12")
 )
 
 // CalculateSettlementInput contains report scope for monthly settlement.

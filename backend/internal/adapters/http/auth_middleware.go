@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 	"strings"
-
-	infraauth "micha/backend/internal/infrastructure/auth"
 )
 
 type contextKey string
@@ -15,8 +13,13 @@ const (
 	contextKeyEmail  contextKey = "email"
 )
 
+// TokenValidator validates a Bearer JWT and returns the embedded claims.
+type TokenValidator interface {
+	Validate(tokenString string) (userID, email string, err error)
+}
+
 // AuthMiddleware validates the Bearer JWT on protected routes.
-func AuthMiddleware(validator infraauth.JWTValidator) func(http.Handler) http.Handler {
+func AuthMiddleware(validator TokenValidator) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			header := r.Header.Get("Authorization")

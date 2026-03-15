@@ -10,6 +10,8 @@ import (
 	"micha/backend/internal/ports/outbound"
 )
 
+var _ inbound.CalculateSettlementUseCase = CalculateSettlementUseCase{}
+
 // CalculateSettlementUseCase computes a household monthly settlement report.
 type CalculateSettlementUseCase struct {
 	householdRepo outbound.HouseholdRepository
@@ -33,13 +35,13 @@ func NewCalculateSettlementUseCase(
 // Execute calculates monthly settlement for one household.
 func (u CalculateSettlementUseCase) Execute(ctx context.Context, input inbound.CalculateSettlementInput) (inbound.CalculateSettlementOutput, error) {
 	if input.HouseholdID == "" {
-		return inbound.CalculateSettlementOutput{}, fmt.Errorf("calculate settlement: household_id is required")
+		return inbound.CalculateSettlementOutput{}, fmt.Errorf("calculate settlement: %w", inbound.ErrSettlementMissingHouseholdID)
 	}
 	if input.Year < 2000 || input.Year > 2200 {
-		return inbound.CalculateSettlementOutput{}, fmt.Errorf("calculate settlement: year is out of range")
+		return inbound.CalculateSettlementOutput{}, fmt.Errorf("calculate settlement: %w", inbound.ErrSettlementYearOutOfRange)
 	}
 	if input.Month < 1 || input.Month > 12 {
-		return inbound.CalculateSettlementOutput{}, fmt.Errorf("calculate settlement: month must be between 1 and 12")
+		return inbound.CalculateSettlementOutput{}, fmt.Errorf("calculate settlement: %w", inbound.ErrSettlementInvalidMonth)
 	}
 
 	householdEntity, err := u.householdRepo.FindByID(ctx, input.HouseholdID)

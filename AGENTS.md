@@ -38,6 +38,16 @@ domain → use case → ports → adapter → wiring in cmd/api
 
 Validate with `docs/architecture-checklist.md` before finishing any feature.
 
+## Agent Routing (OpenCode)
+
+| Task | Agent / Command |
+|------|-----------------|
+| Implement a feature | `build` (default) |
+| Plan a feature across layers | `/plan-feature` → `plan` agent |
+| Audit architecture | `/check-arch` → `architect` subagent |
+| Review code quality | `/review` → `reviewer` subagent |
+| Run & fix tests | `/test` → `build` agent |
+
 ## Build & test
 
 ```bash
@@ -53,8 +63,4 @@ docker compose -f deploy/docker-compose.yml up --build  # full stack (Go + Postg
 - Endpoints: `/health` + full CRUD for expenses, households, members + settlement calculation
 - PostgreSQL: `localhost:5432`, db/user/pass: `micha` / `micha` / `micha_dev_password`
 
-## Go standards (auto-applied)
 
-All `.go` files adhere to: guard clauses, `fmt.Errorf("context: %w", err)` error wrapping,
-`slog` structured logging with context propagation, OWASP security (parameterised queries,
-`MaxBytesReader`, `DisallowUnknownFields`), table-driven tests with `testify`.

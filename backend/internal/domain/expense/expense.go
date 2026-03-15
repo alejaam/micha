@@ -14,6 +14,7 @@ var (
 	ErrInvalidCurrency       = errors.New("invalid expense currency")
 	ErrInvalidPaymentMethod  = errors.New("invalid payment method")
 	ErrInvalidExpenseType    = errors.New("invalid expense type")
+	ErrInvalidCategory       = errors.New("invalid expense category")
 )
 
 // PaymentMethod defines how an expense was paid.
@@ -35,6 +36,19 @@ const (
 	ExpenseTypeMSI      ExpenseType = "msi"
 )
 
+// Category is the semantic grouping of an expense (mirrors the Excel panels).
+type Category string
+
+const (
+	CategoryRent      Category = "rent"
+	CategoryAuto      Category = "auto"
+	CategoryStreaming Category = "streaming"
+	CategoryFood      Category = "food"
+	CategoryPersonal  Category = "personal"
+	CategorySavings   Category = "savings"
+	CategoryOther     Category = "other"
+)
+
 // ID is the unique identifier type for an expense.
 type ID string
 
@@ -49,6 +63,8 @@ type ExpenseAttributes struct {
 	Currency       string
 	PaymentMethod  PaymentMethod
 	ExpenseType    ExpenseType
+	CardName       string
+	Category       Category
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	DeletedAt      *time.Time
@@ -65,6 +81,8 @@ type Expense struct {
 	currency       string
 	paymentMethod  PaymentMethod
 	expenseType    ExpenseType
+	cardName       string
+	category       Category
 	createdAt      time.Time
 	updatedAt      time.Time
 	deletedAt      *time.Time
@@ -82,6 +100,8 @@ func New(id ID, householdID string, amountCents int64, description string, creat
 		Currency:       "MXN",
 		PaymentMethod:  PaymentMethodCash,
 		ExpenseType:    ExpenseTypeVariable,
+		CardName:       "",
+		Category:       CategoryOther,
 		CreatedAt:      createdAt,
 		UpdatedAt:      createdAt,
 	})
@@ -123,6 +143,18 @@ func NewFromAttributes(attrs ExpenseAttributes) (Expense, error) {
 		return Expense{}, ErrInvalidExpenseType
 	}
 
+	category := attrs.Category
+	if category == "" {
+		category = CategoryOther
+	}
+	validCategories := map[Category]bool{
+		CategoryRent: true, CategoryAuto: true, CategoryStreaming: true,
+		CategoryFood: true, CategoryPersonal: true, CategorySavings: true, CategoryOther: true,
+	}
+	if !validCategories[category] {
+		return Expense{}, ErrInvalidCategory
+	}
+
 	updatedAt := attrs.UpdatedAt
 	if updatedAt.IsZero() {
 		updatedAt = attrs.CreatedAt
@@ -138,6 +170,8 @@ func NewFromAttributes(attrs ExpenseAttributes) (Expense, error) {
 		currency:       currency,
 		paymentMethod:  paymentMethod,
 		expenseType:    expenseType,
+		cardName:       strings.TrimSpace(attrs.CardName),
+		category:       category,
 		createdAt:      attrs.CreatedAt,
 		updatedAt:      updatedAt,
 		deletedAt:      attrs.DeletedAt,
@@ -183,6 +217,8 @@ func (e Expense) Attributes() ExpenseAttributes {
 		Currency:       e.currency,
 		PaymentMethod:  e.paymentMethod,
 		ExpenseType:    e.expenseType,
+		CardName:       e.cardName,
+		Category:       e.category,
 		CreatedAt:      e.createdAt,
 		UpdatedAt:      e.updatedAt,
 		DeletedAt:      e.deletedAt,
@@ -198,6 +234,8 @@ func (e Expense) IsShared() bool               { return e.isShared }
 func (e Expense) Currency() string             { return e.currency }
 func (e Expense) PaymentMethod() PaymentMethod { return e.paymentMethod }
 func (e Expense) ExpenseType() ExpenseType     { return e.expenseType }
+func (e Expense) CardName() string             { return e.cardName }
+func (e Expense) Category() Category           { return e.category }
 func (e Expense) CreatedAt() time.Time         { return e.createdAt }
 func (e Expense) UpdatedAt() time.Time         { return e.updatedAt }
 func (e Expense) DeletedAt() *time.Time        { return e.deletedAt }

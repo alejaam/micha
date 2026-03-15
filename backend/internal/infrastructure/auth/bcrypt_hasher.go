@@ -5,10 +5,10 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	authapp "micha/backend/internal/application/auth"
+	"micha/backend/internal/ports/outbound"
 )
 
-// BcryptHasher implements authapp.PasswordHasher using bcrypt at cost 12.
+// BcryptHasher implements outbound.PasswordHasher using bcrypt at cost 12.
 type BcryptHasher struct{}
 
 // NewBcryptHasher constructs a BcryptHasher.
@@ -28,4 +28,4 @@ func (BcryptHasher) Verify(password, hash string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 }
 
-var _ authapp.PasswordHasher = BcryptHasher{}
+var _ outbound.PasswordHasher = BcryptHasher{}

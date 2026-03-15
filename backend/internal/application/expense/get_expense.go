@@ -7,8 +7,11 @@ import (
 
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/shared"
+	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
 )
+
+var _ inbound.GetExpenseUseCase = GetExpenseUseCase{}
 
 // GetExpenseUseCase retrieves a single non-deleted expense by ID.
 type GetExpenseUseCase struct {

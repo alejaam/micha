@@ -11,7 +11,8 @@ const SETTLEMENT_MONTHS = [
 ]
 
 /**
- * SettlementPanel renders monthly settlement controls and transfer details.
+ * SettlementPanel — monthly period controls + Excel-style adjustment table.
+ * Shows the net balance per member and a clear "X owes Y $Z" callout.
  */
 export function SettlementPanel({
   settlement,
@@ -27,6 +28,8 @@ export function SettlementPanel({
   return (
     <section className="card" aria-label="Monthly settlement">
       <h2 className="sectionTitle">Monthly settlement</h2>
+
+      {/* Period controls */}
       <div className="settlementControls">
         <div className="householdRow">
           <label htmlFor="settlementYear" className="householdLabel">Year</label>
@@ -58,20 +61,33 @@ export function SettlementPanel({
             ))}
           </select>
         </div>
-        <button type="button" className="btn btnGhost btnSm" onClick={onRefresh} disabled={loadingSettlement}>
-          {loadingSettlement ? <><span className="spinIcon" aria-hidden>&#x27F3;</span> Loading...</> : 'Refresh'}
+        <button
+          type="button"
+          className="btn btnGhost btnSm"
+          onClick={onRefresh}
+          disabled={loadingSettlement}
+        >
+          {loadingSettlement
+            ? <><span className="spinIcon" aria-hidden>&#x27F3;</span> Loading...</>
+            : 'Refresh'}
         </button>
       </div>
 
       {settlement ? (
         <div className="formStack">
-          {settlement.fallback_reason ? (
-            <p className="settlementFallback" role="alert">Warning: {settlement.fallback_reason}</p>
-          ) : null}
+          {settlement.fallback_reason && (
+            <p className="settlementFallback" role="alert">
+              Warning: {settlement.fallback_reason}
+            </p>
+          )}
+
+          {/* Stats strip */}
           <div className="settlementStats">
             <span className="settlementStat">
               <span className="settlementStatLabel">Total shared:</span>
-              <span className="settlementStatValue">{formatCurrency(settlement.total_shared_cents, currency)}</span>
+              <span className="settlementStatValue">
+                {formatCurrency(settlement.total_shared_cents, currency)}
+              </span>
             </span>
             <span className="settlementStat">
               <span className="settlementStatLabel">Mode:</span>
@@ -86,30 +102,65 @@ export function SettlementPanel({
               <span className="settlementStatValue">{settlement.excluded_voucher_count}</span>
             </span>
           </div>
-          <h3 className="sectionTitle">
-            <span className="sectionTitleIcon" aria-hidden>{'<->'}</span>
-            Transfers
-          </h3>
+
+          {/* Adjustment callouts — one per transfer */}
           {Array.isArray(settlement.transfers) && settlement.transfers.length > 0 ? (
-            <ul className="transferList">
-              {settlement.transfers.map((t, idx) => (
-                <li key={`${t.from_member_id}-${t.to_member_id}-${idx}`} className="transferItem">
-                  <span className="transferNames">
-                    {memberIndex[t.from_member_id] ?? t.from_member_id.slice(0, 8) + '...'}
-                    <span className="transferArrow" aria-hidden>{'->'}</span>
-                    {memberIndex[t.to_member_id] ?? t.to_member_id.slice(0, 8) + '...'}
-                  </span>
-                  <span className="transferAmount">{formatCurrency(t.amount_cents, currency)}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="adjustmentList">
+              {settlement.transfers.map((t, idx) => {
+                const from = memberIndex[t.from_member_id] ?? t.from_member_id.slice(0, 8)
+                const to = memberIndex[t.to_member_id] ?? t.to_member_id.slice(0, 8)
+                return (
+                  <div
+                    key={`${t.from_member_id}-${t.to_member_id}-${idx}`}
+                    className="adjustmentCallout"
+                    role="status"
+                    aria-label={`${from} owes ${to} ${formatCurrency(t.amount_cents, currency)}`}
+                  >
+                    <div className="adjustmentRow">
+                      <span className="adjustmentDebtor">{from}</span>
+                      <span className="adjustmentVerb">owes</span>
+                      <span className="adjustmentCreditor">{to}</span>
+                    </div>
+                    <span className="adjustmentAmount">
+                      {formatCurrency(t.amount_cents, currency)}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
           ) : (
-            <p className="emptyHint">No transfers needed - everyone is settled!</p>
+            <p className="emptyHint">No transfers needed — everyone is settled!</p>
+          )}
+
+          {/* Per-member balance summary */}
+          {Array.isArray(settlement.members) && settlement.members.length > 0 && (
+            <div className="settlementBalances">
+              {settlement.members.map((sm) => {
+                const name = memberIndex[sm.member_id] ?? sm.member_id.slice(0, 8)
+                const pct = sm.salary_weight_bps != null
+                  ? (sm.salary_weight_bps / 100).toFixed(1)
+                  : null
+                return (
+                  <div key={sm.member_id} className="settlementBalanceRow">
+                    <span className="settlementBalanceName">{name}</span>
+                    {pct !== null && (
+                      <span className="settlementBalancePct">{pct}%</span>
+                    )}
+                    <span className="settlementBalancePaid">
+                      paid {formatCurrency(sm.total_paid_cents ?? 0, currency)}
+                    </span>
+                    <span className="settlementBalanceDue">
+                      owes {formatCurrency(sm.total_due_cents ?? 0, currency)}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
           )}
         </div>
       ) : (
         <div className="emptyState">
-          <div className="emptyIcon" aria-hidden>Data</div>
+          <div className="emptyIcon" aria-hidden>~</div>
           <p className="emptyTitle">No settlement data</p>
           <p className="emptyHint">No expenses recorded for this period.</p>
         </div>

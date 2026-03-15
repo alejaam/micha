@@ -11,23 +11,15 @@ import (
 	"micha/backend/internal/ports/outbound"
 )
 
-// ErrInvalidCredentials is returned when the email or password is incorrect.
-var ErrInvalidCredentials = errors.New("invalid credentials")
-
-// TokenSigner signs a user ID and email into a JWT token.
-type TokenSigner interface {
-	Sign(userID, email string) (string, error)
-}
-
 // LoginUseCase authenticates a user and issues a JWT token.
 type LoginUseCase struct {
 	repo   outbound.UserRepository
-	hasher PasswordHasher
-	signer TokenSigner
+	hasher outbound.PasswordHasher
+	signer outbound.TokenSigner
 }
 
 // NewLoginUseCase constructs a LoginUseCase.
-func NewLoginUseCase(repo outbound.UserRepository, hasher PasswordHasher, signer TokenSigner) LoginUseCase {
+func NewLoginUseCase(repo outbound.UserRepository, hasher outbound.PasswordHasher, signer outbound.TokenSigner) LoginUseCase {
 	return LoginUseCase{repo: repo, hasher: hasher, signer: signer}
 }
 
@@ -36,13 +28,13 @@ func (u LoginUseCase) Execute(ctx context.Context, input inbound.LoginInput) (in
 	foundUser, err := u.repo.FindByEmail(ctx, input.Email)
 	if err != nil {
 		if errors.Is(err, shared.ErrNotFound) {
-			return inbound.LoginOutput{}, ErrInvalidCredentials
+			return inbound.LoginOutput{}, shared.ErrInvalidCredentials
 		}
 		return inbound.LoginOutput{}, fmt.Errorf("login: %w", err)
 	}
 
 	if err := u.hasher.Verify(input.Password, foundUser.PasswordHash()); err != nil {
-		return inbound.LoginOutput{}, ErrInvalidCredentials
+		return inbound.LoginOutput{}, shared.ErrInvalidCredentials
 	}
 
 	token, err := u.signer.Sign(foundUser.ID(), foundUser.Email())

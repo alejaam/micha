@@ -4,14 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	appshared "micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/household"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
-)
-
-const (
-	defaultLimit = 20
-	maxLimit     = 100
 )
 
 // ListHouseholdsUseCase lists households with pagination.
@@ -28,10 +24,10 @@ func NewListHouseholdsUseCase(repo outbound.HouseholdRepository) ListHouseholdsU
 func (u ListHouseholdsUseCase) Execute(ctx context.Context, query inbound.ListHouseholdsQuery) ([]household.Household, error) {
 	limit := query.Limit
 	if limit <= 0 {
-		limit = defaultLimit
+		limit = appshared.DefaultLimit
 	}
-	if limit > maxLimit {
-		limit = maxLimit
+	if limit > appshared.MaxLimit {
+		limit = appshared.MaxLimit
 	}
 
 	offset := query.Offset
@@ -46,3 +42,5 @@ func (u ListHouseholdsUseCase) Execute(ctx context.Context, query inbound.ListHo
 
 	return households, nil
 }
+
+var _ inbound.ListHouseholdsUseCase = ListHouseholdsUseCase{}

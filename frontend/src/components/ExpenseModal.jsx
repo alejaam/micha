@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Modal } from '../ui/Modal'
 import { FormField } from '../ui/FormField'
+import { Modal } from '../ui/Modal'
 import { dollarsToCents } from '../utils'
 
 /**
@@ -20,13 +20,23 @@ export function ExpenseModal({
 }) {
     const [amount, setAmount] = useState('')
     const [description, setDescription] = useState('')
-    const [paidByMemberId, setPaidByMemberId] = useState(defaultPaidByMemberId)
     const [isShared, setIsShared] = useState(true)
     const [paymentMethod, setPaymentMethod] = useState('card')
     const [expenseType, setExpenseType] = useState('variable')
+    const [cardName, setCardName] = useState('')
+    const [category, setCategory] = useState('other')
     const [showAdvanced, setShowAdvanced] = useState(false)
 
     const hasMembers = members.length > 0
+    const paidByMemberId = useMemo(
+        () => defaultPaidByMemberId.trim() || members[0]?.id || '',
+        [defaultPaidByMemberId, members],
+    )
+    const paidByMemberName = useMemo(
+        () => members.find((member) => member.id === paidByMemberId)?.name || '',
+        [members, paidByMemberId],
+    )
+    const isCardPayment = paymentMethod === 'card'
 
     const isValid = useMemo(
         () => hasMembers && description.trim() !== '' && paidByMemberId.trim() !== '' && dollarsToCents(amount) !== null,
@@ -45,6 +55,8 @@ export function ExpenseModal({
             isShared,
             paymentMethod,
             expenseType,
+            cardName: isCardPayment ? cardName.trim() : '',
+            category,
         })
     }
 
@@ -80,6 +92,24 @@ export function ExpenseModal({
                     />
                 </FormField>
 
+                <FormField label="Category" htmlFor="modalCategory">
+                    <select
+                        id="modalCategory"
+                        className="input"
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        disabled={isSubmitting}
+                    >
+                        <option value="rent">Rent</option>
+                        <option value="auto">Auto</option>
+                        <option value="streaming">Streaming / Services</option>
+                        <option value="food">Food</option>
+                        <option value="personal">Personal</option>
+                        <option value="savings">Savings</option>
+                        <option value="other">Other</option>
+                    </select>
+                </FormField>
+
                 {/* Advanced options toggle */}
                 <button
                     type="button"
@@ -91,22 +121,7 @@ export function ExpenseModal({
 
                 {showAdvanced && (
                     <div className="formStack advancedSection">
-                        <FormField label="Paid by" htmlFor="modalPaidBy">
-                            <select
-                                id="modalPaidBy"
-                                className="input"
-                                value={paidByMemberId}
-                                onChange={(e) => setPaidByMemberId(e.target.value)}
-                                disabled={isSubmitting || isLoadingMembers || !hasMembers}
-                            >
-                                <option value="">
-                                    {isLoadingMembers ? 'Loading…' : hasMembers ? 'Select a member' : 'No members'}
-                                </option>
-                                {members.map((m) => (
-                                    <option key={m.id} value={m.id}>{m.name}</option>
-                                ))}
-                            </select>
-                        </FormField>
+                        {paidByMemberName ? <p className="formHint">Paid by: {paidByMemberName}</p> : null}
 
                         <FormField label="Payment method" htmlFor="modalPaymentMethod">
                             <select
@@ -116,12 +131,26 @@ export function ExpenseModal({
                                 onChange={(e) => setPaymentMethod(e.target.value)}
                                 disabled={isSubmitting}
                             >
-                                <option value="card">card</option>
-                                <option value="cash">cash</option>
-                                <option value="transfer">transfer</option>
-                                <option value="voucher">voucher</option>
+                                <option value="card">Card</option>
+                                <option value="cash">Cash</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="voucher">Voucher</option>
                             </select>
                         </FormField>
+
+                        {isCardPayment && (
+                            <FormField label="Card name" htmlFor="modalCardName">
+                                <input
+                                    id="modalCardName"
+                                    className="input"
+                                    placeholder="e.g. BANAMEX, HSBC, BBVA"
+                                    value={cardName}
+                                    onChange={(e) => setCardName(e.target.value)}
+                                    autoComplete="off"
+                                    disabled={isSubmitting}
+                                />
+                            </FormField>
+                        )}
 
                         <FormField label="Expense type" htmlFor="modalExpenseType">
                             <select
@@ -131,9 +160,9 @@ export function ExpenseModal({
                                 onChange={(e) => setExpenseType(e.target.value)}
                                 disabled={isSubmitting}
                             >
-                                <option value="variable">variable</option>
-                                <option value="fixed">fixed</option>
-                                <option value="msi">msi</option>
+                                <option value="variable">Variable</option>
+                                <option value="fixed">Fixed</option>
+                                <option value="msi">MSI (installments)</option>
                             </select>
                         </FormField>
 

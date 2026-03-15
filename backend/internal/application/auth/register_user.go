@@ -16,21 +16,15 @@ type IDGenerator interface {
 	NewID() string
 }
 
-// PasswordHasher hashes and verifies passwords.
-type PasswordHasher interface {
-	Hash(password string) (string, error)
-	Verify(password, hash string) error
-}
-
 // RegisterUserUseCase creates new user accounts.
 type RegisterUserUseCase struct {
 	repo   outbound.UserRepository
 	idGen  IDGenerator
-	hasher PasswordHasher
+	hasher outbound.PasswordHasher
 }
 
 // NewRegisterUserUseCase constructs a RegisterUserUseCase.
-func NewRegisterUserUseCase(repo outbound.UserRepository, idGen IDGenerator, hasher PasswordHasher) RegisterUserUseCase {
+func NewRegisterUserUseCase(repo outbound.UserRepository, idGen IDGenerator, hasher outbound.PasswordHasher) RegisterUserUseCase {
 	return RegisterUserUseCase{repo: repo, idGen: idGen, hasher: hasher}
 }
 

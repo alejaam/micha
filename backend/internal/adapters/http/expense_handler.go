@@ -45,6 +45,8 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		Currency       string `json:"currency"`
 		PaymentMethod  string `json:"payment_method"`
 		ExpenseType    string `json:"expense_type"`
+		CardName       string `json:"card_name"`
+		Category       string `json:"category"`
 	}
 	if err := decodeJSON(r, w, &body); err != nil {
 		return
@@ -60,16 +62,6 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		currency = "MXN"
 	}
 
-	paymentMethod := body.PaymentMethod
-	if paymentMethod == "" {
-		paymentMethod = "cash"
-	}
-
-	expenseType := body.ExpenseType
-	if expenseType == "" {
-		expenseType = "variable"
-	}
-
 	input := inbound.RegisterExpenseInput{
 		HouseholdID:    body.HouseholdID,
 		PaidByMemberID: body.PaidByMemberID,
@@ -77,8 +69,10 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		Description:    body.Description,
 		IsShared:       isShared,
 		Currency:       currency,
-		PaymentMethod:  paymentMethod,
-		ExpenseType:    expenseType,
+		PaymentMethod:  body.PaymentMethod,
+		ExpenseType:    body.ExpenseType,
+		CardName:       body.CardName,
+		Category:       body.Category,
 	}
 
 	out, err := h.deps.Register.Execute(r.Context(), input)
@@ -190,8 +184,10 @@ func expenseJSON(e expense.Expense) map[string]any {
 		"description":       attrs.Description,
 		"is_shared":         attrs.IsShared,
 		"currency":          attrs.Currency,
-		"payment_method":    attrs.PaymentMethod,
-		"expense_type":      attrs.ExpenseType,
+		"payment_method":    string(attrs.PaymentMethod),
+		"expense_type":      string(attrs.ExpenseType),
+		"card_name":         attrs.CardName,
+		"category":          string(attrs.Category),
 		"created_at":        attrs.CreatedAt,
 		"updated_at":        attrs.UpdatedAt,
 	}
@@ -273,6 +269,8 @@ func writeErrorFromDomain(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, "INVALID_PAYMENT_METHOD", "payment_method must be cash, card, transfer or voucher")
 	case errors.Is(err, expense.ErrInvalidExpenseType):
 		writeError(w, http.StatusBadRequest, "INVALID_EXPENSE_TYPE", "expense_type must be fixed, variable or msi")
+	case errors.Is(err, expense.ErrInvalidCategory):
+		writeError(w, http.StatusBadRequest, "INVALID_CATEGORY", "category must be rent, auto, streaming, food, personal, savings or other")
 	case errors.Is(err, shared.ErrAlreadyDeleted):
 		writeError(w, http.StatusBadRequest, "ALREADY_DELETED", "expense has already been deleted")
 	default:

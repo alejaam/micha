@@ -6,10 +6,10 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	authapp "micha/backend/internal/application/auth"
+	"micha/backend/internal/ports/outbound"
 )
 
-// JWTSigner implements authapp.TokenSigner using HS256.
+// JWTSigner implements outbound.TokenSigner using HS256.
 type JWTSigner struct{ secret []byte }
 
 // NewJWTSigner constructs a JWTSigner with the given secret.
@@ -59,4 +59,4 @@ func (v JWTValidator) Validate(tokenString string) (userID, email string, err er
 	return userID, email, nil
 }
 
-var _ authapp.TokenSigner = JWTSigner{}
+var _ outbound.TokenSigner = JWTSigner{}

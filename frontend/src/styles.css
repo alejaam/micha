@@ -877,6 +877,7 @@ ul {
     justify-content: center;
     z-index: 100;
     padding: 0;
+    overflow-y: auto;
     animation: fadeIn var(--dur-base) var(--ease-out);
 }
 
@@ -891,7 +892,7 @@ ul {
     width: 100%;
     max-width: 480px;
     max-height: 90dvh;
-    overflow-y: auto;
+    overflow: visible;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     animation: slideUp var(--dur-slow) var(--ease-spring) forwards;
     opacity: 1;
@@ -1070,15 +1071,21 @@ ul {
 
 /* ─── Keyframe additions ─────────────────────────────────────────────────────── */
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 /* ─── Responsive — mobile-first ──────────────────────────────────────────────── */
 
 /* Mobile base (default — no media query needed) */
 .page {
-    padding: 16px 12px 100px; /* extra bottom for FAB */
+    padding: 16px 12px 100px;
+    /* extra bottom for FAB */
 }
 
 .authShell {
@@ -1213,4 +1220,355 @@ ul {
         opacity: 1;
         transform: none;
     }
+}
+
+/* ─── IncomesPanel ───────────────────────────────────────────────────────────── */
+.incomesGrid {
+    display: grid;
+    gap: 12px;
+}
+
+.incomeMemberCard {
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-soft);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.incomeMemberHeader {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.incomeMemberName {
+    font-size: 0.9rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-1);
+}
+
+.incomePct {
+    font-size: 0.8rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-brand-600);
+}
+
+.incomeSalary {
+    font-size: 1.2rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-1);
+    letter-spacing: -0.02em;
+}
+
+.incomeBar {
+    height: 6px;
+    background: var(--color-border);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+}
+
+.incomeBarFill {
+    height: 100%;
+    background: var(--color-brand-500);
+    border-radius: var(--radius-pill);
+    transition: width var(--dur-slow) var(--ease-out);
+}
+
+.incomeTotalRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-top: 1px solid var(--color-border-soft);
+    margin-top: 4px;
+}
+
+.incomeTotalLabel {
+    font-size: 0.875rem;
+    color: var(--color-text-3);
+}
+
+.incomeTotalValue {
+    font-size: 1rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-1);
+}
+
+/* ─── FixedExpensesPanel ─────────────────────────────────────────────────────── */
+.fixedExpensesTable {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--color-border-soft);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    font-size: 0.875rem;
+}
+
+.fixedTableHeader {
+    display: flex;
+    align-items: center;
+    background: var(--color-surface-2);
+    border-bottom: 1px solid var(--color-border);
+    padding: 8px 12px;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-3);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.fixedTableRow {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border-soft);
+    transition: background var(--dur-fast);
+}
+
+.fixedTableRow:hover {
+    background: var(--color-surface-2);
+}
+
+.fixedTableRow:last-of-type {
+    border-bottom: none;
+}
+
+.fixedColConcept {
+    flex: 1;
+    color: var(--color-text-2);
+}
+
+.fixedColMember {
+    width: 100px;
+    text-align: right;
+    flex-shrink: 0;
+    color: var(--color-text-2);
+}
+
+.fixedCategoryLabel {
+    font-weight: var(--fw-medium);
+    color: var(--color-text-1);
+}
+
+.fixedAmount {
+    color: var(--color-text-1);
+}
+
+.fixedTotalRow {
+    background: var(--color-surface-2);
+    border-top: 2px solid var(--color-border);
+    font-weight: var(--fw-medium);
+}
+
+.fixedTotalAmount {
+    font-weight: var(--fw-bold);
+    color: var(--color-brand-700);
+}
+
+.fixedGrandTotal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--color-brand-50);
+    border-top: 2px solid var(--color-brand-100);
+}
+
+.fixedGrandTotalLabel {
+    font-size: 0.875rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-3);
+}
+
+.fixedGrandTotalValue {
+    font-size: 1rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-brand-700);
+}
+
+/* ─── CardExpensesPanel ──────────────────────────────────────────────────────── */
+.cardExpensesTable {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--color-border-soft);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    font-size: 0.875rem;
+}
+
+.cardTableHeader {
+    display: flex;
+    align-items: center;
+    background: var(--color-surface-2);
+    border-bottom: 1px solid var(--color-border);
+    padding: 8px 12px;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-3);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.cardTableRow {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border-soft);
+    transition: background var(--dur-fast);
+}
+
+.cardTableRow:hover {
+    background: var(--color-surface-2);
+}
+
+.cardTableRow:last-of-type {
+    border-bottom: none;
+}
+
+.cardColConcept {
+    flex: 1;
+    color: var(--color-text-2);
+}
+
+.cardColMember {
+    width: 100px;
+    text-align: right;
+    flex-shrink: 0;
+    color: var(--color-text-2);
+}
+
+.cardCardLabel {
+    font-weight: var(--fw-medium);
+    color: var(--color-text-1);
+}
+
+.cardAmount {
+    color: var(--color-text-1);
+}
+
+.cardTotalRow {
+    background: var(--color-surface-2);
+    border-top: 2px solid var(--color-border);
+    font-weight: var(--fw-medium);
+}
+
+.cardTotalAmount {
+    font-weight: var(--fw-bold);
+    color: var(--color-brand-700);
+}
+
+.cardGrandTotal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--color-brand-50);
+    border-top: 2px solid var(--color-brand-100);
+}
+
+.cardGrandTotalLabel {
+    font-size: 0.875rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-3);
+}
+
+.cardGrandTotalValue {
+    font-size: 1rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-brand-700);
+}
+
+/* ─── Settlement redesign ────────────────────────────────────────────────────── */
+.adjustmentList {
+    display: grid;
+    gap: 10px;
+    margin: 4px 0;
+}
+
+.adjustmentCallout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--color-brand-50);
+    border: 1px solid var(--color-brand-100);
+    border-radius: var(--radius-md);
+}
+
+.adjustmentRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.adjustmentDebtor {
+    font-weight: var(--fw-bold);
+    color: var(--color-text-1);
+}
+
+.adjustmentVerb {
+    font-size: 0.875rem;
+    color: var(--color-text-3);
+}
+
+.adjustmentCreditor {
+    font-weight: var(--fw-bold);
+    color: var(--color-text-1);
+}
+
+.adjustmentAmount {
+    font-size: 1.15rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-brand-700);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.settlementBalances {
+    display: grid;
+    gap: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--color-border-soft);
+    margin-top: 4px;
+}
+
+.settlementBalanceRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-soft);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    flex-wrap: wrap;
+}
+
+.settlementBalanceName {
+    font-weight: var(--fw-medium);
+    color: var(--color-text-1);
+    flex: 1;
+    min-width: 80px;
+}
+
+.settlementBalancePct {
+    font-size: 0.8rem;
+    color: var(--color-brand-600);
+    font-weight: var(--fw-medium);
+}
+
+.settlementBalancePaid {
+    color: var(--color-text-2);
+}
+
+.settlementBalanceDue {
+    color: var(--color-text-3);
 }

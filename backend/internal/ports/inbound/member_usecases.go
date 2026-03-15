@@ -14,6 +14,10 @@ type RegisterMemberInput struct {
 	MonthlySalaryCents int64
 	// UserID optionally links the new member to an authenticated user. Empty means no link.
 	UserID string
+	// CallerUserID is the authenticated user's ID — used for auto-linking when emails match.
+	CallerUserID string
+	// CallerEmail is the authenticated user's email — used for auto-linking when emails match.
+	CallerEmail string
 }
 
 // RegisterMemberOutput contains created member identifiers.

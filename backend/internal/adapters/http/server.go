@@ -2,8 +2,6 @@ package httpadapter
 
 import (
 	"net/http"
-
-	infraauth "micha/backend/internal/infrastructure/auth"
 )
 
 // ServerDependencies groups all resource-level dependencies for the HTTP server.
@@ -13,7 +11,7 @@ type ServerDependencies struct {
 	Household    HouseholdHandlerDeps
 	Member       MemberHandlerDeps
 	Settlement   SettlementHandlerDeps
-	JWTValidator infraauth.JWTValidator
+	JWTValidator TokenValidator
 }
 
 // Server is the primary HTTP adapter.

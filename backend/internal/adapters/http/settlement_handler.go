@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 
 	"micha/backend/internal/domain/settlement"
@@ -91,16 +90,12 @@ func writeErrorFromSettlementDomain(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusNotFound, "NOT_FOUND", "the requested resource was not found")
 	case errors.Is(err, settlement.ErrNoMembers):
 		writeError(w, http.StatusBadRequest, "NO_MEMBERS", "household must have at least one member")
-	case isValidationError(err):
+	case errors.Is(err, inbound.ErrSettlementMissingHouseholdID),
+		errors.Is(err, inbound.ErrSettlementYearOutOfRange),
+		errors.Is(err, inbound.ErrSettlementInvalidMonth):
 		writeError(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error())
 	default:
 		slog.Error("settlement handler: internal error", "error", err)
 		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "an internal error occurred")
 	}
-}
-
-func isValidationError(err error) bool {
-	return strings.Contains(err.Error(), "household_id is required") ||
-		strings.Contains(err.Error(), "month must be between 1 and 12") ||
-		strings.Contains(err.Error(), "year is out of range")
 }

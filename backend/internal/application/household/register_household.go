@@ -11,6 +11,8 @@ import (
 	"micha/backend/internal/ports/outbound"
 )
 
+var _ inbound.RegisterHouseholdUseCase = RegisterHouseholdUseCase{}
+
 // IDGenerator abstracts id generation for testability.
 type IDGenerator interface {
 	NewID() string

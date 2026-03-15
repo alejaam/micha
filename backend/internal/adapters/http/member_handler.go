@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 
@@ -45,20 +44,17 @@ func (h memberHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Auto-link user_id when the authenticated user's email matches the member email.
+	// Pass caller identity so the use case can apply the auto-link rule.
 	userID, _ := r.Context().Value(contextKeyUserID).(string)
 	authEmail, _ := r.Context().Value(contextKeyEmail).(string)
-	linkedUserID := ""
-	if userID != "" && strings.EqualFold(strings.TrimSpace(authEmail), strings.TrimSpace(body.Email)) {
-		linkedUserID = userID
-	}
 
 	out, err := h.deps.Register.Execute(r.Context(), inbound.RegisterMemberInput{
 		HouseholdID:        householdID,
 		Name:               body.Name,
 		Email:              body.Email,
 		MonthlySalaryCents: body.MonthlySalaryCents,
-		UserID:             linkedUserID,
+		CallerUserID:       userID,
+		CallerEmail:        authEmail,
 	})
 	if err != nil {
 		writeErrorFromMemberDomain(w, err)

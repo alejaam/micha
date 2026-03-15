@@ -41,6 +41,8 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		Currency:       input.Currency,
 		PaymentMethod:  expense.PaymentMethod(input.PaymentMethod),
 		ExpenseType:    expense.ExpenseType(input.ExpenseType),
+		CardName:       input.CardName,
+		Category:       expense.Category(input.Category),
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	})
@@ -55,3 +57,5 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 	slog.InfoContext(ctx, "register expense", "expense_id", string(e.ID()))
 	return inbound.RegisterExpenseOutput{ExpenseID: string(e.ID())}, nil
 }
+
+var _ inbound.RegisterExpenseUseCase = RegisterExpenseUseCase{}

@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"log/slog"
 
+	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
 )
+
+var _ inbound.DeleteExpenseUseCase = DeleteExpenseUseCase{}
 
 // DeleteExpenseUseCase soft-deletes an expense by ID.
 type DeleteExpenseUseCase struct {

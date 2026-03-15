@@ -9,18 +9,28 @@ import { dollarsToCents } from '../utils'
  * @param {(data:{amountCents:number,description:string})=>Promise<void>} onSubmit
  * @param {boolean} isSubmitting - Disables the form while a request is in-flight
  */
-export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMembers = false }) {
+export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMembers = false, defaultPaidByMemberId = '' }) {
   const [amount, setAmount]                 = useState('')
   const [description, setDescription]       = useState('')
-  const [paidByMemberId, setPaidByMemberId] = useState('')
   const [isShared, setIsShared]             = useState(true)
   const [paymentMethod, setPaymentMethod]   = useState('cash')
   const [expenseType, setExpenseType]       = useState('variable')
+  const [cardName, setCardName]             = useState('')
+  const [category, setCategory]             = useState('other')
 
   const hasMembers = Array.isArray(members) && members.length > 0
+  const paidByMemberId = useMemo(
+    () => defaultPaidByMemberId.trim() || members[0]?.id || '',
+    [defaultPaidByMemberId, members],
+  )
+  const paidByMemberName = useMemo(
+    () => members.find((member) => member.id === paidByMemberId)?.name || '',
+    [members, paidByMemberId],
+  )
+  const isCardPayment = paymentMethod === 'card'
 
   const isValid = useMemo(
-    () => hasMembers && description.trim() !== '' && paidByMemberId.trim() !== '' && dollarsToCents(amount) !== null,
+    () => hasMembers && description.trim() !== '' && paidByMemberId !== '' && dollarsToCents(amount) !== null,
     [amount, description, paidByMemberId, hasMembers],
   )
 
@@ -37,15 +47,18 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
       isShared,
       paymentMethod,
       expenseType,
+      cardName: isCardPayment ? cardName.trim() : '',
+      category,
     })
 
     // Reset on successful submit (parent resolves the promise)
     setAmount('')
     setDescription('')
-    setPaidByMemberId('')
     setIsShared(true)
     setPaymentMethod('cash')
     setExpenseType('variable')
+    setCardName('')
+    setCategory('other')
   }
 
   return (
@@ -84,28 +97,31 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
           />
         </FormField>
 
-        <FormField label="Paid by" htmlFor="newPaidByMemberId">
-          <select
-            id="newPaidByMemberId"
-            className="input"
-            value={paidByMemberId}
-            onChange={(e) => setPaidByMemberId(e.target.value)}
-            disabled={isSubmitting || isLoadingMembers || !hasMembers}
-          >
-            <option value="">
-              {isLoadingMembers ? 'Loading members...' : hasMembers ? 'Select a member' : 'No members available'}
-            </option>
-            {members.map((member) => (
-              <option key={member.id} value={member.id}>
-                {member.name}
-              </option>
-            ))}
-          </select>
-        </FormField>
+        {!isLoadingMembers && paidByMemberName ? (
+          <p className="formHint">Paid by: {paidByMemberName}</p>
+        ) : null}
 
         {!isLoadingMembers && !hasMembers ? (
           <p className="formHint">Create at least one member before adding expenses.</p>
         ) : null}
+
+        <FormField label="Category" htmlFor="newCategory">
+          <select
+            id="newCategory"
+            className="input"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            disabled={isSubmitting}
+          >
+            <option value="rent">Rent</option>
+            <option value="auto">Auto</option>
+            <option value="streaming">Streaming / Services</option>
+            <option value="food">Food</option>
+            <option value="personal">Personal</option>
+            <option value="savings">Savings</option>
+            <option value="other">Other</option>
+          </select>
+        </FormField>
 
         <FormField label="Payment method" htmlFor="newPaymentMethod">
           <select
@@ -115,12 +131,26 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
             onChange={(e) => setPaymentMethod(e.target.value)}
             disabled={isSubmitting}
           >
-            <option value="cash">cash</option>
-            <option value="card">card</option>
-            <option value="transfer">transfer</option>
-            <option value="voucher">voucher</option>
+            <option value="cash">Cash</option>
+            <option value="card">Card</option>
+            <option value="transfer">Transfer</option>
+            <option value="voucher">Voucher</option>
           </select>
         </FormField>
+
+        {isCardPayment && (
+          <FormField label="Card name" htmlFor="newCardName">
+            <input
+              id="newCardName"
+              className="input"
+              placeholder="e.g. BANAMEX, HSBC, BBVA"
+              value={cardName}
+              onChange={(e) => setCardName(e.target.value)}
+              autoComplete="off"
+              disabled={isSubmitting}
+            />
+          </FormField>
+        )}
 
         <FormField label="Expense type" htmlFor="newExpenseType">
           <select
@@ -130,9 +160,9 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
             onChange={(e) => setExpenseType(e.target.value)}
             disabled={isSubmitting}
           >
-            <option value="variable">variable</option>
-            <option value="fixed">fixed</option>
-            <option value="msi">msi</option>
+            <option value="variable">Variable</option>
+            <option value="fixed">Fixed</option>
+            <option value="msi">MSI (installments)</option>
           </select>
         </FormField>
 

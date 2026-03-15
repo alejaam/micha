@@ -10,6 +10,8 @@ import (
 	"micha/backend/internal/ports/outbound"
 )
 
+var _ inbound.PatchExpenseUseCase = PatchExpenseUseCase{}
+
 // PatchExpenseUseCase applies a partial update to an expense.
 type PatchExpenseUseCase struct {
 	repo outbound.ExpenseRepository

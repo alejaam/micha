@@ -5,14 +5,10 @@ import (
 	"fmt"
 	"log/slog"
 
+	"micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
-)
-
-const (
-	defaultLimit = 20
-	maxLimit     = 100
 )
 
 // ListExpensesUseCase lists non-deleted expenses for a household with pagination.
@@ -32,10 +28,10 @@ func (u ListExpensesUseCase) Execute(ctx context.Context, query inbound.ListExpe
 
 	limit := query.Limit
 	if limit <= 0 {
-		limit = defaultLimit
+		limit = appshared.DefaultLimit
 	}
-	if limit > maxLimit {
-		limit = maxLimit
+	if limit > appshared.MaxLimit {
+		limit = appshared.MaxLimit
 	}
 
 	offset := query.Offset
@@ -51,3 +47,5 @@ func (u ListExpensesUseCase) Execute(ctx context.Context, query inbound.ListExpe
 	slog.InfoContext(ctx, "list expenses", "household_id", query.HouseholdID, "limit", limit, "offset", offset, "count", len(expenses))
 	return expenses, nil
 }
+
+var _ inbound.ListExpensesUseCase = ListExpensesUseCase{}
