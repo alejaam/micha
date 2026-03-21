@@ -105,28 +105,7 @@ export function DashboardPage() {
         )
     }
 
-    if (!hasMembers && !loadingMembers) {
-        return (
-            <div className="dashboardOnboarding">
-                <div className="onboardingCard card">
-                    <div className="onboardingHeader">
-                        <p className="authEyebrow">Almost there</p>
-                        <h2 className="authTitle">Add yourself as a member</h2>
-                        <p className="authMeta">
-                            Use the same email as your account so micha can auto-assign expenses to you.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        className="btn btnPrimary btnFull"
-                        onClick={() => navigate('/onboarding/member')}
-                    >
-                        Add member →
-                    </button>
-                </div>
-            </div>
-        )
-    }
+// No secondary onboarding needed because the household creator is auto-added
 
     async function handleCreate({ amountCents, description, paidByMemberId, isShared, paymentMethod, expenseType, cardName, category }) {
         setMessage('')

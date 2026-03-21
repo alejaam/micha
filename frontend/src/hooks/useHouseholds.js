@@ -1,10 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { listHouseholds } from '../api'
 
 export function useHouseholds({ isAuthenticated, handleProtectedError }) {
     const [householdId, setHouseholdId] = useState('')
     const [households, setHouseholds] = useState([])
     const [loadingHouseholds, setLoadingHouseholds] = useState(false)
+
+    const householdIdRef = useRef(householdId)
+    useEffect(() => {
+        householdIdRef.current = householdId
+    }, [householdId])
 
     const loadHouseholds = useCallback(async () => {
         if (!isAuthenticated) {
@@ -20,7 +25,7 @@ export function useHouseholds({ isAuthenticated, handleProtectedError }) {
             if (next.length === 0) {
                 setHouseholdId('')
             } else {
-                const selectedExists = next.some((household) => household.id === householdId)
+                const selectedExists = next.some((household) => household.id === householdIdRef.current)
                 if (!selectedExists) {
                     setHouseholdId(next[0].id)
                 }
@@ -30,7 +35,7 @@ export function useHouseholds({ isAuthenticated, handleProtectedError }) {
         } finally {
             setLoadingHouseholds(false)
         }
-    }, [handleProtectedError, householdId, isAuthenticated])
+    }, [handleProtectedError, isAuthenticated])
 
     useEffect(() => {
         if (!isAuthenticated) {
