@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createHousehold } from '../api'
-import { useAuth } from '../context/AuthContext'
 import { useAppShell } from '../context/AppShellContext'
-import { FormField } from '../ui/FormField'
+import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
+import { FormField } from '../ui/FormField'
 
 export function OnboardingHouseholdPage() {
     const { handleProtectedError } = useAuth()
-    const { loadHouseholds, setHouseholdId } = useAppShell()
+    const { setHouseholdId } = useAppShell()
     const navigate = useNavigate()
     const [name, setName] = useState('')
     const [settlementMode, setSettlementMode] = useState('equal')
@@ -27,9 +27,18 @@ export function OnboardingHouseholdPage() {
                 settlementMode,
                 currency: currency.trim().toUpperCase() || 'MXN',
             })
-            await loadHouseholds()
-            if (out?.household_id) setHouseholdId(out.household_id)
-            navigate('/onboarding/member', { replace: true })
+            const createdHouseholdId = out?.household_id ?? out?.id ?? ''
+            if (!createdHouseholdId) {
+                throw new Error('household created but id was not returned')
+            }
+
+            // Keep the new ID locally and continue onboarding immediately.
+            // Listing households here can return empty until the first member is created.
+            setHouseholdId(createdHouseholdId)
+            navigate('/onboarding/member', {
+                replace: true,
+                state: { householdId: createdHouseholdId },
+            })
         } catch (err) {
             if (!handleProtectedError(err)) setError(err.message)
         } finally {

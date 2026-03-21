@@ -44,6 +44,12 @@ func NewServer(port string, deps ServerDependencies) Server {
 		return protect(householdAuthz(h))
 	}
 
+	// Member creation supports bootstrap flow: allow first member in empty households.
+	householdMemberOrEmptyAuthz := HouseholdMemberOrEmptyAuthzMiddleware(deps.MemberRepo)
+	protectMemberCreate := func(h http.Handler) http.Handler {
+		return protect(householdMemberOrEmptyAuthz(h))
+	}
+
 	// Protected auth routes.
 	mux.Handle("GET /v1/auth/me", protect(http.HandlerFunc(ah.handleMe)))
 
@@ -59,7 +65,7 @@ func NewServer(port string, deps ServerDependencies) Server {
 	mux.Handle("GET /v1/households", protect(http.HandlerFunc(hh.handleList)))
 
 	mh := newMemberHandler(deps.Member)
-	mux.Handle("POST /v1/households/{household_id}/members", protectHousehold(http.HandlerFunc(mh.handleCreate)))
+	mux.Handle("POST /v1/households/{household_id}/members", protectMemberCreate(http.HandlerFunc(mh.handleCreate)))
 	mux.Handle("GET /v1/households/{household_id}/members", protectHousehold(http.HandlerFunc(mh.handleList)))
 
 	sh := newSettlementHandler(deps.Settlement)

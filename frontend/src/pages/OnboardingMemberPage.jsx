@@ -1,35 +1,44 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { createMember } from '../api'
-import { useAuth } from '../context/AuthContext'
 import { useAppShell } from '../context/AppShellContext'
-import { FormField } from '../ui/FormField'
+import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
+import { FormField } from '../ui/FormField'
 
 export function OnboardingMemberPage() {
     const { handleProtectedError } = useAuth()
-    const { householdId } = useAppShell()
+    const { householdId, setHouseholdId } = useAppShell()
+    const location = useLocation()
     const navigate = useNavigate()
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [salary, setSalary] = useState('0')
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
+    const routeHouseholdId = location.state?.householdId ?? ''
+    const activeHouseholdId = householdId || routeHouseholdId
 
     useEffect(() => {
-        if (!householdId) {
+        if (!householdId && routeHouseholdId) {
+            setHouseholdId(routeHouseholdId)
+        }
+    }, [householdId, routeHouseholdId, setHouseholdId])
+
+    useEffect(() => {
+        if (!activeHouseholdId) {
             navigate('/onboarding/household', { replace: true })
         }
-    }, [householdId, navigate])
+    }, [activeHouseholdId, navigate])
 
     async function handleSubmit(e) {
         e.preventDefault()
-        if (!householdId || !name.trim() || !email.trim()) return
+        if (!activeHouseholdId || !name.trim() || !email.trim()) return
         setBusy(true)
         setError('')
         try {
             await createMember({
-                householdId,
+                householdId: activeHouseholdId,
                 name: name.trim(),
                 email: email.trim(),
                 monthlySalaryCents: Number(salary) || 0,
