@@ -103,6 +103,8 @@ func main() {
 	householdDeps := httpadapter.HouseholdHandlerDeps{
 		Register: householdapp.NewRegisterHouseholdUseCase(householdRepo, idGen),
 		List:     householdapp.NewListHouseholdsUseCase(householdRepo),
+		Get:      householdapp.NewGetHouseholdUseCase(householdRepo),
+		Update:   householdapp.NewUpdateHouseholdUseCase(householdRepo),
 	}
 
 	// Category use cases and handler dependencies.
@@ -121,6 +123,8 @@ func main() {
 	memberDeps := httpadapter.MemberHandlerDeps{
 		Register: memberapp.NewRegisterMemberUseCase(memberRepo, idGen),
 		List:     memberapp.NewListMembersUseCase(memberRepo),
+		Update:   memberapp.NewUpdateMemberUseCase(memberRepo),
+		Delete:   memberapp.NewDeleteMemberUseCase(memberRepo),
 	}
 
 	// Server dependencies grouped by resource.
@@ -132,10 +136,11 @@ func main() {
 		Settlement: httpadapter.SettlementHandlerDeps{
 			Calculate: settlementapp.NewCalculateSettlementUseCase(householdRepo, memberRepo, expenseRepo),
 		},
-		Category:     categoryDeps,
-		SplitConfig:  splitConfigDeps,
-		JWTValidator: validator,
-		MemberRepo:   memberRepo,
+		Category:       categoryDeps,
+		SplitConfig:    splitConfigDeps,
+		JWTValidator:   validator,
+		MemberRepo:     memberRepo,
+		AllowedOrigins: cfg.AllowedOrigins,
 	}
 
 	srv := httpadapter.NewServer(cfg.HTTPPort, serverDeps)

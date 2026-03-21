@@ -49,7 +49,7 @@ func (r MemberRepository) FindByID(ctx context.Context, id string) (member.Membe
 	row := r.db.QueryRow(ctx,
 		`SELECT id, household_id, name, email, monthly_salary_cents, user_id, created_at, updated_at
 			FROM members
-			WHERE id = $1`,
+			WHERE id = $1 AND deleted_at IS NULL`,
 		id,
 	)
 
@@ -69,7 +69,7 @@ func (r MemberRepository) FindByUserID(ctx context.Context, householdID, userID 
 	row := r.db.QueryRow(ctx,
 		`SELECT id, household_id, name, email, monthly_salary_cents, user_id, created_at, updated_at
 			FROM members
-			WHERE household_id = $1 AND user_id = $2
+			WHERE household_id = $1 AND user_id = $2 AND deleted_at IS NULL
 			LIMIT 1`,
 		householdID, userID,
 	)
@@ -90,7 +90,7 @@ func (r MemberRepository) ListByHousehold(ctx context.Context, householdID strin
 	rows, err := r.db.Query(ctx,
 		`SELECT id, household_id, name, email, monthly_salary_cents, user_id, created_at, updated_at
 			FROM members
-			WHERE household_id = $1
+			WHERE household_id = $1 AND deleted_at IS NULL
 			ORDER BY created_at DESC
 			LIMIT $2 OFFSET $3`,
 		householdID, limit, offset,
@@ -120,7 +120,7 @@ func (r MemberRepository) ListAllByHousehold(ctx context.Context, householdID st
 	rows, err := r.db.Query(ctx,
 		`SELECT id, household_id, name, email, monthly_salary_cents, user_id, created_at, updated_at
 			FROM members
-			WHERE household_id = $1
+			WHERE household_id = $1 AND deleted_at IS NULL
 			ORDER BY created_at ASC`,
 		householdID,
 	)
@@ -179,7 +179,7 @@ func (r MemberRepository) FindByUserIDGlobal(ctx context.Context, userID string)
 	row := r.db.QueryRow(ctx,
 		`SELECT id, household_id, name, email, monthly_salary_cents, user_id, created_at, updated_at
 			FROM members
-			WHERE user_id = $1
+			WHERE user_id = $1 AND deleted_at IS NULL
 			LIMIT 1`,
 		userID,
 	)
@@ -198,7 +198,7 @@ func (r MemberRepository) FindByUserIDGlobal(ctx context.Context, userID string)
 // ListHouseholdIDsByUserID returns all household IDs the user belongs to.
 func (r MemberRepository) ListHouseholdIDsByUserID(ctx context.Context, userID string) ([]string, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT household_id FROM members WHERE user_id = $1`,
+		`SELECT household_id FROM members WHERE user_id = $1 AND deleted_at IS NULL`,
 		userID,
 	)
 	if err != nil {
@@ -219,6 +219,34 @@ func (r MemberRepository) ListHouseholdIDsByUserID(ctx context.Context, userID s
 	}
 
 	return ids, nil
+}
+
+// Delete soft-deletes a member by setting deleted_at.
+func (r MemberRepository) Delete(ctx context.Context, id string) error {
+	tag, err := r.db.Exec(ctx,
+		`UPDATE members SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`,
+		id,
+	)
+	if err != nil {
+		return fmt.Errorf("member repository delete: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return shared.ErrNotFound
+	}
+	return nil
+}
+
+// CountActiveByHousehold returns the count of non-deleted members in a household.
+func (r MemberRepository) CountActiveByHousehold(ctx context.Context, householdID string) (int, error) {
+	var count int
+	err := r.db.QueryRow(ctx,
+		`SELECT COUNT(*) FROM members WHERE household_id = $1 AND deleted_at IS NULL`,
+		householdID,
+	).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("member repository countActiveByHousehold: %w", err)
+	}
+	return count, nil
 }
 
 func scanMember(r row) (member.Member, error) {

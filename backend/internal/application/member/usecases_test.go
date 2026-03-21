@@ -107,6 +107,21 @@ func (m *mockMemberRepo) ListHouseholdIDsByUserID(_ context.Context, userID stri
 	return ids, nil
 }
 
+func (m *mockMemberRepo) Delete(_ context.Context, id string) error {
+	delete(m.members, id)
+	return nil
+}
+
+func (m *mockMemberRepo) CountActiveByHousehold(_ context.Context, householdID string) (int, error) {
+	count := 0
+	for _, item := range m.members {
+		if item.HouseholdID() == householdID {
+			count++
+		}
+	}
+	return count, nil
+}
+
 func TestRegisterMember_Success(t *testing.T) {
 	t.Parallel()
 	repo := newMockMemberRepo()

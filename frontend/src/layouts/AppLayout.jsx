@@ -2,6 +2,7 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useAppShell } from '../context/AppShellContext'
 import { AppHeader } from '../components/AppHeader'
+import { BottomNav } from '../components/BottomNav'
 
 /**
  * AppLayout — wraps protected routes.
@@ -28,6 +29,7 @@ export function AppLayout() {
                 isLoading={loadingHouseholds}
             />
             <Outlet />
+            <BottomNav />
         </div>
     )
 }

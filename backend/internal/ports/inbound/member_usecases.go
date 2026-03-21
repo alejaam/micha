@@ -32,10 +32,33 @@ type ListMembersQuery struct {
 	Offset      int
 }
 
+// UpdateMemberInput contains mutable fields for updating a member.
+type UpdateMemberInput struct {
+	MemberID           string
+	HouseholdID        string
+	Name               string
+	Email              string
+	MonthlySalaryCents int64
+}
+
+// DeleteMemberInput contains data required to delete a member.
+type DeleteMemberInput struct {
+	MemberID    string
+	HouseholdID string
+}
+
 type RegisterMemberUseCase interface {
 	Execute(ctx context.Context, input RegisterMemberInput) (RegisterMemberOutput, error)
 }
 
 type ListMembersUseCase interface {
 	Execute(ctx context.Context, query ListMembersQuery) ([]member.Member, error)
+}
+
+type UpdateMemberUseCase interface {
+	Execute(ctx context.Context, input UpdateMemberInput) error
+}
+
+type DeleteMemberUseCase interface {
+	Execute(ctx context.Context, input DeleteMemberInput) error
 }

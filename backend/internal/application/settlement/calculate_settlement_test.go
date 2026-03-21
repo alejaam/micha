@@ -151,6 +151,10 @@ func (m *memberMock) ListHouseholdIDsByUserID(_ context.Context, _ string) ([]st
 	return nil, nil
 }
 func (m *memberMock) Update(context.Context, member.Member) error { return nil }
+func (m *memberMock) Delete(_ context.Context, _ string) error    { return nil }
+func (m *memberMock) CountActiveByHousehold(_ context.Context, _ string) (int, error) {
+	return len(m.members), nil
+}
 
 type expenseMock struct {
 	expenses []expense.Expense

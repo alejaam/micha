@@ -26,10 +26,26 @@ type ListHouseholdsQuery struct {
 	Offset int
 }
 
+// UpdateHouseholdInput contains mutable fields for updating a household.
+type UpdateHouseholdInput struct {
+	HouseholdID    string
+	Name           string
+	SettlementMode household.SettlementMode
+	Currency       string
+}
+
 type RegisterHouseholdUseCase interface {
 	Execute(ctx context.Context, input RegisterHouseholdInput) (RegisterHouseholdOutput, error)
 }
 
 type ListHouseholdsUseCase interface {
 	Execute(ctx context.Context, query ListHouseholdsQuery) ([]household.Household, error)
+}
+
+type GetHouseholdUseCase interface {
+	Execute(ctx context.Context, householdID string) (household.Household, error)
+}
+
+type UpdateHouseholdUseCase interface {
+	Execute(ctx context.Context, input UpdateHouseholdInput) error
 }

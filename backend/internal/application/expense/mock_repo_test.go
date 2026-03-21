@@ -197,3 +197,7 @@ func (r *mockMemberRepo) ListByHousehold(_ context.Context, _ string, _, _ int) 
 	return nil, nil
 }
 func (r *mockMemberRepo) Update(_ context.Context, _ member.Member) error { return nil }
+func (r *mockMemberRepo) Delete(_ context.Context, _ string) error        { return nil }
+func (r *mockMemberRepo) CountActiveByHousehold(_ context.Context, _ string) (int, error) {
+	return len(r.members), nil
+}

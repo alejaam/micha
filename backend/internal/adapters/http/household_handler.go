@@ -5,7 +5,10 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/google/uuid"
+
 	"micha/backend/internal/domain/household"
+	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
 )
 
@@ -13,6 +16,8 @@ import (
 type HouseholdHandlerDeps struct {
 	Register inbound.RegisterHouseholdUseCase
 	List     inbound.ListHouseholdsUseCase
+	Get      inbound.GetHouseholdUseCase
+	Update   inbound.UpdateHouseholdUseCase
 }
 
 // householdHandler handles HTTP requests for the household resource.
@@ -86,6 +91,8 @@ func (h householdHandler) handleList(w http.ResponseWriter, r *http.Request) {
 
 func writeErrorFromHouseholdDomain(w http.ResponseWriter, err error) {
 	switch {
+	case errors.Is(err, shared.ErrNotFound):
+		writeError(w, http.StatusNotFound, "NOT_FOUND", "household not found")
 	case errors.Is(err, household.ErrInvalidName):
 		writeError(w, http.StatusBadRequest, "INVALID_NAME", "household name is required")
 	case errors.Is(err, household.ErrInvalidSettlementMode):
@@ -96,4 +103,71 @@ func writeErrorFromHouseholdDomain(w http.ResponseWriter, err error) {
 		slog.Error("household handler: internal error", "error", err)
 		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "an internal error occurred")
 	}
+}
+
+// handleGet handles GET /v1/households/{household_id}.
+func (h householdHandler) handleGet(w http.ResponseWriter, r *http.Request) {
+	householdID := r.PathValue("household_id")
+	if _, err := uuid.Parse(householdID); err != nil {
+		writeError(w, http.StatusBadRequest, "INVALID_HOUSEHOLD_ID", "household_id must be a valid UUID")
+		return
+	}
+
+	hh, err := h.deps.Get.Execute(r.Context(), householdID)
+	if err != nil {
+		writeErrorFromHouseholdDomain(w, err)
+		return
+	}
+
+	attrs := hh.Attributes()
+	splitConfig := make([]map[string]any, 0, len(attrs.SplitConfig.Splits()))
+	for _, s := range attrs.SplitConfig.Splits() {
+		splitConfig = append(splitConfig, map[string]any{
+			"member_id":  s.MemberID,
+			"percentage": s.Percentage,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"data": map[string]any{
+			"id":              string(attrs.ID),
+			"name":            attrs.Name,
+			"settlement_mode": attrs.SettlementMode,
+			"currency":        attrs.Currency,
+			"split_config":    splitConfig,
+			"created_at":      attrs.CreatedAt,
+			"updated_at":      attrs.UpdatedAt,
+		},
+	})
+}
+
+// handleUpdate handles PUT /v1/households/{household_id}.
+func (h householdHandler) handleUpdate(w http.ResponseWriter, r *http.Request) {
+	householdID := r.PathValue("household_id")
+	if _, err := uuid.Parse(householdID); err != nil {
+		writeError(w, http.StatusBadRequest, "INVALID_HOUSEHOLD_ID", "household_id must be a valid UUID")
+		return
+	}
+
+	var body struct {
+		Name           string `json:"name"`
+		SettlementMode string `json:"settlement_mode"`
+		Currency       string `json:"currency"`
+	}
+	if err := decodeJSON(r, w, &body); err != nil {
+		return
+	}
+
+	err := h.deps.Update.Execute(r.Context(), inbound.UpdateHouseholdInput{
+		HouseholdID:    householdID,
+		Name:           body.Name,
+		SettlementMode: household.SettlementMode(body.SettlementMode),
+		Currency:       body.Currency,
+	})
+	if err != nil {
+		writeErrorFromHouseholdDomain(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

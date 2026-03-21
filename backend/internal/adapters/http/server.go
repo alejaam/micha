@@ -8,21 +8,22 @@ import (
 
 // ServerDependencies groups all resource-level dependencies for the HTTP server.
 type ServerDependencies struct {
-	Auth         AuthHandlerDeps
-	Expense      ExpenseHandlerDeps
-	Household    HouseholdHandlerDeps
-	Member       MemberHandlerDeps
-	Settlement   SettlementHandlerDeps
-	Category     CategoryHandlerDeps
-	SplitConfig  SplitConfigHandlerDeps
-	JWTValidator outbound.TokenValidator
-	MemberRepo   outbound.MemberRepository
+	Auth           AuthHandlerDeps
+	Expense        ExpenseHandlerDeps
+	Household      HouseholdHandlerDeps
+	Member         MemberHandlerDeps
+	Settlement     SettlementHandlerDeps
+	Category       CategoryHandlerDeps
+	SplitConfig    SplitConfigHandlerDeps
+	JWTValidator   outbound.TokenValidator
+	MemberRepo     outbound.MemberRepository
+	AllowedOrigins []string
 }
 
 // Server is the primary HTTP adapter.
 type Server struct {
-	port string
-	mux  *http.ServeMux
+	port    string
+	handler http.Handler
 }
 
 // NewServer constructs a Server and registers all routes.
@@ -63,10 +64,14 @@ func NewServer(port string, deps ServerDependencies) Server {
 	hh := newHouseholdHandler(deps.Household)
 	mux.Handle("POST /v1/households", protect(http.HandlerFunc(hh.handleCreate)))
 	mux.Handle("GET /v1/households", protect(http.HandlerFunc(hh.handleList)))
+	mux.Handle("GET /v1/households/{household_id}", protectHousehold(http.HandlerFunc(hh.handleGet)))
+	mux.Handle("PUT /v1/households/{household_id}", protectHousehold(http.HandlerFunc(hh.handleUpdate)))
 
 	mh := newMemberHandler(deps.Member)
 	mux.Handle("POST /v1/households/{household_id}/members", protectMemberCreate(http.HandlerFunc(mh.handleCreate)))
 	mux.Handle("GET /v1/households/{household_id}/members", protectHousehold(http.HandlerFunc(mh.handleList)))
+	mux.Handle("PUT /v1/households/{household_id}/members/{member_id}", protectHousehold(http.HandlerFunc(mh.handleUpdate)))
+	mux.Handle("DELETE /v1/households/{household_id}/members/{member_id}", protectHousehold(http.HandlerFunc(mh.handleDelete)))
 
 	sh := newSettlementHandler(deps.Settlement)
 	mux.Handle("GET /v1/households/{household_id}/settlement", protectHousehold(http.HandlerFunc(sh.handleGetMonthly)))
@@ -79,10 +84,14 @@ func NewServer(port string, deps ServerDependencies) Server {
 	sch := newSplitConfigHandler(deps.SplitConfig)
 	mux.Handle("PUT /v1/households/{household_id}/split-config", protectHousehold(http.HandlerFunc(sch.handleUpdate)))
 
-	return Server{port: port, mux: mux}
+	// Apply middleware chain: RequestID -> CORS -> routes
+	cors := CORSMiddleware(CORSConfig{AllowedOrigins: deps.AllowedOrigins})
+	handler := RequestIDMiddleware(cors(mux))
+
+	return Server{port: port, handler: handler}
 }
 
 // Handler returns the underlying http.Handler for use with http.Server.
 func (s Server) Handler() http.Handler {
-	return s.mux
+	return s.handler
 }

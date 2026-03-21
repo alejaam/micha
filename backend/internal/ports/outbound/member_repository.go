@@ -21,4 +21,8 @@ type MemberRepository interface {
 	// ListHouseholdIDsByUserID returns all household IDs that the user belongs to.
 	ListHouseholdIDsByUserID(ctx context.Context, userID string) ([]string, error)
 	Update(ctx context.Context, m member.Member) error
+	// Delete soft-deletes a member by setting deleted_at.
+	Delete(ctx context.Context, id string) error
+	// CountActiveByHousehold returns the count of non-deleted members in a household.
+	CountActiveByHousehold(ctx context.Context, householdID string) (int, error)
 }

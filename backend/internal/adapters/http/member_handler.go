@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	memberapp "micha/backend/internal/application/member"
 	"micha/backend/internal/domain/member"
 	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
@@ -16,6 +17,8 @@ import (
 type MemberHandlerDeps struct {
 	Register inbound.RegisterMemberUseCase
 	List     inbound.ListMembersUseCase
+	Update   inbound.UpdateMemberUseCase
+	Delete   inbound.DeleteMemberUseCase
 }
 
 // memberHandler handles HTTP requests for the member resource.
@@ -121,8 +124,72 @@ func writeErrorFromMemberDomain(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, "INVALID_EMAIL", "email is invalid")
 	case errors.Is(err, member.ErrInvalidSalary):
 		writeError(w, http.StatusBadRequest, "INVALID_SALARY", "monthly_salary_cents must be greater than or equal to zero")
+	case errors.Is(err, memberapp.ErrLastMember):
+		writeError(w, http.StatusConflict, "LAST_MEMBER", "cannot delete the last member of a household")
 	default:
 		slog.Error("member handler: internal error", "error", err)
 		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "an internal error occurred")
 	}
+}
+
+// handleUpdate handles PUT /v1/households/{household_id}/members/{member_id}.
+func (h memberHandler) handleUpdate(w http.ResponseWriter, r *http.Request) {
+	householdID, ok := parseHouseholdID(w, r)
+	if !ok {
+		return
+	}
+
+	memberID := r.PathValue("member_id")
+	if _, err := uuid.Parse(memberID); err != nil {
+		writeError(w, http.StatusBadRequest, "INVALID_MEMBER_ID", "member_id must be a valid UUID")
+		return
+	}
+
+	var body struct {
+		Name               string `json:"name"`
+		Email              string `json:"email"`
+		MonthlySalaryCents int64  `json:"monthly_salary_cents"`
+	}
+	if err := decodeJSON(r, w, &body); err != nil {
+		return
+	}
+
+	err := h.deps.Update.Execute(r.Context(), inbound.UpdateMemberInput{
+		MemberID:           memberID,
+		HouseholdID:        householdID,
+		Name:               body.Name,
+		Email:              body.Email,
+		MonthlySalaryCents: body.MonthlySalaryCents,
+	})
+	if err != nil {
+		writeErrorFromMemberDomain(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// handleDelete handles DELETE /v1/households/{household_id}/members/{member_id}.
+func (h memberHandler) handleDelete(w http.ResponseWriter, r *http.Request) {
+	householdID, ok := parseHouseholdID(w, r)
+	if !ok {
+		return
+	}
+
+	memberID := r.PathValue("member_id")
+	if _, err := uuid.Parse(memberID); err != nil {
+		writeError(w, http.StatusBadRequest, "INVALID_MEMBER_ID", "member_id must be a valid UUID")
+		return
+	}
+
+	err := h.deps.Delete.Execute(r.Context(), inbound.DeleteMemberInput{
+		MemberID:    memberID,
+		HouseholdID: householdID,
+	})
+	if err != nil {
+		writeErrorFromMemberDomain(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
