@@ -42,7 +42,7 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		PaymentMethod  string `json:"payment_method"`
 		ExpenseType    string `json:"expense_type"`
 		CardName       string `json:"card_name"`
-		Category       string `json:"category"`
+		CategoryID     string `json:"category_id"`
 	}
 	if err := decodeJSON(r, w, &body); err != nil {
 		return
@@ -68,7 +68,7 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		PaymentMethod:  body.PaymentMethod,
 		ExpenseType:    body.ExpenseType,
 		CardName:       body.CardName,
-		Category:       body.Category,
+		CategoryID:     body.CategoryID,
 	}
 
 	out, err := h.deps.Register.Execute(r.Context(), input)
@@ -183,7 +183,7 @@ func expenseJSON(e expense.Expense) map[string]any {
 		"payment_method":    string(attrs.PaymentMethod),
 		"expense_type":      string(attrs.ExpenseType),
 		"card_name":         attrs.CardName,
-		"category":          string(attrs.Category),
+		"category_id":       attrs.CategoryID,
 		"created_at":        attrs.CreatedAt,
 		"updated_at":        attrs.UpdatedAt,
 	}

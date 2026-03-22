@@ -70,12 +70,12 @@ func (m *mockCategoryRepo) Delete(_ context.Context, id string) error {
 
 // seed helper
 func seedCategory(repo *mockCategoryRepo, id, householdID, name, slug string, isDefault bool) {
+	_ = isDefault
 	c, _ := category.NewFromAttributes(category.Attributes{
 		ID:          category.ID(id),
 		HouseholdID: householdID,
 		Name:        name,
 		Slug:        slug,
-		IsDefault:   isDefault,
 		CreatedAt:   time.Now(),
 	})
 	_ = repo.Save(context.Background(), c)

@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"micha/backend/internal/application/shared"
+	appshared "micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
@@ -62,7 +62,7 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		PaymentMethod:  expense.PaymentMethod(input.PaymentMethod),
 		ExpenseType:    expense.ExpenseType(input.ExpenseType),
 		CardName:       input.CardName,
-		Category:       expense.Category(input.Category),
+		CategoryID:     input.CategoryID,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	})

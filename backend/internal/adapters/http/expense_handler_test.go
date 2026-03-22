@@ -220,7 +220,7 @@ func TestExpenseHandler_Get_Success(t *testing.T) {
 		PaymentMethod:  expense.PaymentMethodCard,
 		ExpenseType:    expense.ExpenseTypeVariable,
 		CardName:       "BBVA Azul",
-		Category:       expense.CategoryFood,
+		CategoryID:     "cat-food",
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	})
@@ -351,7 +351,7 @@ func TestExpenseHandler_List_Success(t *testing.T) {
 		Currency:       "MXN",
 		PaymentMethod:  expense.PaymentMethodCard,
 		ExpenseType:    expense.ExpenseTypeVariable,
-		Category:       expense.CategoryFood,
+		CategoryID:     "cat-food",
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	})
@@ -366,7 +366,7 @@ func TestExpenseHandler_List_Success(t *testing.T) {
 		Currency:       "MXN",
 		PaymentMethod:  expense.PaymentMethodCash,
 		ExpenseType:    expense.ExpenseTypeFixed,
-		Category:       expense.CategoryRent,
+		CategoryID:     "cat-rent",
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	})
@@ -460,7 +460,7 @@ func TestExpenseHandler_Patch_Success(t *testing.T) {
 		Currency:       "MXN",
 		PaymentMethod:  expense.PaymentMethodCard,
 		ExpenseType:    expense.ExpenseTypeVariable,
-		Category:       expense.CategoryFood,
+		CategoryID:     "cat-food",
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	})

@@ -17,7 +17,7 @@ type RegisterExpenseInput struct {
 	PaymentMethod  string
 	ExpenseType    string
 	CardName       string
-	Category       string
+	CategoryID     string
 }
 
 // RegisterExpenseOutput contains created expense identifiers.

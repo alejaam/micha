@@ -1,54 +1,80 @@
 package member
 
 import (
+	"errors"
+	"regexp"
 	"strings"
 	"time"
 
 	"micha/backend/internal/domain/shared"
 )
 
+var (
+	ErrInvalidName   = errors.New("invalid member name")
+	ErrInvalidEmail  = errors.New("invalid member email")
+	ErrInvalidSalary = errors.New("invalid member monthly salary")
+)
+
+var emailPattern = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
+
 // ID is the unique identifier type for a member.
 type ID string
 
-// MemberAttributes is the flat DTO used for construction and rehydration.
-type MemberAttributes struct {
-	ID              ID
-	HouseholdID     string
-	UserID          string
-	ContributionPct float64
-	ValidFrom       time.Time
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+// Attributes is the flat DTO used for construction and rehydration.
+type Attributes struct {
+	ID                 ID
+	HouseholdID        string
+	Name               string
+	Email              string
+	UserID             string // foreign key to users; may be empty for pending invites
+	MonthlySalaryCents int64  // in cents; 0 is valid (no salary)
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 // Member represents a person within a Household.
-// ContributionPct defines the proportion of shared expenses they pay.
-// ValidFrom ensures the % only applies forward, never retroactively.
+// MonthlySalaryCents defines their contribution basis for proportional expense splits.
 type Member struct {
-	id              ID
-	householdID     string
-	userID          string
-	contributionPct float64
-	validFrom       time.Time
-	createdAt       time.Time
-	updatedAt       time.Time
+	id                 ID
+	householdID        string
+	name               string
+	email              string
+	userID             string
+	monthlySalaryCents int64
+	createdAt          time.Time
+	updatedAt          time.Time
 }
 
-// New constructs a Member from individual fields.
-func New(id ID, householdID string, userID string, contributionPct float64, validFrom time.Time, createdAt time.Time) (Member, error) {
-	return NewFromAttributes(MemberAttributes{
-		ID:              id,
-		HouseholdID:     householdID,
-		UserID:          userID,
-		ContributionPct: contributionPct,
-		ValidFrom:       validFrom,
-		CreatedAt:       createdAt,
-		UpdatedAt:       createdAt,
+// New constructs a Member from individual fields without a linked user.
+func New(id ID, householdID string, name string, email string, monthlySalaryCents int64, createdAt time.Time) (Member, error) {
+	return NewFromAttributes(Attributes{
+		ID:                 id,
+		HouseholdID:        householdID,
+		Name:               name,
+		Email:              email,
+		UserID:             "",
+		MonthlySalaryCents: monthlySalaryCents,
+		CreatedAt:          createdAt,
+		UpdatedAt:          createdAt,
+	})
+}
+
+// NewWithUserID constructs a Member with a linked user.
+func NewWithUserID(id ID, householdID string, name string, email string, userID string, monthlySalaryCents int64, createdAt time.Time) (Member, error) {
+	return NewFromAttributes(Attributes{
+		ID:                 id,
+		HouseholdID:        householdID,
+		Name:               name,
+		Email:              email,
+		UserID:             userID,
+		MonthlySalaryCents: monthlySalaryCents,
+		CreatedAt:          createdAt,
+		UpdatedAt:          createdAt,
 	})
 }
 
 // NewFromAttributes constructs a Member from a flat attribute bag (used for rehydration).
-func NewFromAttributes(attrs MemberAttributes) (Member, error) {
+func NewFromAttributes(attrs Attributes) (Member, error) {
 	if strings.TrimSpace(string(attrs.ID)) == "" {
 		return Member{}, shared.ErrInvalidID
 	}
@@ -57,12 +83,18 @@ func NewFromAttributes(attrs MemberAttributes) (Member, error) {
 		return Member{}, shared.ErrInvalidID
 	}
 
-	if strings.TrimSpace(attrs.UserID) == "" {
-		return Member{}, shared.ErrInvalidID
+	name := strings.TrimSpace(attrs.Name)
+	if name == "" {
+		return Member{}, ErrInvalidName
 	}
 
-	if attrs.ContributionPct < 0 || attrs.ContributionPct > 100 {
-		return Member{}, shared.ErrInvalidPercentage
+	email := strings.ToLower(strings.TrimSpace(attrs.Email))
+	if !emailPattern.MatchString(email) {
+		return Member{}, ErrInvalidEmail
+	}
+
+	if attrs.MonthlySalaryCents < 0 {
+		return Member{}, ErrInvalidSalary
 	}
 
 	updatedAt := attrs.UpdatedAt
@@ -71,33 +103,70 @@ func NewFromAttributes(attrs MemberAttributes) (Member, error) {
 	}
 
 	return Member{
-		id:              attrs.ID,
-		householdID:     attrs.HouseholdID,
-		userID:          attrs.UserID,
-		contributionPct: attrs.ContributionPct,
-		validFrom:       attrs.ValidFrom,
-		createdAt:       attrs.CreatedAt,
-		updatedAt:       updatedAt,
+		id:                 attrs.ID,
+		householdID:        attrs.HouseholdID,
+		name:               name,
+		email:              email,
+		userID:             strings.TrimSpace(attrs.UserID),
+		monthlySalaryCents: attrs.MonthlySalaryCents,
+		createdAt:          attrs.CreatedAt,
+		updatedAt:          updatedAt,
 	}, nil
 }
 
 // Attributes returns a copy of all fields as a flat DTO.
-func (m Member) Attributes() MemberAttributes {
-	return MemberAttributes{
-		ID:              m.id,
-		HouseholdID:     m.householdID,
-		UserID:          m.userID,
-		ContributionPct: m.contributionPct,
-		ValidFrom:       m.validFrom,
-		CreatedAt:       m.createdAt,
-		UpdatedAt:       m.updatedAt,
+func (m Member) Attributes() Attributes {
+	return Attributes{
+		ID:                 m.id,
+		HouseholdID:        m.householdID,
+		Name:               m.name,
+		Email:              m.email,
+		UserID:             m.userID,
+		MonthlySalaryCents: m.monthlySalaryCents,
+		CreatedAt:          m.createdAt,
+		UpdatedAt:          m.updatedAt,
 	}
 }
 
-func (m Member) ID() ID                   { return m.id }
-func (m Member) HouseholdID() string      { return m.householdID }
-func (m Member) UserID() string           { return m.userID }
-func (m Member) ContributionPct() float64 { return m.contributionPct }
-func (m Member) ValidFrom() time.Time     { return m.validFrom }
-func (m Member) CreatedAt() time.Time     { return m.createdAt }
-func (m Member) UpdatedAt() time.Time     { return m.updatedAt }
+// LinkUser associates this member with a user account.
+func (m *Member) LinkUser(userID string) error {
+	if strings.TrimSpace(userID) == "" {
+		return shared.ErrInvalidID
+	}
+	m.userID = userID
+	m.updatedAt = time.Now()
+	return nil
+}
+
+// UpdateProfile updates member personal information.
+func (m *Member) UpdateProfile(name string, email string, monthlySalaryCents int64) error {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return ErrInvalidName
+	}
+
+	email = strings.ToLower(strings.TrimSpace(email))
+	if !emailPattern.MatchString(email) {
+		return ErrInvalidEmail
+	}
+
+	if monthlySalaryCents < 0 {
+		return ErrInvalidSalary
+	}
+
+	m.name = name
+	m.email = email
+	m.monthlySalaryCents = monthlySalaryCents
+	m.updatedAt = time.Now()
+
+	return nil
+}
+
+func (m Member) ID() ID                    { return m.id }
+func (m Member) HouseholdID() string       { return m.householdID }
+func (m Member) Name() string              { return m.name }
+func (m Member) Email() string             { return m.email }
+func (m Member) UserID() string            { return m.userID }
+func (m Member) MonthlySalaryCents() int64 { return m.monthlySalaryCents }
+func (m Member) CreatedAt() time.Time      { return m.createdAt }
+func (m Member) UpdatedAt() time.Time      { return m.updatedAt }

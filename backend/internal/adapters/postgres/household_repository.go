@@ -30,7 +30,7 @@ func loadSplitConfig(ctx context.Context, db *pgxpool.Pool, householdID string) 
 	var splits []household.MemberSplit
 	for rows.Next() {
 		var memberID string
-		var pct int
+		var pct float64
 		if err := rows.Scan(&memberID, &pct); err != nil {
 			return household.SplitConfig{}, fmt.Errorf("load split config: scan: %w", err)
 		}

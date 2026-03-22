@@ -53,10 +53,9 @@ func Calculate(mode household.SettlementMode, members []member.Member, expenses 
 	memberResults := make([]MemberResult, 0, len(members))
 
 	for i, m := range members {
-		attrs := m.Attributes()
-		memberID := string(attrs.ID)
+		memberID := string(m.ID())
 		memberIndex[memberID] = i
-		memberResults = append(memberResults, MemberResult{MemberID: memberID, Name: attrs.Name})
+		memberResults = append(memberResults, MemberResult{MemberID: memberID, Name: m.Name()})
 	}
 
 	for _, e := range expenses {

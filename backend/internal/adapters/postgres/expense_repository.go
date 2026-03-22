@@ -61,11 +61,11 @@ func NewExpenseRepository(db *pgxpool.Pool) ExpenseRepository {
 func (r ExpenseRepository) Save(ctx context.Context, e expense.Expense) error {
 	attrs := e.Attributes()
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO expenses (id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category, created_at, updated_at)
+		`INSERT INTO expenses (id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category_id, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
 		string(attrs.ID), attrs.HouseholdID, attrs.PaidByMemberID, attrs.AmountCents,
 		attrs.Description, attrs.IsShared, attrs.Currency, string(attrs.PaymentMethod),
-		string(attrs.ExpenseType), attrs.CardName, string(attrs.Category),
+		string(attrs.ExpenseType), attrs.CardName, attrs.CategoryID,
 		attrs.CreatedAt, attrs.UpdatedAt,
 	)
 	if err != nil {
@@ -140,13 +140,13 @@ func (r ExpenseRepository) Update(ctx context.Context, e expense.Expense) error 
 				payment_method    = $6,
 				expense_type      = $7,
 				card_name         = $8,
-				category          = $9,
+				category_id       = $9,
 				updated_at        = $10,
 				deleted_at        = $11
 			WHERE id = $12`,
 		attrs.PaidByMemberID, attrs.AmountCents, attrs.Description,
 		attrs.IsShared, attrs.Currency, string(attrs.PaymentMethod),
-		string(attrs.ExpenseType), attrs.CardName, string(attrs.Category),
+		string(attrs.ExpenseType), attrs.CardName, attrs.CategoryID,
 		attrs.UpdatedAt, attrs.DeletedAt, string(attrs.ID),
 	)
 	if err != nil {
@@ -179,13 +179,13 @@ func scanExpense(r row) (expense.Expense, error) {
 		paymentMethod  string
 		expenseType    string
 		cardName       string
-		category       string
+		categoryID     string
 		createdAt      time.Time
 		updatedAt      time.Time
 		deletedAt      *time.Time
 	)
 
-	if err := r.Scan(&id, &householdID, &paidByMemberID, &amountCents, &description, &isShared, &currency, &paymentMethod, &expenseType, &cardName, &category, &createdAt, &updatedAt, &deletedAt); err != nil {
+	if err := r.Scan(&id, &householdID, &paidByMemberID, &amountCents, &description, &isShared, &currency, &paymentMethod, &expenseType, &cardName, &categoryID, &createdAt, &updatedAt, &deletedAt); err != nil {
 		return expense.Expense{}, err
 	}
 
@@ -200,7 +200,7 @@ func scanExpense(r row) (expense.Expense, error) {
 		PaymentMethod:  expense.PaymentMethod(paymentMethod),
 		ExpenseType:    expense.ExpenseType(expenseType),
 		CardName:       cardName,
-		Category:       expense.Category(category),
+		CategoryID:     categoryID,
 		CreatedAt:      createdAt,
 		UpdatedAt:      updatedAt,
 		DeletedAt:      deletedAt,

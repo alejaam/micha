@@ -28,9 +28,9 @@ func NewCategoryRepository(db *pgxpool.Pool) CategoryRepository {
 func (r CategoryRepository) Save(ctx context.Context, c category.Category) error {
 	attrs := c.Attributes()
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO categories (id, household_id, name, slug, is_default, created_at)
-			VALUES ($1, $2, $3, $4, $5, $6)`,
-		string(attrs.ID), attrs.HouseholdID, attrs.Name, attrs.Slug, attrs.IsDefault, attrs.CreatedAt,
+		`INSERT INTO categories (id, household_id, name, slug, created_at)
+			VALUES ($1, $2, $3, $4, $5)`,
+		string(attrs.ID), attrs.HouseholdID, attrs.Name, attrs.Slug, attrs.CreatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("category repository save: %w", err)
@@ -41,7 +41,7 @@ func (r CategoryRepository) Save(ctx context.Context, c category.Category) error
 // FindBySlug retrieves a category by household and slug.
 func (r CategoryRepository) FindBySlug(ctx context.Context, householdID, slug string) (category.Category, error) {
 	row := r.db.QueryRow(ctx,
-		`SELECT id, household_id, name, slug, is_default, created_at
+		`SELECT id, household_id, name, slug, created_at
 			FROM categories
 			WHERE household_id = $1 AND slug = $2
 			LIMIT 1`,
@@ -58,13 +58,13 @@ func (r CategoryRepository) FindBySlug(ctx context.Context, householdID, slug st
 	return c, nil
 }
 
-// ListByHousehold returns all categories for a household ordered by is_default DESC, name ASC.
+// ListByHousehold returns all categories for a household ordered by name ASC.
 func (r CategoryRepository) ListByHousehold(ctx context.Context, householdID string) ([]category.Category, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, household_id, name, slug, is_default, created_at
+		`SELECT id, household_id, name, slug, created_at
 			FROM categories
 			WHERE household_id = $1
-			ORDER BY is_default DESC, name ASC`,
+			ORDER BY name ASC`,
 		householdID,
 	)
 	if err != nil {
@@ -110,11 +110,10 @@ func scanCategory(r row) (category.Category, error) {
 		householdID string
 		name        string
 		slug        string
-		isDefault   bool
 		createdAt   time.Time
 	)
 
-	if err := r.Scan(&id, &householdID, &name, &slug, &isDefault, &createdAt); err != nil {
+	if err := r.Scan(&id, &householdID, &name, &slug, &createdAt); err != nil {
 		return category.Category{}, err
 	}
 
@@ -123,7 +122,6 @@ func scanCategory(r row) (category.Category, error) {
 		HouseholdID: householdID,
 		Name:        name,
 		Slug:        slug,
-		IsDefault:   isDefault,
 		CreatedAt:   createdAt,
 	})
 }

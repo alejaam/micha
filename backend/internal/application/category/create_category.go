@@ -32,7 +32,7 @@ func (u CreateCategoryUseCase) Execute(ctx context.Context, input inbound.Create
 	}
 
 	c, err := category.New(
-		category.ID(u.idGen.NewID()),
+		u.idGen.NewID(),
 		input.HouseholdID,
 		input.Name,
 		input.Slug,

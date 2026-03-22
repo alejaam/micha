@@ -85,7 +85,7 @@ func (h categoryHandler) handleList(w http.ResponseWriter, r *http.Request) {
 			"household_id": attrs.HouseholdID,
 			"name":         attrs.Name,
 			"slug":         attrs.Slug,
-			"is_default":   attrs.IsDefault,
+			"is_default":   c.IsDefault(),
 			"created_at":   attrs.CreatedAt,
 		})
 	}
@@ -148,7 +148,7 @@ func (h splitConfigHandler) handleUpdate(w http.ResponseWriter, r *http.Request)
 
 	splits := make([]household.MemberSplit, 0, len(body.Splits))
 	for _, s := range body.Splits {
-		splits = append(splits, household.MemberSplit{MemberID: s.MemberID, Percentage: s.Percentage})
+		splits = append(splits, household.MemberSplit{MemberID: s.MemberID, Percentage: float64(s.Percentage)})
 	}
 
 	if err := h.deps.Update.Execute(r.Context(), inbound.UpdateSplitConfigInput{
@@ -166,12 +166,8 @@ func (h splitConfigHandler) handleUpdate(w http.ResponseWriter, r *http.Request)
 
 func writeErrorFromCategoryDomain(w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, category.ErrInvalidName):
-		writeError(w, http.StatusBadRequest, "INVALID_NAME", "category name is required")
 	case errors.Is(err, category.ErrInvalidSlug):
 		writeError(w, http.StatusBadRequest, "INVALID_SLUG", "slug must be lowercase alphanumeric with hyphens, max 64 chars")
-	case errors.Is(err, category.ErrInvalidHouseholdID):
-		writeError(w, http.StatusBadRequest, "INVALID_HOUSEHOLD_ID", "household id is required")
 	case errors.Is(err, shared.ErrAlreadyExists):
 		writeError(w, http.StatusConflict, "ALREADY_EXISTS", "a category with this slug already exists")
 	case errors.Is(err, shared.ErrNotFound):
