@@ -42,6 +42,7 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		PaymentMethod  string `json:"payment_method"`
 		ExpenseType    string `json:"expense_type"`
 		CardName       string `json:"card_name"`
+		Category       string `json:"category"`
 		CategoryID     string `json:"category_id"`
 	}
 	if err := decodeJSON(r, w, &body); err != nil {
@@ -58,6 +59,11 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		currency = "MXN"
 	}
 
+	categoryID := body.CategoryID
+	if categoryID == "" {
+		categoryID = body.Category
+	}
+
 	input := inbound.RegisterExpenseInput{
 		HouseholdID:    body.HouseholdID,
 		PaidByMemberID: body.PaidByMemberID,
@@ -68,7 +74,7 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		PaymentMethod:  body.PaymentMethod,
 		ExpenseType:    body.ExpenseType,
 		CardName:       body.CardName,
-		CategoryID:     body.CategoryID,
+		CategoryID:     categoryID,
 	}
 
 	out, err := h.deps.Register.Execute(r.Context(), input)
