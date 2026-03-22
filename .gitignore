@@ -1,0 +1,6 @@
+.vscode/launch.json
+backend/cmd/api/__debug_*
+backend/api
+.github/copilot-instructions.md
+frontend/node_modules/
+frontend/dist/

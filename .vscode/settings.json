@@ -1,0 +1,9 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^docker exec -i micha-db psql -U micha -d micha -c '\\\\dt'$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "npx skills": true
+    }
+}
