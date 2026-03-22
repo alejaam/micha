@@ -54,56 +54,59 @@ type ID string
 
 // ExpenseAttributes is the flat DTO used for construction and rehydration.
 type ExpenseAttributes struct {
-	ID             ID
-	HouseholdID    string
-	PaidByMemberID string
-	AmountCents    int64
-	Description    string
-	IsShared       bool
-	Currency       string
-	PaymentMethod  PaymentMethod
-	ExpenseType    ExpenseType
-	CardName       string
-	Category       Category
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	DeletedAt      *time.Time
+	ID            ID
+	MemberID      string // The member who registered this expense
+	PeriodID      string // The period this expense belongs to
+	CategoryID    string // The category this expense belongs to
+	HouseholdID   string
+	AmountCents   int64
+	Description   string
+	IsShared      bool
+	Currency      string
+	PaymentMethod PaymentMethod
+	ExpenseType   ExpenseType
+	CardName      string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     *time.Time
 }
 
 // Expense is the aggregate root for an expense record.
 type Expense struct {
-	id             ID
-	householdID    string
-	paidByMemberID string
-	amountCents    int64
-	description    string
-	isShared       bool
-	currency       string
-	paymentMethod  PaymentMethod
-	expenseType    ExpenseType
-	cardName       string
-	category       Category
-	createdAt      time.Time
-	updatedAt      time.Time
-	deletedAt      *time.Time
+	id            ID
+	memberID      string
+	periodID      string
+	categoryID    string
+	householdID   string
+	amountCents   int64
+	description   string
+	isShared      bool
+	currency      string
+	paymentMethod PaymentMethod
+	expenseType   ExpenseType
+	cardName      string
+	createdAt     time.Time
+	updatedAt     time.Time
+	deletedAt     *time.Time
 }
 
 // New constructs an Expense from individual fields.
 func New(id ID, householdID string, amountCents int64, description string, createdAt time.Time) (Expense, error) {
 	return NewFromAttributes(ExpenseAttributes{
-		ID:             id,
-		HouseholdID:    householdID,
-		PaidByMemberID: "unassigned",
-		AmountCents:    amountCents,
-		Description:    description,
-		IsShared:       true,
-		Currency:       "MXN",
-		PaymentMethod:  PaymentMethodCash,
-		ExpenseType:    ExpenseTypeVariable,
-		CardName:       "",
-		Category:       CategoryOther,
-		CreatedAt:      createdAt,
-		UpdatedAt:      createdAt,
+		ID:            id,
+		HouseholdID:   householdID,
+		MemberID:      "unassigned",
+		PeriodID:      "",
+		CategoryID:    "",
+		AmountCents:   amountCents,
+		Description:   description,
+		IsShared:      true,
+		Currency:      "MXN",
+		PaymentMethod: PaymentMethodCash,
+		ExpenseType:   ExpenseTypeVariable,
+		CardName:      "",
+		CreatedAt:     createdAt,
+		UpdatedAt:     createdAt,
 	})
 }
 
@@ -117,10 +120,13 @@ func NewFromAttributes(attrs ExpenseAttributes) (Expense, error) {
 		return Expense{}, ErrInvalidHouseholdID
 	}
 
-	paidByMemberID := strings.TrimSpace(attrs.PaidByMemberID)
-	if paidByMemberID == "" {
+	memberID := strings.TrimSpace(attrs.MemberID)
+	if memberID == "" {
 		return Expense{}, ErrInvalidPaidByMemberID
 	}
+
+	// PeriodID and CategoryID are optional during construction
+	// They will be validated by the application layer
 
 	currency := strings.ToUpper(strings.TrimSpace(attrs.Currency))
 	if len(currency) != 3 {
@@ -143,39 +149,27 @@ func NewFromAttributes(attrs ExpenseAttributes) (Expense, error) {
 		return Expense{}, ErrInvalidExpenseType
 	}
 
-	category := attrs.Category
-	if category == "" {
-		category = CategoryOther
-	}
-	// Category validation is intentionally permissive: the domain accepts any
-	// non-empty slug so that custom household categories (Phase 6) are supported
-	// without coupling the expense domain to the category repository.
-	// The HTTP layer is responsible for validating the slug against the
-	// household's category list before invoking the use case.
-	if strings.TrimSpace(string(category)) == "" {
-		return Expense{}, ErrInvalidCategory
-	}
-
 	updatedAt := attrs.UpdatedAt
 	if updatedAt.IsZero() {
 		updatedAt = attrs.CreatedAt
 	}
 
 	return Expense{
-		id:             attrs.ID,
-		householdID:    attrs.HouseholdID,
-		paidByMemberID: paidByMemberID,
-		amountCents:    attrs.AmountCents,
-		description:    attrs.Description,
-		isShared:       attrs.IsShared,
-		currency:       currency,
-		paymentMethod:  paymentMethod,
-		expenseType:    expenseType,
-		cardName:       strings.TrimSpace(attrs.CardName),
-		category:       category,
-		createdAt:      attrs.CreatedAt,
-		updatedAt:      updatedAt,
-		deletedAt:      attrs.DeletedAt,
+		id:            attrs.ID,
+		memberID:      memberID,
+		periodID:      strings.TrimSpace(attrs.PeriodID),
+		categoryID:    strings.TrimSpace(attrs.CategoryID),
+		householdID:   attrs.HouseholdID,
+		amountCents:   attrs.AmountCents,
+		description:   attrs.Description,
+		isShared:      attrs.IsShared,
+		currency:      currency,
+		paymentMethod: paymentMethod,
+		expenseType:   expenseType,
+		cardName:      strings.TrimSpace(attrs.CardName),
+		createdAt:     attrs.CreatedAt,
+		updatedAt:     updatedAt,
+		deletedAt:     attrs.DeletedAt,
 	}, nil
 }
 
@@ -209,26 +203,29 @@ func (e *Expense) SoftDelete() error {
 // Attributes returns a copy of all fields as a flat DTO.
 func (e Expense) Attributes() ExpenseAttributes {
 	return ExpenseAttributes{
-		ID:             e.id,
-		HouseholdID:    e.householdID,
-		PaidByMemberID: e.paidByMemberID,
-		AmountCents:    e.amountCents,
-		Description:    e.description,
-		IsShared:       e.isShared,
-		Currency:       e.currency,
-		PaymentMethod:  e.paymentMethod,
-		ExpenseType:    e.expenseType,
-		CardName:       e.cardName,
-		Category:       e.category,
-		CreatedAt:      e.createdAt,
-		UpdatedAt:      e.updatedAt,
-		DeletedAt:      e.deletedAt,
+		ID:            e.id,
+		MemberID:      e.memberID,
+		PeriodID:      e.periodID,
+		CategoryID:    e.categoryID,
+		HouseholdID:   e.householdID,
+		AmountCents:   e.amountCents,
+		Description:   e.description,
+		IsShared:      e.isShared,
+		Currency:      e.currency,
+		PaymentMethod: e.paymentMethod,
+		ExpenseType:   e.expenseType,
+		CardName:      e.cardName,
+		CreatedAt:     e.createdAt,
+		UpdatedAt:     e.updatedAt,
+		DeletedAt:     e.deletedAt,
 	}
 }
 
 func (e Expense) ID() ID                       { return e.id }
+func (e Expense) MemberID() string             { return e.memberID }
+func (e Expense) PeriodID() string             { return e.periodID }
+func (e Expense) CategoryID() string           { return e.categoryID }
 func (e Expense) HouseholdID() string          { return e.householdID }
-func (e Expense) PaidByMemberID() string       { return e.paidByMemberID }
 func (e Expense) AmountCents() int64           { return e.amountCents }
 func (e Expense) Description() string          { return e.description }
 func (e Expense) IsShared() bool               { return e.isShared }
@@ -236,7 +233,13 @@ func (e Expense) Currency() string             { return e.currency }
 func (e Expense) PaymentMethod() PaymentMethod { return e.paymentMethod }
 func (e Expense) ExpenseType() ExpenseType     { return e.expenseType }
 func (e Expense) CardName() string             { return e.cardName }
-func (e Expense) Category() Category           { return e.category }
 func (e Expense) CreatedAt() time.Time         { return e.createdAt }
 func (e Expense) UpdatedAt() time.Time         { return e.updatedAt }
 func (e Expense) DeletedAt() *time.Time        { return e.deletedAt }
+
+// Legacy methods for backward compatibility
+func (e Expense) PaidByMemberID() string { return e.memberID }
+func (e Expense) Category() Category {
+	// Return a default category for backward compatibility
+	return CategoryOther
+}
