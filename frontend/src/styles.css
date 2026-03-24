@@ -825,6 +825,57 @@ ul {
     max-width: 280px;
 }
 
+/* Dashboard-specific empty state (larger, more prominent) */
+.dashboardEmptyState {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    padding: 64px 32px;
+    max-width: 400px;
+    margin: 32px auto;
+    text-align: center;
+}
+
+.emptyStateIcon {
+    font-size: 4rem;
+    line-height: 1;
+    animation: emptyBounce 2s ease-in-out infinite;
+}
+
+@keyframes emptyBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+.emptyStateTitle {
+    font-size: 1.5rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-1);
+    margin: 0;
+}
+
+.emptyStateHint {
+    font-size: 1rem;
+    color: var(--color-text-3);
+    line-height: 1.6;
+    max-width: 320px;
+}
+
+/* Current period badge */
+.currentPeriodBadge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    background: var(--color-green-500);
+    color: white;
+    border-radius: var(--radius-pill);
+    font-size: 0.7rem;
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+}
+
 /* ─── Settlement card ───────────────────────────────────────────────────────── */
 .settlementControls {
     display: flex;

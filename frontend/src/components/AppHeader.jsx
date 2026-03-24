@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 /**
  * AppHeader — top bar with brand identity, household selector, reload
  * action, and backend health indicator.
@@ -38,6 +40,17 @@ export function AppHeader({ health, householdId, onHouseholdChange, onReload, on
             ))}
           </select>
         </div>
+
+        {/* Invite member */}
+        {householdId && (
+          <Link
+            to="/members/new"
+            className="btn btnGhost btnSm"
+            aria-label="Invite a new member"
+          >
+            + Member
+          </Link>
+        )}
 
         {/* Reload */}
         <button

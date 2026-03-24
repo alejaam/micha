@@ -62,6 +62,7 @@ export function DashboardPage() {
         setSettlementYear,
         setSettlementMonth,
         loadSettlement,
+        resetToCurrentMonth,
     } = useSettlement({
         isAuthenticated,
         householdId,
@@ -167,81 +168,97 @@ export function DashboardPage() {
         }
     }
 
+    const hasExpenses = items.length > 0
+
     return (
         <>
             {error && <Banner type="error" onDismiss={() => setError('')}>{error}</Banner>}
             {message && <Banner type="ok" onDismiss={() => setMessage('')}>{message}</Banner>}
 
-            {/* Incomes */}
-            <IncomesPanel
-                members={members}
-                settlement={settlement}
-                currency={activeCurrency}
-            />
+            {!hasExpenses && !loadingList ? (
+                /* Empty state when no expenses */
+                <section className="card dashboardEmptyState" aria-label="No expenses yet">
+                    <div className="emptyStateIcon" aria-hidden>💸</div>
+                    <h2 className="emptyStateTitle">No expenses yet</h2>
+                    <p className="emptyStateHint">
+                        Tap the <strong>+</strong> button below to add your first expense and start tracking!
+                    </p>
+                </section>
+            ) : (
+                <>
+                    {/* Incomes */}
+                    <IncomesPanel
+                        members={members}
+                        settlement={settlement}
+                        currency={activeCurrency}
+                    />
 
-            {/* Summary strip */}
-            <section className="card dashboardSummaryCard" aria-label="This month">
-                <h2 className="sectionTitle">
-                    <span className="sectionTitleIcon" aria-hidden>📊</span>
-                    This month
-                </h2>
-                <ExpenseSummary settlement={settlement} currency={activeCurrency} />
-            </section>
+                    {/* Summary strip */}
+                    <section className="card dashboardSummaryCard" aria-label="This month">
+                        <h2 className="sectionTitle">
+                            <span className="sectionTitleIcon" aria-hidden>📊</span>
+                            This month
+                        </h2>
+                        <ExpenseSummary settlement={settlement} currency={activeCurrency} />
+                    </section>
 
-            {/* Fixed expenses breakdown */}
-            <FixedExpensesPanel
-                items={items}
-                members={members}
-                currency={activeCurrency}
-            />
+                    {/* Fixed expenses breakdown */}
+                    <FixedExpensesPanel
+                        items={items}
+                        members={members}
+                        currency={activeCurrency}
+                    />
 
-            {/* Card expenses breakdown */}
-            <CardExpensesPanel
-                items={items}
-                members={members}
-                currency={activeCurrency}
-            />
+                    {/* Card expenses breakdown */}
+                    <CardExpensesPanel
+                        items={items}
+                        members={members}
+                        currency={activeCurrency}
+                    />
 
-            {/* Settlement */}
-            <SettlementPanel
-                settlement={settlement}
-                settlementYear={settlementYear}
-                settlementMonth={settlementMonth}
-                onSettlementYearChange={setSettlementYear}
-                onSettlementMonthChange={setSettlementMonth}
-                onRefresh={loadSettlement}
-                loadingSettlement={loadingSettlement}
-                memberIndex={memberIndex}
-                currency={activeCurrency}
-            />
+                    {/* Settlement */}
+                    <SettlementPanel
+                        settlement={settlement}
+                        settlementYear={settlementYear}
+                        settlementMonth={settlementMonth}
+                        onSettlementYearChange={setSettlementYear}
+                        onSettlementMonthChange={setSettlementMonth}
+                        onRefresh={loadSettlement}
+                        onResetToCurrentMonth={resetToCurrentMonth}
+                        loadingSettlement={loadingSettlement}
+                        memberIndex={memberIndex}
+                        currency={activeCurrency}
+                    />
 
-            {/* Recent expenses */}
-            <section className="card" aria-label="Recent expenses">
-                <div className="listHeader">
-                    <h2 className="listTitle">Recent expenses</h2>
+                    {/* Recent expenses */}
+                    <section className="card" aria-label="Recent expenses">
+                        <div className="listHeader">
+                            <h2 className="listTitle">Recent expenses</h2>
+                            {items.length > 0 && (
+                                <span className="listCount">{items.length} total</span>
+                            )}
+                        </div>
+                        <RecentExpenses
+                            items={items}
+                            isLoading={loadingList}
+                            currency={activeCurrency}
+                            limit={8}
+                        />
+                    </section>
+
+                    {/* Full expense list with edit/delete */}
                     {items.length > 0 && (
-                        <span className="listCount">{items.length} total</span>
+                        <ExpenseList
+                            items={items}
+                            isLoading={loadingList}
+                            deletingId={deletingId}
+                            savingId={savingId}
+                            onDelete={handleDelete}
+                            onSave={handleSave}
+                            currency={activeCurrency}
+                        />
                     )}
-                </div>
-                <RecentExpenses
-                    items={items}
-                    isLoading={loadingList}
-                    currency={activeCurrency}
-                    limit={8}
-                />
-            </section>
-
-            {/* Full expense list with edit/delete */}
-            {items.length > 0 && (
-                <ExpenseList
-                    items={items}
-                    isLoading={loadingList}
-                    deletingId={deletingId}
-                    savingId={savingId}
-                    onDelete={handleDelete}
-                    onSave={handleSave}
-                    currency={activeCurrency}
-                />
+                </>
             )}
 
             {/* FAB + Modal */}

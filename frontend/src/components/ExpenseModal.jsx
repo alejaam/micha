@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { FormField } from '../ui/FormField'
 import { Modal } from '../ui/Modal'
 import { dollarsToCents } from '../utils'
@@ -20,6 +20,7 @@ export function ExpenseModal({
 }) {
     const [amount, setAmount] = useState('')
     const [description, setDescription] = useState('')
+    const [paidByMemberId, setPaidByMemberId] = useState(defaultPaidByMemberId.trim() || '')
     const [isShared, setIsShared] = useState(true)
     const [paymentMethod, setPaymentMethod] = useState('card')
     const [expenseType, setExpenseType] = useState('variable')
@@ -28,15 +29,16 @@ export function ExpenseModal({
     const [showAdvanced, setShowAdvanced] = useState(false)
 
     const hasMembers = members.length > 0
-    const paidByMemberId = useMemo(
-        () => defaultPaidByMemberId.trim() || members[0]?.id || '',
-        [defaultPaidByMemberId, members],
-    )
-    const paidByMemberName = useMemo(
-        () => members.find((member) => member.id === paidByMemberId)?.name || '',
-        [members, paidByMemberId],
-    )
     const isCardPayment = paymentMethod === 'card'
+
+    // Sync paidByMemberId when members load or defaultPaidByMemberId changes
+    useEffect(() => {
+        if (members.length > 0 && !paidByMemberId) {
+            setPaidByMemberId(defaultPaidByMemberId || members[0].id)
+        }
+    }, [members, paidByMemberId, defaultPaidByMemberId])
+
+    const isCurrentMemberSelected = paidByMemberId === defaultPaidByMemberId && defaultPaidByMemberId !== ''
 
     const isValid = useMemo(
         () => hasMembers && description.trim() !== '' && paidByMemberId.trim() !== '' && dollarsToCents(amount) !== null,
@@ -92,6 +94,25 @@ export function ExpenseModal({
                     />
                 </FormField>
 
+                <FormField label="Paid by" htmlFor="modalPaidBy">
+                    <select
+                        id="modalPaidBy"
+                        className="input"
+                        value={paidByMemberId}
+                        onChange={(e) => setPaidByMemberId(e.target.value)}
+                        disabled={isSubmitting || !hasMembers}
+                    >
+                        {members.map((m) => (
+                            <option key={m.id} value={m.id}>
+                                {m.name}{m.id === defaultPaidByMemberId ? ' (you)' : ''}
+                            </option>
+                        ))}
+                    </select>
+                    {isCurrentMemberSelected && (
+                        <p className="formHint">Defaults to you</p>
+                    )}
+                </FormField>
+
                 <FormField label="Category" htmlFor="modalCategory">
                     <select
                         id="modalCategory"
@@ -121,8 +142,6 @@ export function ExpenseModal({
 
                 {showAdvanced && (
                     <div className="formStack advancedSection">
-                        {paidByMemberName ? <p className="formHint">Paid by: {paidByMemberName}</p> : null}
-
                         <FormField label="Payment method" htmlFor="modalPaymentMethod">
                             <select
                                 id="modalPaymentMethod"
