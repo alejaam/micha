@@ -23,7 +23,7 @@ type ExpenseRepository struct {
 // ListByHouseholdAndPeriod returns non-deleted household expenses between [from, to).
 func (r ExpenseRepository) ListByHouseholdAndPeriod(ctx context.Context, householdID string, from, to time.Time) ([]expense.Expense, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category, created_at, updated_at, deleted_at
+		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category_id, created_at, updated_at, deleted_at
 			FROM expenses
 			WHERE household_id = $1
 				AND created_at >= $2
@@ -79,7 +79,7 @@ func (r ExpenseRepository) Save(ctx context.Context, e expense.Expense) error {
 // Note: soft-deleted rows are still returned so callers can inspect DeletedAt.
 func (r ExpenseRepository) FindByID(ctx context.Context, id string) (expense.Expense, error) {
 	row := r.db.QueryRow(ctx,
-		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category, created_at, updated_at, deleted_at
+		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category_id, created_at, updated_at, deleted_at
 			FROM expenses
 			WHERE id = $1`,
 		id,
@@ -99,7 +99,7 @@ func (r ExpenseRepository) FindByID(ctx context.Context, id string) (expense.Exp
 // List returns non-deleted expenses for a household ordered by created_at DESC.
 func (r ExpenseRepository) List(ctx context.Context, householdID string, limit, offset int) ([]expense.Expense, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category, created_at, updated_at, deleted_at
+		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category_id, created_at, updated_at, deleted_at
 			FROM expenses
 			WHERE household_id = $1 AND deleted_at IS NULL
 			ORDER BY created_at DESC
@@ -132,18 +132,18 @@ func (r ExpenseRepository) Update(ctx context.Context, e expense.Expense) error 
 	attrs := e.Attributes()
 	tag, err := r.db.Exec(ctx,
 		`UPDATE expenses
-			SET paid_by_member_id = $1,
-				amount_cents      = $2,
-				description       = $3,
-				is_shared         = $4,
-				currency          = $5,
-				payment_method    = $6,
-				expense_type      = $7,
-				card_name         = $8,
-				category_id       = $9,
-				updated_at        = $10,
-				deleted_at        = $11
-			WHERE id = $12`,
+		SET paid_by_member_id = $1,
+			amount_cents      = $2,
+			description       = $3,
+			is_shared         = $4,
+			currency          = $5,
+			payment_method    = $6,
+			expense_type      = $7,
+			card_name         = $8,
+			category_id       = $9,
+			updated_at        = $10,
+			deleted_at        = $11
+		WHERE id = $12`,
 		attrs.PaidByMemberID, attrs.AmountCents, attrs.Description,
 		attrs.IsShared, attrs.Currency, string(attrs.PaymentMethod),
 		string(attrs.ExpenseType), attrs.CardName, attrs.CategoryID,

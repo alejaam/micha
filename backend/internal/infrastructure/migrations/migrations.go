@@ -87,17 +87,14 @@ func applyFile(ctx context.Context, db *pgxpool.Pool, fullPath, filename string)
 		return fmt.Errorf("read file: %w", err)
 	}
 
-	statements := splitSQLStatements(string(sqlBytes))
 	tx, err := db.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
-	for _, stmt := range statements {
-		if _, execErr := tx.Exec(ctx, stmt); execErr != nil {
-			return fmt.Errorf("exec statement: %w", execErr)
-		}
+	if _, execErr := tx.Exec(ctx, string(sqlBytes)); execErr != nil {
+		return fmt.Errorf("exec statement: %w", execErr)
 	}
 
 	if _, err := tx.Exec(ctx,
@@ -112,18 +109,4 @@ func applyFile(ctx context.Context, db *pgxpool.Pool, fullPath, filename string)
 	}
 
 	return nil
-}
-
-func splitSQLStatements(content string) []string {
-	parts := strings.Split(content, ";")
-	statements := make([]string, 0, len(parts))
-	for _, part := range parts {
-		trimmed := strings.TrimSpace(part)
-		if trimmed == "" {
-			continue
-		}
-		statements = append(statements, trimmed)
-	}
-
-	return statements
 }
