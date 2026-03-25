@@ -21,6 +21,7 @@ import (
 	expenseapp "micha/backend/internal/application/expense"
 	householdapp "micha/backend/internal/application/household"
 	memberapp "micha/backend/internal/application/member"
+	recurringexpenseapp "micha/backend/internal/application/recurringexpense"
 	settlementapp "micha/backend/internal/application/settlement"
 	infraauth "micha/backend/internal/infrastructure/auth"
 	"micha/backend/internal/infrastructure/config"
@@ -66,6 +67,7 @@ func main() {
 	}
 
 	expenseRepo := postgres.NewExpenseRepository(pool)
+	recurringExpenseRepo := postgres.NewRecurringExpenseRepository(pool)
 	householdRepo := postgres.NewHouseholdRepository(pool)
 	memberRepo := postgres.NewMemberRepository(pool)
 	categoryRepo := postgres.NewCategoryRepository(pool)
@@ -92,11 +94,21 @@ func main() {
 
 	// Expense use cases and handler dependencies.
 	expenseDeps := httpadapter.ExpenseHandlerDeps{
-		Register: expenseapp.NewRegisterExpenseUseCase(expenseRepo, householdRepo, memberRepo, idGen),
+		Register: expenseapp.NewRegisterExpenseUseCase(expenseRepo, householdRepo, memberRepo, categoryRepo, idGen),
 		Get:      expenseapp.NewGetExpenseUseCase(expenseRepo),
 		List:     expenseapp.NewListExpensesUseCase(expenseRepo),
 		Patch:    expenseapp.NewPatchExpenseUseCase(expenseRepo),
 		Delete:   expenseapp.NewDeleteExpenseUseCase(expenseRepo),
+	}
+
+	// Recurring expense use cases and handler dependencies.
+	recurringExpenseDeps := httpadapter.RecurringExpenseHandlerDeps{
+		Create:   recurringexpenseapp.NewCreateRecurringExpenseUseCase(recurringExpenseRepo, householdRepo, memberRepo, categoryRepo, idGen),
+		Get:      recurringexpenseapp.NewGetRecurringExpenseUseCase(recurringExpenseRepo),
+		List:     recurringexpenseapp.NewListRecurringExpensesUseCase(recurringExpenseRepo),
+		Update:   recurringexpenseapp.NewUpdateRecurringExpenseUseCase(recurringExpenseRepo, categoryRepo),
+		Delete:   recurringexpenseapp.NewDeleteRecurringExpenseUseCase(recurringExpenseRepo),
+		Generate: recurringexpenseapp.NewGenerateRecurringExpensesUseCase(recurringExpenseRepo, expenseRepo, idGen),
 	}
 
 	// Household use cases and handler dependencies.
@@ -129,10 +141,11 @@ func main() {
 
 	// Server dependencies grouped by resource.
 	serverDeps := httpadapter.ServerDependencies{
-		Auth:      authDeps,
-		Expense:   expenseDeps,
-		Household: householdDeps,
-		Member:    memberDeps,
+		Auth:             authDeps,
+		Expense:          expenseDeps,
+		RecurringExpense: recurringExpenseDeps,
+		Household:        householdDeps,
+		Member:           memberDeps,
 		Settlement: httpadapter.SettlementHandlerDeps{
 			Calculate: settlementapp.NewCalculateSettlementUseCase(householdRepo, memberRepo, expenseRepo),
 		},

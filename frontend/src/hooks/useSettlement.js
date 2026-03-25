@@ -58,6 +58,12 @@ export function useSettlement({
         loadSettlement()
     }, [isAuthenticated, loadSettlement])
 
+    const resetToCurrentMonth = useCallback(() => {
+        const now = new Date()
+        setSettlementYear(now.getUTCFullYear())
+        setSettlementMonth(now.getUTCMonth() + 1)
+    }, [])
+
     return {
         settlement,
         loadingSettlement,
@@ -67,5 +73,6 @@ export function useSettlement({
         setSettlementYear,
         setSettlementMonth,
         loadSettlement,
+        resetToCurrentMonth,
     }
 }

@@ -8,16 +8,17 @@ import (
 
 // ServerDependencies groups all resource-level dependencies for the HTTP server.
 type ServerDependencies struct {
-	Auth           AuthHandlerDeps
-	Expense        ExpenseHandlerDeps
-	Household      HouseholdHandlerDeps
-	Member         MemberHandlerDeps
-	Settlement     SettlementHandlerDeps
-	Category       CategoryHandlerDeps
-	SplitConfig    SplitConfigHandlerDeps
-	JWTValidator   outbound.TokenValidator
-	MemberRepo     outbound.MemberRepository
-	AllowedOrigins []string
+	Auth             AuthHandlerDeps
+	Expense          ExpenseHandlerDeps
+	RecurringExpense RecurringExpenseHandlerDeps
+	Household        HouseholdHandlerDeps
+	Member           MemberHandlerDeps
+	Settlement       SettlementHandlerDeps
+	Category         CategoryHandlerDeps
+	SplitConfig      SplitConfigHandlerDeps
+	JWTValidator     outbound.TokenValidator
+	MemberRepo       outbound.MemberRepository
+	AllowedOrigins   []string
 }
 
 // Server is the primary HTTP adapter.
@@ -60,6 +61,14 @@ func NewServer(port string, deps ServerDependencies) Server {
 	mux.Handle("GET /v1/expenses", protect(http.HandlerFunc(eh.handleList)))
 	mux.Handle("PATCH /v1/expenses/{id}", protect(http.HandlerFunc(eh.handlePatch)))
 	mux.Handle("DELETE /v1/expenses/{id}", protect(http.HandlerFunc(eh.handleDelete)))
+
+	reh := newRecurringExpenseHandler(deps.RecurringExpense)
+	mux.Handle("POST /v1/recurring-expenses", protect(http.HandlerFunc(reh.handleCreate)))
+	mux.Handle("GET /v1/recurring-expenses/{id}", protect(http.HandlerFunc(reh.handleGet)))
+	mux.Handle("GET /v1/recurring-expenses", protect(http.HandlerFunc(reh.handleList)))
+	mux.Handle("PATCH /v1/recurring-expenses/{id}", protect(http.HandlerFunc(reh.handleUpdate)))
+	mux.Handle("DELETE /v1/recurring-expenses/{id}", protect(http.HandlerFunc(reh.handleDelete)))
+	mux.Handle("POST /v1/recurring-expenses/generate", protect(http.HandlerFunc(reh.handleGenerate)))
 
 	hh := newHouseholdHandler(deps.Household)
 	mux.Handle("POST /v1/households", protect(http.HandlerFunc(hh.handleCreate)))

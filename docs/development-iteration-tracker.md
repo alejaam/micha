@@ -30,7 +30,7 @@ Se actualiza al cierre de cada iteración.
 
 - Fecha de arranque: 2026-03-07
 - Fase actual: `Phase 4` (pendiente)
-- Última fase cerrada: `Phase 3`
+- Última fase cerrada: `Iteración 005 (UX Polish)`
 - Estrategia de entrega: incremental por iteraciones cortas
 - Estado general: en progreso
 
@@ -425,6 +425,67 @@ Eliminar fricción de captura y acelerar resumen mensual.
   - `frontend/src/components/ExpenseForm.jsx`
 - Riesgos / deuda:
   - falta suite de tests de handlers HTTP para settlement.
+
+### Iteración 005 — UX Polish
+- Fecha: 2026-03-24
+- Fase: Intermedia (entre Phase 3 y Phase 4)
+- Objetivo:
+  - pulir experiencia de usuario antes de agregar complejidad de Phase 4.
+  - hacer la app delightful para usuarios nuevos.
+- MEM:
+  - backend A+, no requiere cambios.
+  - frontend funcional pero con gaps UX críticos.
+  - decisión: pausar Phase 4, priorizar polish.
+- SEQ:
+  - propuesta SDD → specs → design → tasks → implementación → verificación.
+- THINK:
+  - Hipótesis:
+    - pulir UX antes de Phase 4 mejora fundación para features futuras.
+    - cambios son solo frontend, bajo riesgo de regresiones.
+  - Validación ejecutada:
+    - `cd frontend && npm run build` ✅
+  - Resultado:
+    - ✅ todas las tareas P0 completadas.
+    - ✅ tareas P1 principales completadas.
+    - ✅ build de producción exitoso.
+  - Decisión siguiente:
+    - continuar con Phase 4 (gastos recurrentes) según roadmap original.
+- Cambios por capa:
+  - Domain:
+    - sin cambios.
+  - Application:
+    - sin cambios.
+  - Ports:
+    - sin cambios.
+  - Adapters:
+    - sin cambios en backend.
+  - DB/Migrations:
+    - sin cambios.
+  - Frontend:
+    - salary field en dólares (no cents) en OnboardingMemberPage.
+    - settlement auto-carga mes actual, botón "This month".
+    - campo "Paid by" visible sin "More options" en ExpenseModal.
+    - empty state en dashboard para usuarios nuevos.
+    - botón "+ Member" en AppHeader.
+    - ruta /members/new para invitar miembros post-onboarding.
+    - badge "(current)" en SettlementPanel cuando es mes actual.
+    - estilos CSS para empty state y badge.
+- Archivos clave:
+  - `frontend/src/pages/OnboardingMemberPage.jsx`
+  - `frontend/src/hooks/useSettlement.js`
+  - `frontend/src/components/SettlementPanel.jsx`
+  - `frontend/src/components/ExpenseModal.jsx`
+  - `frontend/src/pages/DashboardPage.jsx`
+  - `frontend/src/components/AppHeader.jsx`
+  - `frontend/src/router.jsx`
+  - `frontend/src/styles.css`
+  - `docs/iteration-005-ux-polish-proposal.md`
+  - `docs/iteration-005-ux-polish-specs.md`
+  - `docs/iteration-005-ux-polish-design.md`
+  - `docs/iteration-005-ux-polish-tasks.md`
+- Riesgos / deuda:
+  - tareas P2 (tooltips, category icons, members list) postponed.
+  - falta smoke test manual completo.
 
 ---
 

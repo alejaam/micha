@@ -21,13 +21,22 @@ export function SettlementPanel({
   onSettlementYearChange,
   onSettlementMonthChange,
   onRefresh,
+  onResetToCurrentMonth,
   loadingSettlement,
   memberIndex,
   currency = 'MXN',
 }) {
+  const now = new Date()
+  const isCurrentMonth = settlementYear === now.getUTCFullYear() 
+    && settlementMonth === (now.getUTCMonth() + 1)
+
   return (
     <section className="card" aria-label="Monthly settlement">
-      <h2 className="sectionTitle">Monthly settlement</h2>
+      <h2 className="sectionTitle">
+        <span className="sectionTitleIcon" aria-hidden>🧮</span>
+        Monthly settlement
+        {isCurrentMonth && <span className="currentPeriodBadge">current</span>}
+      </h2>
 
       {/* Period controls */}
       <div className="settlementControls">
@@ -71,6 +80,16 @@ export function SettlementPanel({
             ? <><span className="spinIcon" aria-hidden>&#x27F3;</span> Loading...</>
             : 'Refresh'}
         </button>
+        {!isCurrentMonth && (
+          <button
+            type="button"
+            className="btn btnGhost btnSm"
+            onClick={onResetToCurrentMonth}
+            aria-label="Reset to current month"
+          >
+            📅 This month
+          </button>
+        )}
       </div>
 
       {settlement ? (

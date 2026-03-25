@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"micha/backend/internal/domain/category"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/household"
 	"micha/backend/internal/domain/member"
@@ -200,4 +201,61 @@ func (r *mockMemberRepo) Update(_ context.Context, _ member.Member) error { retu
 func (r *mockMemberRepo) Delete(_ context.Context, _ string) error        { return nil }
 func (r *mockMemberRepo) CountActiveByHousehold(_ context.Context, _ string) (int, error) {
 	return len(r.members), nil
+}
+
+type mockCategoryRepoActual struct {
+	mu   sync.Mutex
+	rows map[string]category.Category
+}
+
+func newMockCategoryRepo() *mockCategoryRepoActual {
+	return &mockCategoryRepoActual{rows: make(map[string]category.Category)}
+}
+
+func (r *mockCategoryRepoActual) Save(_ context.Context, c category.Category) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.rows[string(c.ID())] = c
+	return nil
+}
+
+func (r *mockCategoryRepoActual) FindBySlug(_ context.Context, householdID, slug string) (category.Category, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, c := range r.rows {
+		if c.HouseholdID() == householdID && c.Slug() == slug {
+			return c, nil
+		}
+	}
+	return category.Category{}, shared.ErrNotFound
+}
+
+func (r *mockCategoryRepoActual) ListByHousehold(_ context.Context, householdID string) ([]category.Category, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var result []category.Category
+	for _, c := range r.rows {
+		if c.HouseholdID() == householdID {
+			result = append(result, c)
+		}
+	}
+	return result, nil
+}
+
+func (r *mockCategoryRepoActual) Delete(_ context.Context, id string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	delete(r.rows, id)
+	return nil
+}
+
+func (r *mockCategoryRepoActual) seedCategory(id, householdID, slug string) {
+	c, _ := category.NewFromAttributes(category.Attributes{
+		ID:          category.ID(id),
+		HouseholdID: householdID,
+		Name:        slug, // simple for test
+		Slug:        slug,
+		CreatedAt:   time.Now(),
+	})
+	_ = r.Save(context.Background(), c)
 }

@@ -25,6 +25,7 @@ const router = createBrowserRouter([
             { index: true, element: <DashboardPage /> },
             { path: 'onboarding/household', element: <OnboardingHouseholdPage /> },
             { path: 'onboarding/member', element: <OnboardingMemberPage /> },
+            { path: 'members/new', element: <OnboardingMemberPage /> },
         ],
     },
     {

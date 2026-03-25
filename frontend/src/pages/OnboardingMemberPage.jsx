@@ -5,6 +5,7 @@ import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
 import { FormField } from '../ui/FormField'
+import { dollarsToCents } from '../utils'
 
 export function OnboardingMemberPage() {
     const { handleProtectedError } = useAuth()
@@ -13,7 +14,7 @@ export function OnboardingMemberPage() {
     
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
-    const [salary, setSalary] = useState('0')
+    const [salaryDollars, setSalaryDollars] = useState('')
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
 
@@ -23,11 +24,12 @@ export function OnboardingMemberPage() {
         setBusy(true)
         setError('')
         try {
+            const salaryCents = dollarsToCents(salaryDollars) || 0
             await createMember({
                 householdId: householdId,
                 name: name.trim(),
                 email: email.trim(),
-                monthlySalaryCents: Number(salary) || 0,
+                monthlySalaryCents: salaryCents,
             })
             // Refresh households just in case this member triggers something, 
             // though usually it only affects member list
@@ -84,17 +86,21 @@ export function OnboardingMemberPage() {
                         disabled={busy}
                     />
                 </FormField>
-                <FormField label="Monthly salary (cents, optional)" htmlFor="memSalary">
-                    <input
-                        id="memSalary"
-                        className="input"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        value={salary}
-                        onChange={(e) => setSalary(e.target.value)}
-                        disabled={busy}
-                    />
+                <FormField label="Monthly salary (optional)" htmlFor="memSalary">
+                    <div className="inputWrap">
+                        <span className="inputPrefix" aria-hidden>$</span>
+                        <input
+                            id="memSalary"
+                            className="input inputWithPrefix"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="e.g., 5000"
+                            value={salaryDollars}
+                            onChange={(e) => setSalaryDollars(e.target.value)}
+                            disabled={busy}
+                        />
+                    </div>
                 </FormField>
                 <div className="flex gap-4 mt-6">
                     <button

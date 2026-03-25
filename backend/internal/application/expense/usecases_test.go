@@ -20,7 +20,9 @@ func TestRegisterExpense_Success(t *testing.T) {
 	hhRepo := newMockHouseholdRepo("hh-1")
 	mRepo := newMockMemberRepo()
 	mRepo.seedMember("m-1", "hh-1")
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, staticIDGen("exp-1"))
+	catRepo := newMockCategoryRepo()
+	catRepo.seedCategory("cat-other", "hh-1", "other")
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, catRepo, staticIDGen("exp-1"))
 
 	out, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
@@ -46,7 +48,9 @@ func TestRegisterExpense_InvalidMoney(t *testing.T) {
 	hhRepo := newMockHouseholdRepo("hh-1")
 	mRepo := newMockMemberRepo()
 	mRepo.seedMember("m-1", "hh-1")
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, staticIDGen("exp-1"))
+	catRepo := newMockCategoryRepo()
+	catRepo.seedCategory("cat-other", "hh-1", "other")
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, catRepo, staticIDGen("exp-1"))
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
@@ -68,7 +72,9 @@ func TestRegisterExpense_InvalidExpenseType(t *testing.T) {
 	hhRepo := newMockHouseholdRepo("hh-1")
 	mRepo := newMockMemberRepo()
 	mRepo.seedMember("m-1", "hh-1")
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, staticIDGen("exp-1"))
+	catRepo := newMockCategoryRepo()
+	catRepo.seedCategory("cat-other", "hh-1", "other")
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, catRepo, staticIDGen("exp-1"))
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
