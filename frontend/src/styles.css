@@ -561,6 +561,53 @@ ul {
     line-height: 1.4;
 }
 
+.formHintError {
+    color: var(--color-red-600);
+    font-weight: var(--fw-medium);
+}
+
+.formHintWarning {
+    color: var(--color-amber-700);
+    font-weight: var(--fw-medium);
+}
+
+/* ─── Shared toggle ─────────────────────────────────────────────────────────── */
+.sharedToggle {
+    display: grid;
+    gap: 6px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-soft);
+    background: var(--color-surface-2);
+    transition: border-color var(--dur-fast);
+}
+
+.sharedToggle:has(input:checked) {
+    border-color: var(--color-brand-200);
+    background: linear-gradient(135deg, var(--color-brand-50), var(--color-surface-2));
+}
+
+.sharedToggleLabel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.875rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-1);
+    cursor: pointer;
+}
+
+.sharedToggleLabel input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-brand-500);
+    cursor: pointer;
+}
+
+.sharedToggleText {
+    user-select: none;
+}
+
 /* ─── Section title ─────────────────────────────────────────────────────────── */
 .sectionTitle {
     display: flex;
@@ -571,6 +618,24 @@ ul {
     color: var(--color-text-1);
     letter-spacing: -0.02em;
     margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.sectionBadge {
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--color-brand-50);
+    border: 1px solid var(--color-brand-100);
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-brand-700);
+    margin-left: auto;
+}
+
+.sectionSubtitle {
+    font-size: 0.85rem;
+    color: var(--color-text-3);
+    font-weight: var(--fw-normal);
 }
 
 .sectionTitleIcon {
@@ -1099,6 +1164,12 @@ ul {
     transform: scale(1.1);
 }
 
+.bottomNavItemDisabled {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+}
+
 .bottomNavLabel {
     font-size: 0.65rem;
     font-weight: var(--fw-semibold);
@@ -1609,11 +1680,11 @@ html {
 .fixedTableHeader {
     display: flex;
     align-items: center;
-    background: var(--color-surface-2);
-    border-bottom: 1px solid var(--color-border);
+    background: var(--color-brand-50);
+    border-bottom: 1px solid var(--color-brand-100);
     padding: 8px 12px;
-    font-weight: var(--fw-medium);
-    color: var(--color-text-3);
+    font-weight: var(--fw-bold);
+    color: var(--color-brand-700);
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -1702,11 +1773,11 @@ html {
 .cardTableHeader {
     display: flex;
     align-items: center;
-    background: var(--color-surface-2);
-    border-bottom: 1px solid var(--color-border);
+    background: var(--color-brand-50);
+    border-bottom: 1px solid var(--color-brand-100);
     padding: 8px 12px;
-    font-weight: var(--fw-medium);
-    color: var(--color-text-3);
+    font-weight: var(--fw-bold);
+    color: var(--color-brand-700);
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;

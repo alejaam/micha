@@ -113,7 +113,7 @@ func main() {
 
 	// Household use cases and handler dependencies.
 	householdDeps := httpadapter.HouseholdHandlerDeps{
-		Register: householdapp.NewRegisterHouseholdUseCase(householdRepo, idGen),
+		Register: householdapp.NewRegisterHouseholdUseCase(householdRepo, categoryRepo, idGen),
 		List:     householdapp.NewListHouseholdsUseCase(householdRepo),
 		Get:      householdapp.NewGetHouseholdUseCase(householdRepo),
 		Update:   householdapp.NewUpdateHouseholdUseCase(householdRepo),

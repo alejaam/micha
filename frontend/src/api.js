@@ -167,6 +167,13 @@ export async function listMembers({ householdId, limit = 100, offset = 0 }) {
     return parseResponse(response)
 }
 
+export async function listCategories({ householdId }) {
+    const response = await fetch(`/v1/households/${householdId}/categories`, {
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
 export async function patchExpense({ id, amountCents, description }) {
     const body = {}
 

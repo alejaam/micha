@@ -116,6 +116,8 @@ func parseHouseholdID(w http.ResponseWriter, r *http.Request) (string, bool) {
 
 func writeErrorFromMemberDomain(w http.ResponseWriter, err error) {
 	switch {
+	case errors.Is(err, shared.ErrAlreadyExists):
+		writeError(w, http.StatusConflict, "ALREADY_EXISTS", "A member with this email already exists in this household")
 	case errors.Is(err, shared.ErrNotFound):
 		writeError(w, http.StatusNotFound, "NOT_FOUND", "resource not found")
 	case errors.Is(err, member.ErrInvalidName):

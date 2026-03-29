@@ -9,14 +9,12 @@ export function BottomNav() {
     const currentPath = location.pathname
 
     const navItems = [
-        { path: '/', icon: '~', label: 'Home', exact: true },
-        { path: '/expenses', icon: '$', label: 'Expenses' },
-        { path: '/settlement', icon: '=', label: 'Settle' },
-        { path: '/settings', icon: '*', label: 'Settings' },
+        { path: '/', icon: '🏠', label: 'Home', exact: true, enabled: true },
+        { path: '/expenses', icon: '💰', label: 'Expenses', enabled: false },
+        { path: '/settlement', icon: '⚖️', label: 'Settle', enabled: false },
+        { path: '/settings', icon: '⚙️', label: 'Settings', enabled: false },
     ]
 
-    // For now, since we only have the dashboard, we'll simplify
-    // and just show visual feedback on the current item
     const isActive = (item) => {
         if (item.exact) {
             return currentPath === item.path
@@ -26,17 +24,29 @@ export function BottomNav() {
 
     return (
         <nav className="bottomNav" aria-label="Main navigation">
-            {navItems.map((item) => (
-                <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`bottomNavItem ${isActive(item) ? 'active' : ''}`}
-                    aria-current={isActive(item) ? 'page' : undefined}
-                >
-                    <span className="bottomNavIcon" aria-hidden>{item.icon}</span>
-                    <span className="bottomNavLabel">{item.label}</span>
-                </Link>
-            ))}
+            {navItems.map((item) =>
+                item.enabled ? (
+                    <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`bottomNavItem ${isActive(item) ? 'active' : ''}`}
+                        aria-current={isActive(item) ? 'page' : undefined}
+                    >
+                        <span className="bottomNavIcon" aria-hidden>{item.icon}</span>
+                        <span className="bottomNavLabel">{item.label}</span>
+                    </Link>
+                ) : (
+                    <span
+                        key={item.path}
+                        className="bottomNavItem bottomNavItemDisabled"
+                        aria-disabled="true"
+                        title="Coming soon"
+                    >
+                        <span className="bottomNavIcon" aria-hidden>{item.icon}</span>
+                        <span className="bottomNavLabel">{item.label}</span>
+                    </span>
+                ),
+            )}
         </nav>
     )
 }

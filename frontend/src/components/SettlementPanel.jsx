@@ -36,6 +36,9 @@ export function SettlementPanel({
         <span className="sectionTitleIcon" aria-hidden>🧮</span>
         Monthly settlement
         {isCurrentMonth && <span className="currentPeriodBadge">current</span>}
+        {settlement && <span className="sectionBadge" style={{ marginLeft: isCurrentMonth ? '8px' : 'auto' }}>
+            {settlement.effective_settlement_mode === 'exact' ? 'Exact split' : 'Income proportional'}
+        </span>}
       </h2>
 
       {/* Period controls */}

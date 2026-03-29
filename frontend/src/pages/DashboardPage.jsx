@@ -272,6 +272,7 @@ export function DashboardPage() {
                     members={members}
                     isLoadingMembers={loadingMembers}
                     defaultPaidByMemberId={currentMember?.id ?? ''}
+                    householdId={householdId}
                 />
             )}
         </>

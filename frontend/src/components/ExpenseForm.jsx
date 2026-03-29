@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { FormField } from '../ui/FormField'
-import { dollarsToCents } from '../utils'
+import { dollarsToCents, sanitizeAmountInput } from '../utils'
 
 /**
  * ExpenseForm — self-contained create-expense panel.
@@ -78,9 +78,10 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
               inputMode="decimal"
               placeholder="0.00"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => setAmount(sanitizeAmountInput(e.target.value))}
               aria-label="Amount in dollars"
               disabled={isSubmitting}
+              pattern="[0-9]*\.?[0-9]*"
             />
           </div>
         </FormField>
@@ -140,15 +141,25 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
 
         {isCardPayment && (
           <FormField label="Card name" htmlFor="newCardName">
-            <input
+            <select
               id="newCardName"
               className="input"
-              placeholder="e.g. BANAMEX, HSBC, BBVA"
               value={cardName}
               onChange={(e) => setCardName(e.target.value)}
-              autoComplete="off"
               disabled={isSubmitting}
-            />
+            >
+              <option value="" disabled>Select card...</option>
+              <option value="BBVA">BBVA</option>
+              <option value="BANAMEX">Banamex</option>
+              <option value="HSBC">HSBC</option>
+              <option value="BANORTE">Banorte</option>
+              <option value="SANTANDER">Santander</option>
+              <option value="AMEX">Amex</option>
+              <option value="NU">Nu</option>
+              <option value="HEY BANCO">Hey Banco</option>
+              <option value="RAPPI">Rappi</option>
+              <option value="OTHER">Other</option>
+            </select>
           </FormField>
         )}
 
