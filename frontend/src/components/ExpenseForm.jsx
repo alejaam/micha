@@ -15,6 +15,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
   const [isShared, setIsShared]             = useState(true)
   const [paymentMethod, setPaymentMethod]   = useState('cash')
   const [expenseType, setExpenseType]       = useState('variable')
+  const [totalInstallments, setTotalInstallments] = useState(3)
   const [cardName, setCardName]             = useState('')
   const [category, setCategory]             = useState('other')
 
@@ -28,10 +29,16 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
     [members, paidByMemberId],
   )
   const isCardPayment = paymentMethod === 'card'
+  const isMSI = expenseType === 'msi'
 
   const isValid = useMemo(
-    () => hasMembers && description.trim() !== '' && paidByMemberId !== '' && dollarsToCents(amount) !== null,
-    [amount, description, paidByMemberId, hasMembers],
+    () => {
+      const basic = hasMembers && description.trim() !== '' && paidByMemberId !== '' && dollarsToCents(amount) !== null
+      if (!basic) return false
+      if (isMSI && (isNaN(totalInstallments) || totalInstallments <= 0)) return false
+      return true
+    },
+    [amount, description, paidByMemberId, hasMembers, isMSI, totalInstallments],
   )
 
   async function handleSubmit(event) {
@@ -49,6 +56,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
       expenseType,
       cardName: isCardPayment ? cardName.trim() : '',
       category,
+      totalInstallments: isMSI ? Number(totalInstallments) : 0,
     })
 
     // Reset on successful submit (parent resolves the promise)
@@ -57,6 +65,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
     setIsShared(true)
     setPaymentMethod('cash')
     setExpenseType('variable')
+    setTotalInstallments(3)
     setCardName('')
     setCategory('other')
   }
@@ -176,6 +185,21 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
             <option value="msi">MSI (installments)</option>
           </select>
         </FormField>
+
+        {isMSI && (
+          <FormField label="Total installments" htmlFor="newTotalInstallments">
+            <input
+              id="newTotalInstallments"
+              className="input"
+              type="number"
+              min="1"
+              max="48"
+              value={totalInstallments}
+              onChange={(e) => setTotalInstallments(e.target.value)}
+              disabled={isSubmitting}
+            />
+          </FormField>
+        )}
 
         <label className="householdLabel" htmlFor="newIsShared" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input

@@ -17,7 +17,7 @@ import { listCategories } from '../api'
 const EXPENSE_TYPE_HINTS = {
     variable: 'One-time expense for this period only.',
     fixed: 'Recurs every period. Will be auto-copied when the current period closes.',
-    msi: 'Installment purchase — coming soon.',
+    msi: 'Installment purchase — will generate installments for the following months.',
 }
 
 export function ExpenseModal({
@@ -35,6 +35,7 @@ export function ExpenseModal({
     const [isShared, setIsShared] = useState(true)
     const [paymentMethod, setPaymentMethod] = useState('card')
     const [expenseType, setExpenseType] = useState('variable')
+    const [totalInstallments, setTotalInstallments] = useState(3)
     const [cardName, setCardName] = useState('')
     const [category, setCategory] = useState('')
     const [showAdvanced, setShowAdvanced] = useState(false)
@@ -82,6 +83,7 @@ export function ExpenseModal({
     const hasMembers = members.length > 0
     const isCardPayment = paymentMethod === 'card'
     const isVoucher = paymentMethod === 'voucher'
+    const isMSI = expenseType === 'msi'
 
     // Sync paidByMemberId when members load or defaultPaidByMemberId changes
     useEffect(() => {
@@ -93,8 +95,13 @@ export function ExpenseModal({
     const isCurrentMemberSelected = paidByMemberId === defaultPaidByMemberId && defaultPaidByMemberId !== ''
 
     const isValid = useMemo(
-        () => hasMembers && description.trim() !== '' && paidByMemberId.trim() !== '' && dollarsToCents(amount) !== null,
-        [amount, description, paidByMemberId, hasMembers],
+        () => {
+            const basic = hasMembers && description.trim() !== '' && paidByMemberId.trim() !== '' && dollarsToCents(amount) !== null
+            if (!basic) return false
+            if (isMSI && (isNaN(totalInstallments) || totalInstallments <= 0)) return false
+            return true
+        },
+        [amount, description, paidByMemberId, hasMembers, isMSI, totalInstallments],
     )
 
     async function handleSubmit(e) {
@@ -111,6 +118,7 @@ export function ExpenseModal({
             expenseType,
             cardName: isCardPayment ? cardName.trim() : '',
             category,
+            totalInstallments: isMSI ? Number(totalInstallments) : 0,
         })
     }
 
@@ -217,8 +225,8 @@ export function ExpenseModal({
                                 <option value="voucher">🎟️ Voucher</option>
                             </select>
                             {isVoucher && (
-                                <p className="formHint formHintWarning">
-                                    ⚠️ Voucher expenses are excluded from settlement calculations.
+                                <p className="formHint">
+                                    Voucher expenses are included in settlement calculations.
                                 </p>
                             )}
                         </FormField>
@@ -257,10 +265,25 @@ export function ExpenseModal({
                             >
                                 <option value="variable">📝 Variable</option>
                                 <option value="fixed">📌 Fixed (recurrent)</option>
-                                <option value="msi" disabled>🔒 MSI — coming soon</option>
+                                <option value="msi">🔒 MSI (installments)</option>
                             </select>
                             <p className="formHint">{EXPENSE_TYPE_HINTS[expenseType]}</p>
                         </FormField>
+
+                        {isMSI && (
+                            <FormField label="Total installments" htmlFor="modalTotalInstallments">
+                                <input
+                                    id="modalTotalInstallments"
+                                    className="input"
+                                    type="number"
+                                    min="1"
+                                    max="48"
+                                    value={totalInstallments}
+                                    onChange={(e) => setTotalInstallments(e.target.value)}
+                                    disabled={isSubmitting}
+                                />
+                            </FormField>
+                        )}
                     </div>
                 )}
 

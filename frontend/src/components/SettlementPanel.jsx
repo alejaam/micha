@@ -169,10 +169,10 @@ export function SettlementPanel({
                       <span className="settlementBalancePct">{pct}%</span>
                     )}
                     <span className="settlementBalancePaid">
-                      paid {formatCurrency(sm.total_paid_cents ?? 0, currency)}
+                      paid {formatCurrency(sm.paid_cents ?? 0, currency)}
                     </span>
                     <span className="settlementBalanceDue">
-                      owes {formatCurrency(sm.total_due_cents ?? 0, currency)}
+                      share {formatCurrency(sm.expected_share ?? 0, currency)}
                     </span>
                   </div>
                 )

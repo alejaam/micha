@@ -108,7 +108,7 @@ export function DashboardPage() {
 
 // No secondary onboarding needed because the household creator is auto-added
 
-    async function handleCreate({ amountCents, description, paidByMemberId, isShared, paymentMethod, expenseType, cardName, category }) {
+    async function handleCreate({ amountCents, description, paidByMemberId, isShared, paymentMethod, expenseType, cardName, category, totalInstallments }) {
         setMessage('')
         setError('')
         setSubmittingCreate(true)
@@ -124,6 +124,7 @@ export function DashboardPage() {
                 expenseType,
                 cardName,
                 category,
+                totalInstallments,
             })
             setMessage('Expense added.')
             setModalOpen(false)
