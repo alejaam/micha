@@ -229,6 +229,7 @@ export function DashboardPage() {
                         loadingSettlement={loadingSettlement}
                         memberIndex={memberIndex}
                         currency={activeCurrency}
+                        selectedHousehold={selectedHousehold}
                     />
 
                     {/* Recent expenses */}
