@@ -33,17 +33,18 @@ func newExpenseHandler(deps ExpenseHandlerDeps) expenseHandler {
 // handleCreate handles POST /v1/expenses.
 func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		HouseholdID    string `json:"household_id"`
-		PaidByMemberID string `json:"paid_by_member_id"`
-		AmountCents    int64  `json:"amount_cents"`
-		Description    string `json:"description"`
-		IsShared       *bool  `json:"is_shared"`
-		Currency       string `json:"currency"`
-		PaymentMethod  string `json:"payment_method"`
-		ExpenseType    string `json:"expense_type"`
-		CardName       string `json:"card_name"`
-		Category       string `json:"category"`
-		CategoryID     string `json:"category_id"`
+		HouseholdID       string `json:"household_id"`
+		PaidByMemberID    string `json:"paid_by_member_id"`
+		AmountCents       int64  `json:"amount_cents"`
+		Description       string `json:"description"`
+		IsShared          *bool  `json:"is_shared"`
+		Currency          string `json:"currency"`
+		PaymentMethod     string `json:"payment_method"`
+		ExpenseType       string `json:"expense_type"`
+		CardName          string `json:"card_name"`
+		Category          string `json:"category"`
+		CategoryID        string `json:"category_id"`
+		TotalInstallments int    `json:"total_installments"`
 	}
 	if err := decodeJSON(r, w, &body); err != nil {
 		return
@@ -65,16 +66,17 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	input := inbound.RegisterExpenseInput{
-		HouseholdID:    body.HouseholdID,
-		PaidByMemberID: body.PaidByMemberID,
-		AmountCents:    body.AmountCents,
-		Description:    body.Description,
-		IsShared:       isShared,
-		Currency:       currency,
-		PaymentMethod:  body.PaymentMethod,
-		ExpenseType:    body.ExpenseType,
-		CardName:       body.CardName,
-		CategoryID:     categoryID,
+		HouseholdID:       body.HouseholdID,
+		PaidByMemberID:    body.PaidByMemberID,
+		AmountCents:       body.AmountCents,
+		Description:       body.Description,
+		IsShared:          isShared,
+		Currency:          currency,
+		PaymentMethod:     body.PaymentMethod,
+		ExpenseType:       body.ExpenseType,
+		CardName:          body.CardName,
+		CategoryID:        categoryID,
+		TotalInstallments: body.TotalInstallments,
 	}
 
 	out, err := h.deps.Register.Execute(r.Context(), input)
@@ -190,6 +192,7 @@ func expenseJSON(e expense.Expense) map[string]any {
 		"expense_type":      string(attrs.ExpenseType),
 		"card_name":         attrs.CardName,
 		"category_id":       attrs.CategoryID,
+		"total_installments": attrs.TotalInstallments,
 		"created_at":        attrs.CreatedAt,
 		"updated_at":        attrs.UpdatedAt,
 	}

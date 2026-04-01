@@ -23,7 +23,7 @@ type ExpenseRepository struct {
 // ListByHouseholdAndPeriod returns non-deleted household expenses between [from, to).
 func (r ExpenseRepository) ListByHouseholdAndPeriod(ctx context.Context, householdID string, from, to time.Time) ([]expense.Expense, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category_id, created_at, updated_at, deleted_at
+		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category_id, total_installments, created_at, updated_at, deleted_at
 			FROM expenses
 			WHERE household_id = $1
 				AND created_at >= $2
@@ -61,11 +61,11 @@ func NewExpenseRepository(db *pgxpool.Pool) ExpenseRepository {
 func (r ExpenseRepository) Save(ctx context.Context, e expense.Expense) error {
 	attrs := e.Attributes()
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO expenses (id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category_id, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+		`INSERT INTO expenses (id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category_id, total_installments, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
 		string(attrs.ID), attrs.HouseholdID, attrs.PaidByMemberID, attrs.AmountCents,
 		attrs.Description, attrs.IsShared, attrs.Currency, string(attrs.PaymentMethod),
-		string(attrs.ExpenseType), attrs.CardName, attrs.CategoryID,
+		string(attrs.ExpenseType), attrs.CardName, attrs.CategoryID, attrs.TotalInstallments,
 		attrs.CreatedAt, attrs.UpdatedAt,
 	)
 	if err != nil {
@@ -79,7 +79,7 @@ func (r ExpenseRepository) Save(ctx context.Context, e expense.Expense) error {
 // Note: soft-deleted rows are still returned so callers can inspect DeletedAt.
 func (r ExpenseRepository) FindByID(ctx context.Context, id string) (expense.Expense, error) {
 	row := r.db.QueryRow(ctx,
-		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category_id, created_at, updated_at, deleted_at
+		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category_id, total_installments, created_at, updated_at, deleted_at
 			FROM expenses
 			WHERE id = $1`,
 		id,
@@ -99,7 +99,7 @@ func (r ExpenseRepository) FindByID(ctx context.Context, id string) (expense.Exp
 // List returns non-deleted expenses for a household ordered by created_at DESC.
 func (r ExpenseRepository) List(ctx context.Context, householdID string, limit, offset int) ([]expense.Expense, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category_id, created_at, updated_at, deleted_at
+		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_name, category_id, total_installments, created_at, updated_at, deleted_at
 			FROM expenses
 			WHERE household_id = $1 AND deleted_at IS NULL
 			ORDER BY created_at DESC
@@ -141,13 +141,14 @@ func (r ExpenseRepository) Update(ctx context.Context, e expense.Expense) error 
 			expense_type      = $7,
 			card_name         = $8,
 			category_id       = $9,
-			updated_at        = $10,
-			deleted_at        = $11
-		WHERE id = $12`,
+			total_installments = $10,
+			updated_at        = $11,
+			deleted_at        = $12
+		WHERE id = $13`,
 		attrs.PaidByMemberID, attrs.AmountCents, attrs.Description,
 		attrs.IsShared, attrs.Currency, string(attrs.PaymentMethod),
 		string(attrs.ExpenseType), attrs.CardName, attrs.CategoryID,
-		attrs.UpdatedAt, attrs.DeletedAt, string(attrs.ID),
+		attrs.TotalInstallments, attrs.UpdatedAt, attrs.DeletedAt, string(attrs.ID),
 	)
 	if err != nil {
 		return fmt.Errorf("expense repository update: %w", err)
@@ -169,40 +170,42 @@ type row interface {
 
 func scanExpense(r row) (expense.Expense, error) {
 	var (
-		id             string
-		householdID    string
-		paidByMemberID string
-		amountCents    int64
-		description    string
-		isShared       bool
-		currency       string
-		paymentMethod  string
-		expenseType    string
-		cardName       string
-		categoryID     string
-		createdAt      time.Time
-		updatedAt      time.Time
-		deletedAt      *time.Time
+		id                string
+		householdID       string
+		paidByMemberID    string
+		amountCents       int64
+		description       string
+		isShared          bool
+		currency          string
+		paymentMethod     string
+		expenseType       string
+		cardName          string
+		categoryID        string
+		totalInstallments int
+		createdAt         time.Time
+		updatedAt         time.Time
+		deletedAt         *time.Time
 	)
 
-	if err := r.Scan(&id, &householdID, &paidByMemberID, &amountCents, &description, &isShared, &currency, &paymentMethod, &expenseType, &cardName, &categoryID, &createdAt, &updatedAt, &deletedAt); err != nil {
+	if err := r.Scan(&id, &householdID, &paidByMemberID, &amountCents, &description, &isShared, &currency, &paymentMethod, &expenseType, &cardName, &categoryID, &totalInstallments, &createdAt, &updatedAt, &deletedAt); err != nil {
 		return expense.Expense{}, err
 	}
 
 	return expense.NewFromAttributes(expense.ExpenseAttributes{
-		ID:             expense.ID(id),
-		HouseholdID:    householdID,
-		PaidByMemberID: paidByMemberID,
-		AmountCents:    amountCents,
-		Description:    description,
-		IsShared:       isShared,
-		Currency:       currency,
-		PaymentMethod:  expense.PaymentMethod(paymentMethod),
-		ExpenseType:    expense.ExpenseType(expenseType),
-		CardName:       cardName,
-		CategoryID:     categoryID,
-		CreatedAt:      createdAt,
-		UpdatedAt:      updatedAt,
-		DeletedAt:      deletedAt,
+		ID:                expense.ID(id),
+		HouseholdID:       householdID,
+		PaidByMemberID:    paidByMemberID,
+		AmountCents:       amountCents,
+		Description:       description,
+		IsShared:          isShared,
+		Currency:          currency,
+		PaymentMethod:     expense.PaymentMethod(paymentMethod),
+		ExpenseType:       expense.ExpenseType(expenseType),
+		CardName:          cardName,
+		CategoryID:        categoryID,
+		TotalInstallments: totalInstallments,
+		CreatedAt:         createdAt,
+		UpdatedAt:         updatedAt,
+		DeletedAt:         deletedAt,
 	})
 }

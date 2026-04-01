@@ -8,9 +8,62 @@ import (
 	"micha/backend/internal/domain/category"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/household"
+	"micha/backend/internal/domain/installment"
 	"micha/backend/internal/domain/member"
 	"micha/backend/internal/domain/shared"
 )
+
+type mockInstallmentRepo struct {
+	mu           sync.RWMutex
+	installments map[string]installment.Installment
+}
+
+func newMockInstallmentRepo() *mockInstallmentRepo {
+	return &mockInstallmentRepo{installments: make(map[string]installment.Installment)}
+}
+
+func (m *mockInstallmentRepo) Save(_ context.Context, i installment.Installment) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.installments[string(i.ID())] = i
+	return nil
+}
+
+func (m *mockInstallmentRepo) SaveAll(_ context.Context, insts []installment.Installment) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, i := range insts {
+		m.installments[string(i.ID())] = i
+	}
+	return nil
+}
+
+func (m *mockInstallmentRepo) ListByExpense(_ context.Context, expenseID string) ([]installment.Installment, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var result []installment.Installment
+	for _, i := range m.installments {
+		if i.ExpenseID() == expenseID {
+			result = append(result, i)
+		}
+	}
+	return result, nil
+}
+
+func (m *mockInstallmentRepo) ListByHouseholdAndPeriod(_ context.Context, _ string, _, _ time.Time) ([]installment.Installment, error) {
+	return nil, nil
+}
+
+func (m *mockInstallmentRepo) DeleteByExpense(_ context.Context, expenseID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for id, i := range m.installments {
+		if i.ExpenseID() == expenseID {
+			delete(m.installments, id)
+		}
+	}
+	return nil
+}
 
 // mockRepo is a hand-written in-memory mock for outbound.ExpenseRepository.
 type mockRepo struct {
@@ -164,6 +217,7 @@ func (r *mockMemberRepo) seedMember(id, householdID string) {
 		HouseholdID: householdID,
 		Name:        "Test Member",
 		Email:       "test@example.com",
+		UserID:      "user-linked",
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	})

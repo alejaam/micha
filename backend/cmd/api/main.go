@@ -67,6 +67,7 @@ func main() {
 	}
 
 	expenseRepo := postgres.NewExpenseRepository(pool)
+	installmentRepo := postgres.NewInstallmentRepository(pool)
 	recurringExpenseRepo := postgres.NewRecurringExpenseRepository(pool)
 	householdRepo := postgres.NewHouseholdRepository(pool)
 	memberRepo := postgres.NewMemberRepository(pool)
@@ -94,7 +95,7 @@ func main() {
 
 	// Expense use cases and handler dependencies.
 	expenseDeps := httpadapter.ExpenseHandlerDeps{
-		Register: expenseapp.NewRegisterExpenseUseCase(expenseRepo, householdRepo, memberRepo, categoryRepo, idGen),
+		Register: expenseapp.NewRegisterExpenseUseCase(expenseRepo, householdRepo, memberRepo, categoryRepo, installmentRepo, idGen),
 		Get:      expenseapp.NewGetExpenseUseCase(expenseRepo),
 		List:     expenseapp.NewListExpensesUseCase(expenseRepo),
 		Patch:    expenseapp.NewPatchExpenseUseCase(expenseRepo),
@@ -147,7 +148,7 @@ func main() {
 		Household:        householdDeps,
 		Member:           memberDeps,
 		Settlement: httpadapter.SettlementHandlerDeps{
-			Calculate: settlementapp.NewCalculateSettlementUseCase(householdRepo, memberRepo, expenseRepo),
+			Calculate: settlementapp.NewCalculateSettlementUseCase(householdRepo, memberRepo, expenseRepo, installmentRepo),
 		},
 		Category:       categoryDeps,
 		SplitConfig:    splitConfigDeps,

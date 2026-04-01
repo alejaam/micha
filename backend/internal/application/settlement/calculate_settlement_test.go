@@ -9,6 +9,7 @@ import (
 	settlementapp "micha/backend/internal/application/settlement"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/household"
+	"micha/backend/internal/domain/installment"
 	"micha/backend/internal/domain/member"
 	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
@@ -19,7 +20,8 @@ func TestCalculateSettlementUseCase_Execute_Success(t *testing.T) {
 	hh := newHouseholdMock(t)
 	mm := newMemberMock(t)
 	ee := newExpenseMock(t)
-	uc := settlementapp.NewCalculateSettlementUseCase(hh, mm, ee)
+	ii := &installmentMock{}
+	uc := settlementapp.NewCalculateSettlementUseCase(hh, mm, ee, ii)
 
 	out, err := uc.Execute(context.Background(), inbound.CalculateSettlementInput{
 		HouseholdID: "hh-1",
@@ -44,7 +46,8 @@ func TestCalculateSettlementUseCase_Execute_HouseholdNotFound(t *testing.T) {
 	hh.findErr = shared.ErrNotFound
 	mm := newMemberMock(t)
 	ee := newExpenseMock(t)
-	uc := settlementapp.NewCalculateSettlementUseCase(hh, mm, ee)
+	ii := &installmentMock{}
+	uc := settlementapp.NewCalculateSettlementUseCase(hh, mm, ee, ii)
 
 	_, err := uc.Execute(context.Background(), inbound.CalculateSettlementInput{
 		HouseholdID: "missing",
@@ -61,7 +64,8 @@ func TestCalculateSettlementUseCase_Execute_InvalidMonth(t *testing.T) {
 	hh := newHouseholdMock(t)
 	mm := newMemberMock(t)
 	ee := newExpenseMock(t)
-	uc := settlementapp.NewCalculateSettlementUseCase(hh, mm, ee)
+	ii := &installmentMock{}
+	uc := settlementapp.NewCalculateSettlementUseCase(hh, mm, ee, ii)
 
 	_, err := uc.Execute(context.Background(), inbound.CalculateSettlementInput{
 		HouseholdID: "hh-1",
@@ -72,6 +76,18 @@ func TestCalculateSettlementUseCase_Execute_InvalidMonth(t *testing.T) {
 		t.Fatal("expected error")
 	}
 }
+
+type installmentMock struct{}
+
+func (m *installmentMock) Save(context.Context, installment.Installment) error             { return nil }
+func (m *installmentMock) SaveAll(context.Context, []installment.Installment) error        { return nil }
+func (m *installmentMock) ListByExpense(context.Context, string) ([]installment.Installment, error) {
+	return nil, nil
+}
+func (m *installmentMock) ListByHouseholdAndPeriod(_ context.Context, _ string, _, _ time.Time) ([]installment.Installment, error) {
+	return nil, nil
+}
+func (m *installmentMock) DeleteByExpense(context.Context, string) error { return nil }
 
 type householdMock struct {
 	house   household.Household
