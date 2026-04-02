@@ -10,6 +10,7 @@ import (
 type RegisterExpenseInput struct {
 	HouseholdID       string
 	PaidByMemberID    string
+	CurrentUserID     string // The user ID of the request caller (from JWT)
 	AmountCents       int64
 	Description       string
 	IsShared          bool

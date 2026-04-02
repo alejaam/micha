@@ -211,6 +211,22 @@ export function DashboardPage() {
                         <ExpenseSummary settlement={settlement} currency={activeCurrency} />
                     </section>
 
+                    <section className="card" aria-label="Cards quick actions">
+                        <div className="listHeader">
+                            <h2 className="listTitle">Cards</h2>
+                        </div>
+                        <p className="text-sm text-dim mb-3">
+                            Add a new card or change your preferred card for new expenses.
+                        </p>
+                        <button
+                            type="button"
+                            className="btn"
+                            onClick={() => navigate('/onboarding/cards')}
+                        >
+                            Manage cards
+                        </button>
+                    </section>
+
                     {/* Fixed expenses breakdown */}
                     <FixedExpensesPanel
                         items={items}

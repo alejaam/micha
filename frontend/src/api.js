@@ -183,6 +183,20 @@ export async function listCards({ householdId }) {
     return parseResponse(response)
 }
 
+export async function createCard({ householdId, bankName, cardName, cutoffDay }) {
+    const response = await fetch(`/v1/households/${householdId}/cards`, {
+        method: 'POST',
+        headers: buildProtectedHeaders(),
+        body: JSON.stringify({
+            bank_name: bankName,
+            card_name: cardName,
+            cutoff_day: cutoffDay,
+        }),
+    })
+
+    return parseResponse(response)
+}
+
 export async function patchExpense({ id, amountCents, description }) {
     const body = {}
 

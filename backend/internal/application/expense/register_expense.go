@@ -66,7 +66,13 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 
 	// Requirement: Pending members cannot register expenses.
 	if m.IsPending() {
-		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: pending members cannot register expenses")
+		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", shared.ErrForbidden)
+	}
+
+	// NEW: Validate session authorization — only the member can register their own expenses,
+	// UNLESS the current user is the admin (first/creator member of the household).
+	if err := u.validateSessionAuthorization(ctx, input.HouseholdID, input.PaidByMemberID, input.CurrentUserID); err != nil {
+		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
 	}
 
 	categoryID, err := u.resolveCategoryID(ctx, input.HouseholdID, input.CategoryID)
@@ -198,6 +204,46 @@ func (u RegisterExpenseUseCase) resolveCardDetails(ctx context.Context, input in
 	}
 
 	return string(c.ID()), c.CardName(), nil
+}
+
+// validateSessionAuthorization verifies that the current user is authorized to register an expense
+// for the specified member. Rules:
+// 1. A user can always register an expense for their own member (m.UserID() == currentUserID)
+// 2. A user can register expenses for other members if they are the admin (first member linked to the household creator)
+func (u RegisterExpenseUseCase) validateSessionAuthorization(ctx context.Context, householdID, paidByMemberID, currentUserID string) error {
+	if strings.TrimSpace(currentUserID) == "" {
+		return shared.ErrForbidden // No user context
+	}
+
+	// Get the member paying for the expense
+	paidByMember, err := u.memberRepo.FindByID(ctx, paidByMemberID)
+	if err != nil {
+		return err
+	}
+
+	// Rule 1: User can register their own expenses
+	if paidByMember.UserID() == currentUserID {
+		return nil
+	}
+
+	// Rule 2: User must be the admin (first member of household with a user_id)
+	members, err := u.memberRepo.ListAllByHousehold(ctx, householdID)
+	if err != nil {
+		return err
+	}
+
+	// Find the admin: first member with a non-empty user_id
+	for _, m := range members {
+		if strings.TrimSpace(m.UserID()) != "" {
+			// Found the first member with a user_id; they are the admin
+			if m.UserID() == currentUserID {
+				return nil // Current user is the admin, allowed
+			}
+			break // Stop checking; this is the admin and it's not the current user
+		}
+	}
+
+	return shared.ErrForbidden
 }
 
 var _ inbound.RegisterExpenseUseCase = RegisterExpenseUseCase{}

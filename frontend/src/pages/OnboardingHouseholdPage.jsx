@@ -75,8 +75,8 @@ export function OnboardingHouseholdPage() {
             // 3. Refresh households list now that there's a member linked to the user
             await loadHouseholds()
 
-            // 4. Finish onboarding
-            navigate('/', { replace: true })
+            // 4. Continue onboarding with cards setup
+            navigate('/onboarding/cards', { replace: true })
             
         } catch (err) {
             if (!handleProtectedError(err)) setError(err.message)

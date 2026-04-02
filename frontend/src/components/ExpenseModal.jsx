@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { listCards, listCategories } from '../api'
+import { MEXICAN_BANKS } from '../constants/mexicanBanks'
 import { FormField } from '../ui/FormField'
 import { Modal } from '../ui/Modal'
 import { Tooltip } from '../ui/Tooltip'
@@ -20,6 +21,10 @@ const EXPENSE_TYPE_HINTS = {
     variable: 'One-time expense for this period only.',
     fixed: 'Recurs every period. Will be auto-copied when the current period closes.',
     msi: 'Installment purchase — will generate installments for the following months.',
+}
+
+function preferredCardStorageKey(householdId) {
+    return `micha_preferred_card_${householdId}`
 }
 
 export function ExpenseModal({
@@ -48,6 +53,11 @@ export function ExpenseModal({
     const [loadingCategories, setLoadingCategories] = useState(false)
     const [cards, setCards] = useState([])
     const [loadingCards, setLoadingCards] = useState(false)
+
+    const eligibleMembers = useMemo(
+        () => members.filter((member) => member.user_id && String(member.user_id).trim() !== ''),
+        [members],
+    )
 
     useEffect(() => {
         if (!householdId) return
@@ -94,8 +104,11 @@ export function ExpenseModal({
                 if (cancelled || !Array.isArray(items)) return
                 setCards(items)
                 if (items.length > 0 && !cardId) {
-                    setCardId(items[0].id)
-                    setCardName(items[0].card_name || '')
+                    const preferredCardId = localStorage.getItem(preferredCardStorageKey(householdId)) ?? ''
+                    const preferredCard = items.find((item) => item.id === preferredCardId)
+                    const initialCard = preferredCard ?? items[0]
+                    setCardId(initialCard.id)
+                    setCardName(initialCard.card_name || '')
                 }
             })
             .catch(() => {
@@ -111,7 +124,12 @@ export function ExpenseModal({
         }
     }, [householdId])
 
-    const hasMembers = members.length > 0
+    useEffect(() => {
+        if (!householdId || !cardId) return
+        localStorage.setItem(preferredCardStorageKey(householdId), cardId)
+    }, [householdId, cardId])
+
+    const hasMembers = eligibleMembers.length > 0
     const isCardPayment = paymentMethod === 'card'
     const isVoucher = paymentMethod === 'voucher'
     const isMSI = expenseType === 'msi'
@@ -125,10 +143,11 @@ export function ExpenseModal({
 
     // Sync paidByMemberId when members load or defaultPaidByMemberId changes
     useEffect(() => {
-        if (members.length > 0 && !paidByMemberId) {
-            setPaidByMemberId(defaultPaidByMemberId || members[0].id)
+        if (eligibleMembers.length > 0 && !paidByMemberId) {
+            const preferredMember = eligibleMembers.find((member) => member.id === defaultPaidByMemberId)
+            setPaidByMemberId(preferredMember?.id || eligibleMembers[0].id)
         }
-    }, [members, paidByMemberId, defaultPaidByMemberId])
+    }, [eligibleMembers, paidByMemberId, defaultPaidByMemberId])
 
     const isCurrentMemberSelected = paidByMemberId === defaultPaidByMemberId && defaultPaidByMemberId !== ''
 
@@ -205,9 +224,9 @@ export function ExpenseModal({
                         {isLoadingMembers ? (
                             <option>Loading members…</option>
                         ) : !hasMembers ? (
-                            <option disabled>No members available</option>
+                            <option disabled>No eligible members available</option>
                         ) : (
-                            members.map((m) => (
+                            eligibleMembers.map((m) => (
                                 <option key={m.id} value={m.id}>
                                     {m.name}{m.id === defaultPaidByMemberId ? ' (you)' : ''}
                                 </option>
@@ -216,6 +235,9 @@ export function ExpenseModal({
                     </select>
                     {isCurrentMemberSelected && (
                         <p className="formHint">Defaults to you — your linked member.</p>
+                    )}
+                    {!isLoadingMembers && !hasMembers && (
+                        <p className="formHint formHintError">Pending members cannot register expenses. Link your account to a member first.</p>
                     )}
                 </FormField>
 
@@ -311,18 +333,9 @@ export function ExpenseModal({
                                             </option>
                                         ))
                                     ) : (
-                                        <>
-                                            <option value="BBVA">BBVA</option>
-                                            <option value="BANAMEX">Banamex</option>
-                                            <option value="HSBC">HSBC</option>
-                                            <option value="BANORTE">Banorte</option>
-                                            <option value="SANTANDER">Santander</option>
-                                            <option value="AMEX">Amex</option>
-                                            <option value="NU">Nu</option>
-                                            <option value="HEY BANCO">Hey Banco</option>
-                                            <option value="RAPPI">Rappi</option>
-                                            <option value="OTHER">Other</option>
-                                        </>
+                                        MEXICAN_BANKS.map((bank) => (
+                                            <option key={bank.value} value={bank.value}>{bank.label}</option>
+                                        ))
                                     )}
                                 </select>
                                 {hasRegisteredCards && (
@@ -375,7 +388,7 @@ export function ExpenseModal({
                     <button
                         type="submit"
                         className="btn btnPrimary btnFull"
-                        disabled={!isValid || isSubmitting || isLoadingMembers}
+                        disabled={!isValid || isSubmitting || isLoadingMembers || !hasMembers}
                     >
                         {isSubmitting
                             ? <><span className="spinIcon" aria-hidden>⟳</span> Saving…</>

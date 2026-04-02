@@ -66,9 +66,12 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		categoryID = body.Category
 	}
 
+	currentUserID, _ := UserIDFromContext(r.Context())
+
 	input := inbound.RegisterExpenseInput{
 		HouseholdID:       body.HouseholdID,
 		PaidByMemberID:    body.PaidByMemberID,
+		CurrentUserID:     currentUserID,
 		AmountCents:       body.AmountCents,
 		Description:       body.Description,
 		IsShared:          isShared,
@@ -236,6 +239,8 @@ func writeErrorFromDomain(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, "INVALID_CATEGORY", "category must be rent, auto, streaming, food, personal, savings or other")
 	case errors.Is(err, shared.ErrAlreadyDeleted):
 		writeError(w, http.StatusBadRequest, "ALREADY_DELETED", "expense has already been deleted")
+	case errors.Is(err, shared.ErrForbidden):
+		writeError(w, http.StatusForbidden, "FORBIDDEN", "you are not allowed to register expenses with this member")
 	default:
 		slog.Error("expense handler: internal error", "error", err)
 		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "an internal error occurred")

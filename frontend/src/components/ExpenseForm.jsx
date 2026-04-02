@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { MEXICAN_BANKS } from '../constants/mexicanBanks'
 import { FormField } from '../ui/FormField'
 import { dollarsToCents, sanitizeAmountInput } from '../utils'
 
@@ -158,16 +159,9 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
               disabled={isSubmitting}
             >
               <option value="" disabled>Select card...</option>
-              <option value="BBVA">BBVA</option>
-              <option value="BANAMEX">Banamex</option>
-              <option value="HSBC">HSBC</option>
-              <option value="BANORTE">Banorte</option>
-              <option value="SANTANDER">Santander</option>
-              <option value="AMEX">Amex</option>
-              <option value="NU">Nu</option>
-              <option value="HEY BANCO">Hey Banco</option>
-              <option value="RAPPI">Rappi</option>
-              <option value="OTHER">Other</option>
+              {MEXICAN_BANKS.map((bank) => (
+                <option key={bank.value} value={bank.value}>{bank.label}</option>
+              ))}
             </select>
           </FormField>
         )}
