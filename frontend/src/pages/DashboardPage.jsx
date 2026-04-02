@@ -1,27 +1,27 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import {
+    createExpense,
+    deleteExpense,
+    patchExpense,
+} from '../api'
+import { CardExpensesPanel } from '../components/CardExpensesPanel'
+import { ExpenseList } from '../components/ExpenseList'
+import { ExpenseModal } from '../components/ExpenseModal'
+import { ExpenseSummary } from '../components/ExpenseSummary'
+import { FAB } from '../components/FAB'
+import { FixedExpensesPanel } from '../components/FixedExpensesPanel'
+import { IncomesPanel } from '../components/IncomesPanel'
+import { MembersPanel } from '../components/MembersPanel'
+import { RecentExpenses } from '../components/RecentExpenses'
+import { SettlementPanel } from '../components/SettlementPanel'
 import { useAppShell } from '../context/AppShellContext'
+import { useAuth } from '../context/AuthContext'
+import { useCurrentMember } from '../hooks/useCurrentMember'
 import { useExpenses } from '../hooks/useExpenses'
 import { useMembers } from '../hooks/useMembers'
 import { useSettlement } from '../hooks/useSettlement'
-import { useCurrentMember } from '../hooks/useCurrentMember'
-import { ExpenseSummary } from '../components/ExpenseSummary'
-import { RecentExpenses } from '../components/RecentExpenses'
-import { ExpenseList } from '../components/ExpenseList'
-import { SettlementPanel } from '../components/SettlementPanel'
-import { MembersPanel } from '../components/MembersPanel'
-import { IncomesPanel } from '../components/IncomesPanel'
-import { FixedExpensesPanel } from '../components/FixedExpensesPanel'
-import { CardExpensesPanel } from '../components/CardExpensesPanel'
-import { ExpenseModal } from '../components/ExpenseModal'
-import { FAB } from '../components/FAB'
 import { Banner } from '../ui/Banner'
-import {
-    createExpense,
-    patchExpense,
-    deleteExpense,
-} from '../api'
 
 function isExpectedSettlementOnboardingError(err) {
     return err?.code === 'NO_MEMBERS' || String(err?.message || '').toLowerCase().includes('at least one member')
@@ -109,7 +109,7 @@ export function DashboardPage() {
 
 // No secondary onboarding needed because the household creator is auto-added
 
-    async function handleCreate({ amountCents, description, paidByMemberId, isShared, paymentMethod, expenseType, cardName, category, totalInstallments }) {
+    async function handleCreate({ amountCents, description, paidByMemberId, isShared, paymentMethod, expenseType, cardId, cardName, category, totalInstallments }) {
         setMessage('')
         setError('')
         setSubmittingCreate(true)
@@ -123,6 +123,7 @@ export function DashboardPage() {
                 currency: activeCurrency,
                 paymentMethod,
                 expenseType,
+                cardId,
                 cardName,
                 category,
                 totalInstallments,

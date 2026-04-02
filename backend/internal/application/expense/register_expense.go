@@ -12,6 +12,7 @@ import (
 	appshared "micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/installment"
+	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
 )
@@ -20,6 +21,7 @@ type RegisterExpenseUseCase struct {
 	repo            outbound.ExpenseRepository
 	householdRepo   outbound.HouseholdRepository
 	memberRepo      outbound.MemberRepository
+	cardRepo        outbound.CardRepository
 	categoryRepo    outbound.CategoryRepository
 	installmentRepo outbound.InstallmentRepository
 	idGenerator     appshared.IDGenerator
@@ -30,6 +32,7 @@ func NewRegisterExpenseUseCase(
 	repo outbound.ExpenseRepository,
 	householdRepo outbound.HouseholdRepository,
 	memberRepo outbound.MemberRepository,
+	cardRepo outbound.CardRepository,
 	categoryRepo outbound.CategoryRepository,
 	installmentRepo outbound.InstallmentRepository,
 	idGenerator appshared.IDGenerator,
@@ -38,6 +41,7 @@ func NewRegisterExpenseUseCase(
 		repo:            repo,
 		householdRepo:   householdRepo,
 		memberRepo:      memberRepo,
+		cardRepo:        cardRepo,
 		categoryRepo:    categoryRepo,
 		installmentRepo: installmentRepo,
 		idGenerator:     idGenerator,
@@ -70,6 +74,11 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: resolve category: %w", err)
 	}
 
+	cardID, cardName, err := u.resolveCardDetails(ctx, input)
+	if err != nil {
+		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: resolve card: %w", err)
+	}
+
 	now := u.now()
 	e, err := expense.NewFromAttributes(expense.ExpenseAttributes{
 		ID:                expense.ID(u.idGenerator.NewID()),
@@ -81,7 +90,8 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		Currency:          input.Currency,
 		PaymentMethod:     expense.PaymentMethod(input.PaymentMethod),
 		ExpenseType:       expense.ExpenseType(input.ExpenseType),
-		CardName:          input.CardName,
+		CardID:            cardID,
+		CardName:          cardName,
 		CategoryID:        categoryID,
 		TotalInstallments: input.TotalInstallments,
 		CreatedAt:         now,
@@ -167,6 +177,27 @@ func (u RegisterExpenseUseCase) resolveCategoryID(ctx context.Context, household
 	}
 
 	return string(c.ID()), nil
+}
+
+func (u RegisterExpenseUseCase) resolveCardDetails(ctx context.Context, input inbound.RegisterExpenseInput) (string, string, error) {
+	if expense.PaymentMethod(input.PaymentMethod) != expense.PaymentMethodCard {
+		return "", "", nil
+	}
+
+	cardID := strings.TrimSpace(input.CardID)
+	if cardID == "" {
+		return "", strings.TrimSpace(input.CardName), nil
+	}
+
+	c, err := u.cardRepo.FindByID(ctx, cardID)
+	if err != nil {
+		return "", "", err
+	}
+	if c.HouseholdID() != input.HouseholdID {
+		return "", "", shared.ErrNotFound
+	}
+
+	return string(c.ID()), c.CardName(), nil
 }
 
 var _ inbound.RegisterExpenseUseCase = RegisterExpenseUseCase{}

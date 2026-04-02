@@ -41,6 +41,7 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		Currency          string `json:"currency"`
 		PaymentMethod     string `json:"payment_method"`
 		ExpenseType       string `json:"expense_type"`
+		CardID            string `json:"card_id"`
 		CardName          string `json:"card_name"`
 		Category          string `json:"category"`
 		CategoryID        string `json:"category_id"`
@@ -74,6 +75,7 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		Currency:          currency,
 		PaymentMethod:     body.PaymentMethod,
 		ExpenseType:       body.ExpenseType,
+		CardID:            body.CardID,
 		CardName:          body.CardName,
 		CategoryID:        categoryID,
 		TotalInstallments: body.TotalInstallments,
@@ -181,20 +183,21 @@ func (h expenseHandler) handleDelete(w http.ResponseWriter, r *http.Request) {
 func expenseJSON(e expense.Expense) map[string]any {
 	attrs := e.Attributes()
 	m := map[string]any{
-		"id":                string(attrs.ID),
-		"household_id":      attrs.HouseholdID,
-		"paid_by_member_id": attrs.PaidByMemberID,
-		"amount_cents":      attrs.AmountCents,
-		"description":       attrs.Description,
-		"is_shared":         attrs.IsShared,
-		"currency":          attrs.Currency,
-		"payment_method":    string(attrs.PaymentMethod),
-		"expense_type":      string(attrs.ExpenseType),
-		"card_name":         attrs.CardName,
-		"category_id":       attrs.CategoryID,
+		"id":                 string(attrs.ID),
+		"household_id":       attrs.HouseholdID,
+		"paid_by_member_id":  attrs.PaidByMemberID,
+		"amount_cents":       attrs.AmountCents,
+		"description":        attrs.Description,
+		"is_shared":          attrs.IsShared,
+		"currency":           attrs.Currency,
+		"payment_method":     string(attrs.PaymentMethod),
+		"expense_type":       string(attrs.ExpenseType),
+		"card_id":            attrs.CardID,
+		"card_name":          attrs.CardName,
+		"category_id":        attrs.CategoryID,
 		"total_installments": attrs.TotalInstallments,
-		"created_at":        attrs.CreatedAt,
-		"updated_at":        attrs.UpdatedAt,
+		"created_at":         attrs.CreatedAt,
+		"updated_at":         attrs.UpdatedAt,
 	}
 	if attrs.DeletedAt != nil {
 		m["deleted_at"] = attrs.DeletedAt

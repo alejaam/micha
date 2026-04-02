@@ -58,6 +58,7 @@ type ExpenseAttributes struct {
 	PaidByMemberID    string // The member who paid this expense
 	PeriodID          string // The period this expense belongs to
 	CategoryID        string // The category this expense belongs to
+	CardID            string // Optional linked card id when payment_method=card
 	HouseholdID       string
 	AmountCents       int64
 	Description       string
@@ -78,6 +79,7 @@ type Expense struct {
 	memberID          string
 	periodID          string
 	categoryID        string
+	cardID            string
 	householdID       string
 	amountCents       int64
 	description       string
@@ -167,6 +169,7 @@ func NewFromAttributes(attrs ExpenseAttributes) (Expense, error) {
 		memberID:          memberID,
 		periodID:          strings.TrimSpace(attrs.PeriodID),
 		categoryID:        strings.TrimSpace(attrs.CategoryID),
+		cardID:            strings.TrimSpace(attrs.CardID),
 		householdID:       attrs.HouseholdID,
 		amountCents:       attrs.AmountCents,
 		description:       attrs.Description,
@@ -216,6 +219,7 @@ func (e Expense) Attributes() ExpenseAttributes {
 		PaidByMemberID:    e.memberID,
 		PeriodID:          e.periodID,
 		CategoryID:        e.categoryID,
+		CardID:            e.cardID,
 		HouseholdID:       e.householdID,
 		AmountCents:       e.amountCents,
 		Description:       e.description,
@@ -235,6 +239,7 @@ func (e Expense) ID() ID                       { return e.id }
 func (e Expense) PaidByMemberID() string       { return e.memberID }
 func (e Expense) PeriodID() string             { return e.periodID }
 func (e Expense) CategoryID() string           { return e.categoryID }
+func (e Expense) CardID() string               { return e.cardID }
 func (e Expense) HouseholdID() string          { return e.householdID }
 func (e Expense) AmountCents() int64           { return e.amountCents }
 func (e Expense) Description() string          { return e.description }

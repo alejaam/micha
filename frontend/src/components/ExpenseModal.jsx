@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { listCategories } from '../api'
+import { listCards, listCategories } from '../api'
 import { FormField } from '../ui/FormField'
 import { Modal } from '../ui/Modal'
 import { Tooltip } from '../ui/Tooltip'
@@ -38,6 +38,7 @@ export function ExpenseModal({
     const [paymentMethod, setPaymentMethod] = useState('card')
     const [expenseType, setExpenseType] = useState('variable')
     const [totalInstallments, setTotalInstallments] = useState(3)
+    const [cardId, setCardId] = useState('')
     const [cardName, setCardName] = useState('')
     const [category, setCategory] = useState('')
     const [showAdvanced, setShowAdvanced] = useState(false)
@@ -45,6 +46,8 @@ export function ExpenseModal({
     // Dynamic categories from backend
     const [categories, setCategories] = useState([])
     const [loadingCategories, setLoadingCategories] = useState(false)
+    const [cards, setCards] = useState([])
+    const [loadingCards, setLoadingCards] = useState(false)
 
     useEffect(() => {
         if (!householdId) return
@@ -82,10 +85,43 @@ export function ExpenseModal({
         return () => { cancelled = true }
     }, [householdId])
 
+    useEffect(() => {
+        if (!householdId) return
+        let cancelled = false
+        setLoadingCards(true)
+        listCards({ householdId })
+            .then((items) => {
+                if (cancelled || !Array.isArray(items)) return
+                setCards(items)
+                if (items.length > 0 && !cardId) {
+                    setCardId(items[0].id)
+                    setCardName(items[0].card_name || '')
+                }
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setCards([])
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setLoadingCards(false)
+            })
+        return () => {
+            cancelled = true
+        }
+    }, [householdId])
+
     const hasMembers = members.length > 0
     const isCardPayment = paymentMethod === 'card'
     const isVoucher = paymentMethod === 'voucher'
     const isMSI = expenseType === 'msi'
+    const hasRegisteredCards = cards.length > 0
+
+    useEffect(() => {
+        if (paymentMethod === 'card') return
+        setCardId('')
+        setCardName('')
+    }, [paymentMethod])
 
     // Sync paidByMemberId when members load or defaultPaidByMemberId changes
     useEffect(() => {
@@ -118,6 +154,7 @@ export function ExpenseModal({
             isShared,
             paymentMethod,
             expenseType,
+            cardId: isCardPayment ? cardId.trim() : '',
             cardName: isCardPayment ? cardName.trim() : '',
             category,
             totalInstallments: isMSI ? Number(totalInstallments) : 0,
@@ -253,22 +290,44 @@ export function ExpenseModal({
                                 <select
                                     id="modalCardName"
                                     className="input"
-                                    value={cardName}
-                                    onChange={(e) => setCardName(e.target.value)}
-                                    disabled={isSubmitting}
+                                    value={hasRegisteredCards ? cardId : cardName}
+                                    onChange={(e) => {
+                                        const selectedValue = e.target.value
+                                        if (hasRegisteredCards) {
+                                            setCardId(selectedValue)
+                                            const selectedCard = cards.find((item) => item.id === selectedValue)
+                                            setCardName(selectedCard?.card_name || '')
+                                            return
+                                        }
+                                        setCardName(selectedValue)
+                                    }}
+                                    disabled={isSubmitting || loadingCards}
                                 >
                                     <option value="" disabled>Select card...</option>
-                                    <option value="BBVA">BBVA</option>
-                                    <option value="BANAMEX">Banamex</option>
-                                    <option value="HSBC">HSBC</option>
-                                    <option value="BANORTE">Banorte</option>
-                                    <option value="SANTANDER">Santander</option>
-                                    <option value="AMEX">Amex</option>
-                                    <option value="NU">Nu</option>
-                                    <option value="HEY BANCO">Hey Banco</option>
-                                    <option value="RAPPI">Rappi</option>
-                                    <option value="OTHER">Other</option>
+                                    {hasRegisteredCards ? (
+                                        cards.map((item) => (
+                                            <option key={item.id} value={item.id}>
+                                                {item.bank_name} - {item.card_name}
+                                            </option>
+                                        ))
+                                    ) : (
+                                        <>
+                                            <option value="BBVA">BBVA</option>
+                                            <option value="BANAMEX">Banamex</option>
+                                            <option value="HSBC">HSBC</option>
+                                            <option value="BANORTE">Banorte</option>
+                                            <option value="SANTANDER">Santander</option>
+                                            <option value="AMEX">Amex</option>
+                                            <option value="NU">Nu</option>
+                                            <option value="HEY BANCO">Hey Banco</option>
+                                            <option value="RAPPI">Rappi</option>
+                                            <option value="OTHER">Other</option>
+                                        </>
+                                    )}
                                 </select>
+                                {hasRegisteredCards && (
+                                    <p className="formHint">Using registered cards from this household.</p>
+                                )}
                             </FormField>
                         )}
 

@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"micha/backend/internal/domain/card"
 	"micha/backend/internal/domain/category"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/household"
@@ -260,6 +261,71 @@ func (r *mockMemberRepo) CountActiveByHousehold(_ context.Context, _ string) (in
 type mockCategoryRepoActual struct {
 	mu   sync.Mutex
 	rows map[string]category.Category
+}
+
+type mockCardRepo struct {
+	mu      sync.RWMutex
+	cards   map[string]card.Card
+	findErr error
+}
+
+func newMockCardRepo() *mockCardRepo {
+	return &mockCardRepo{cards: make(map[string]card.Card)}
+}
+
+func (r *mockCardRepo) seedCard(id, householdID, cardName string) {
+	c, _ := card.NewFromAttributes(card.Attributes{
+		ID:          card.ID(id),
+		HouseholdID: householdID,
+		BankName:    "BANAMEX",
+		CardName:    cardName,
+		CutoffDay:   10,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	})
+	r.cards[id] = c
+}
+
+func (r *mockCardRepo) Save(_ context.Context, c card.Card) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.cards[string(c.ID())] = c
+	return nil
+}
+
+func (r *mockCardRepo) FindByID(_ context.Context, id string) (card.Card, error) {
+	if r.findErr != nil {
+		return card.Card{}, r.findErr
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	c, ok := r.cards[id]
+	if !ok {
+		return card.Card{}, shared.ErrNotFound
+	}
+	return c, nil
+}
+
+func (r *mockCardRepo) ListByHousehold(_ context.Context, householdID string) ([]card.Card, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	result := make([]card.Card, 0)
+	for _, c := range r.cards {
+		if c.HouseholdID() == householdID {
+			result = append(result, c)
+		}
+	}
+	return result, nil
+}
+
+func (r *mockCardRepo) Delete(_ context.Context, id string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, ok := r.cards[id]; !ok {
+		return shared.ErrNotFound
+	}
+	delete(r.cards, id)
+	return nil
 }
 
 func newMockCategoryRepo() *mockCategoryRepoActual {

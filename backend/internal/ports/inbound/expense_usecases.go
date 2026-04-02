@@ -8,14 +8,15 @@ import (
 
 // RegisterExpenseInput contains required data to register an expense.
 type RegisterExpenseInput struct {
-	HouseholdID    string
-	PaidByMemberID string
-	AmountCents    int64
-	Description    string
-	IsShared       bool
-	Currency       string
-	PaymentMethod  string
+	HouseholdID       string
+	PaidByMemberID    string
+	AmountCents       int64
+	Description       string
+	IsShared          bool
+	Currency          string
+	PaymentMethod     string
 	ExpenseType       string
+	CardID            string
 	CardName          string
 	CategoryID        string
 	TotalInstallments int
