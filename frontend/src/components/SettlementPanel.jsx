@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { formatCurrency } from '../utils'
+import { Tooltip } from '../ui/Tooltip'
 
 const ALL_MONTHS = [
   { value: 1, label: '01 - Jan' }, { value: 2, label: '02 - Feb' },
@@ -84,6 +85,7 @@ export function SettlementPanel({
       <h2 className="sectionTitle">
         <span className="sectionTitleIcon" aria-hidden>🧮</span>
         Monthly settlement
+        <Tooltip text="Shows who owes whom for shared expenses this month. Based on income proportion or equal split." position="right" />
         {isCurrentMonth && <span className="currentPeriodBadge">current</span>}
         {settlement && <span className="sectionBadge" style={{ marginLeft: isCurrentMonth ? '8px' : 'auto' }}>
             {settlement.effective_settlement_mode === 'exact' ? 'Exact split' : 'Income proportional'}

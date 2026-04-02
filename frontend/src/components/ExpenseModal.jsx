@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
+import { listCategories } from '../api'
 import { FormField } from '../ui/FormField'
 import { Modal } from '../ui/Modal'
+import { Tooltip } from '../ui/Tooltip'
 import { dollarsToCents, sanitizeAmountInput } from '../utils'
-import { listCategories } from '../api'
+import { getCategoryIcon } from '../utils/categoryIcons'
 
 /**
  * ExpenseModal — quick-add expense form inside a modal.
@@ -155,11 +157,30 @@ export function ExpenseModal({
                     />
                 </FormField>
 
-                {hasMembers && (
-                    <p className="formHint">
-                        Paid by: <strong>{members.find((m) => m.id === paidByMemberId)?.name || 'You'}</strong> (you)
-                    </p>
-                )}
+                <FormField label="Paid by" htmlFor="modalPaidBy">
+                    <select
+                        id="modalPaidBy"
+                        className="input"
+                        value={paidByMemberId}
+                        onChange={(e) => setPaidByMemberId(e.target.value)}
+                        disabled={isSubmitting || isLoadingMembers || !hasMembers}
+                    >
+                        {isLoadingMembers ? (
+                            <option>Loading members…</option>
+                        ) : !hasMembers ? (
+                            <option disabled>No members available</option>
+                        ) : (
+                            members.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                    {m.name}{m.id === defaultPaidByMemberId ? ' (you)' : ''}
+                                </option>
+                            ))
+                        )}
+                    </select>
+                    {isCurrentMemberSelected && (
+                        <p className="formHint">Defaults to you — your linked member.</p>
+                    )}
+                </FormField>
 
                 <FormField label="Category" htmlFor="modalCategory">
                     <select
@@ -174,7 +195,7 @@ export function ExpenseModal({
                         ) : (
                             categories.map((c) => (
                                 <option key={c.id || c.slug} value={c.id || c.slug}>
-                                    {c.name}
+                                    {getCategoryIcon(c.slug || c.id)} {c.name}
                                 </option>
                             ))
                         )}
@@ -192,12 +213,8 @@ export function ExpenseModal({
                             disabled={isSubmitting}
                         />
                         <span className="sharedToggleText">Shared expense</span>
+                        <Tooltip text="Shared expenses are split among household members based on income proportion or equal split." />
                     </label>
-                    <p className="formHint">
-                        {isShared
-                            ? 'Will be split among household members according to the settlement mode.'
-                            : 'Personal expense — will NOT be included in settlement calculations.'}
-                    </p>
                 </div>
 
                 {/* ── Advanced options toggle ── */}
@@ -255,7 +272,15 @@ export function ExpenseModal({
                             </FormField>
                         )}
 
-                        <FormField label="Expense type" htmlFor="modalExpenseType">
+                        <FormField
+                            label={(
+                                <>
+                                    Expense type
+                                    <Tooltip text="Variable is one-time, Fixed is recurring, and MSI creates installments over future months." position="right" />
+                                </>
+                            )}
+                            htmlFor="modalExpenseType"
+                        >
                             <select
                                 id="modalExpenseType"
                                 className="input"

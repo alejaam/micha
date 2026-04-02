@@ -10,6 +10,7 @@ import { ExpenseSummary } from '../components/ExpenseSummary'
 import { RecentExpenses } from '../components/RecentExpenses'
 import { ExpenseList } from '../components/ExpenseList'
 import { SettlementPanel } from '../components/SettlementPanel'
+import { MembersPanel } from '../components/MembersPanel'
 import { IncomesPanel } from '../components/IncomesPanel'
 import { FixedExpensesPanel } from '../components/FixedExpensesPanel'
 import { CardExpensesPanel } from '../components/CardExpensesPanel'
@@ -187,6 +188,12 @@ export function DashboardPage() {
                 </section>
             ) : (
                 <>
+                    {/* Members overview */}
+                    <MembersPanel
+                        members={members}
+                        currency={activeCurrency}
+                    />
+
                     {/* Incomes */}
                     <IncomesPanel
                         members={members}
