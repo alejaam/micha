@@ -60,6 +60,7 @@ export function CardExpensesPanel({ items = [], members = [], currency = 'MXN' }
             <h2 className="sectionTitle">
                 <span className="sectionTitleIcon" aria-hidden>&#9646;</span>
                 Card expenses
+                {cardItems.length > 0 && <span className="sectionBadge">{cardItems.length} charges • {formatCurrency(grandTotal, currency)}</span>}
             </h2>
 
             <div className="cardExpensesTable">

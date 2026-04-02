@@ -6,6 +6,7 @@ import (
 
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/household"
+	"micha/backend/internal/domain/installment"
 	"micha/backend/internal/domain/member"
 )
 
@@ -43,7 +44,7 @@ type Result struct {
 }
 
 // Calculate computes per-member balances and transfer suggestions.
-func Calculate(mode household.SettlementMode, members []member.Member, expenses []expense.Expense) (Result, error) {
+func Calculate(mode household.SettlementMode, members []member.Member, expenses []expense.Expense, installments []installment.Installment) (Result, error) {
 	if len(members) == 0 {
 		return Result{}, ErrNoMembers
 	}
@@ -62,10 +63,14 @@ func Calculate(mode household.SettlementMode, members []member.Member, expenses 
 		if e.DeletedAt() != nil || !e.IsShared() {
 			continue
 		}
-		if e.PaymentMethod() == expense.PaymentMethodVoucher {
-			result.ExcludedVoucherCount++
+
+		// MSI root expenses are excluded because their value is settled via installments.
+		if e.ExpenseType() == expense.ExpenseTypeMSI {
 			continue
 		}
+
+		// Vouchers were previously excluded but now they are included in settlement.
+		// Previous code checked for PaymentMethodVoucher and continued.
 
 		result.TotalSharedCents += e.AmountCents()
 		result.IncludedExpenseCount++
@@ -73,6 +78,16 @@ func Calculate(mode household.SettlementMode, members []member.Member, expenses 
 		idx, ok := memberIndex[e.PaidByMemberID()]
 		if ok {
 			memberResults[idx].PaidCents += e.AmountCents()
+		}
+	}
+
+	for _, i := range installments {
+		result.TotalSharedCents += i.InstallmentAmountCents()
+		result.IncludedExpenseCount++
+
+		idx, ok := memberIndex[i.PaidByMemberID()]
+		if ok {
+			memberResults[idx].PaidCents += i.InstallmentAmountCents()
 		}
 	}
 

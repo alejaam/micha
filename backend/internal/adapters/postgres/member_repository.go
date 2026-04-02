@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"micha/backend/internal/domain/member"
@@ -38,6 +39,10 @@ func (r MemberRepository) Save(ctx context.Context, m member.Member) error {
 		string(attrs.ID), attrs.HouseholdID, attrs.Name, attrs.Email, attrs.MonthlySalaryCents, userID, attrs.CreatedAt, attrs.UpdatedAt,
 	)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return shared.ErrAlreadyExists
+		}
 		return fmt.Errorf("member repository save: %w", err)
 	}
 

@@ -29,6 +29,18 @@ export function dollarsToCents(value) {
     return Math.round(parsed * 100)
 }
 
+export function sanitizeAmountInput(value) {
+    let cleaned = String(value).replace(/[^0-9.]/g, '')
+    const parts = cleaned.split('.')
+    if (parts.length > 2) {
+        cleaned = parts[0] + '.' + parts.slice(1).join('')
+    }
+    if (parts.length === 2 && parts[1].length > 2) {
+        cleaned = parts[0] + '.' + parts[1].slice(0, 2)
+    }
+    return cleaned
+}
+
 /**
  * Format an ISO timestamp as a short relative date label.
  * Falls back to a locale date string when the date is far in the past.

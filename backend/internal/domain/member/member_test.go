@@ -111,3 +111,16 @@ func TestLinkUser_SetsUserID(t *testing.T) {
 		t.Errorf("UserID after LinkUser = %q; want %q", m.UserID(), "user-77")
 	}
 }
+
+func TestIsPending(t *testing.T) {
+	t.Parallel()
+	m1, _ := member.New(member.ID("m-1"), "hh-1", "Ale", "ale@mail.com", 0, time.Now())
+	if !m1.IsPending() {
+		t.Errorf("expected IsPending() = true for new member")
+	}
+
+	m2, _ := member.NewWithUserID(member.ID("m-2"), "hh-1", "Bob", "bob@mail.com", "user-2", 0, time.Now())
+	if m2.IsPending() {
+		t.Errorf("expected IsPending() = false for member with UserID")
+	}
+}

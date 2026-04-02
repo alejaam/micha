@@ -1,7 +1,8 @@
+import { useEffect } from 'react'
 import { formatCurrency } from '../utils'
+import { Tooltip } from '../ui/Tooltip'
 
-const SETTLEMENT_YEARS = Array.from({ length: 6 }, (_, i) => new Date().getUTCFullYear() - 4 + i)
-const SETTLEMENT_MONTHS = [
+const ALL_MONTHS = [
   { value: 1, label: '01 - Jan' }, { value: 2, label: '02 - Feb' },
   { value: 3, label: '03 - Mar' }, { value: 4, label: '04 - Apr' },
   { value: 5, label: '05 - May' }, { value: 6, label: '06 - Jun' },
@@ -25,17 +26,70 @@ export function SettlementPanel({
   loadingSettlement,
   memberIndex,
   currency = 'MXN',
+  selectedHousehold,
 }) {
   const now = new Date()
-  const isCurrentMonth = settlementYear === now.getUTCFullYear() 
-    && settlementMonth === (now.getUTCMonth() + 1)
+  const currentYear = now.getUTCFullYear()
+  const currentMonth = now.getUTCMonth() + 1
+
+  const startDate = selectedHousehold?.created_at ? new Date(selectedHousehold.created_at) : now
+  const startYear = startDate.getUTCFullYear()
+  const startMonth = startDate.getUTCMonth() + 1
+
+  // Clamp selection when household or bounds change
+  useEffect(() => {
+    if (!selectedHousehold) return
+
+    let nextYear = settlementYear
+    let nextMonth = settlementMonth
+
+    if (settlementYear < startYear) {
+      nextYear = startYear
+      nextMonth = startMonth
+    } else if (settlementYear > currentYear) {
+      nextYear = currentYear
+      nextMonth = currentMonth
+    } else {
+      if (settlementYear === startYear && settlementMonth < startMonth) {
+        nextMonth = startMonth
+      } else if (settlementYear === currentYear && settlementMonth > currentMonth) {
+        nextMonth = currentMonth
+      }
+    }
+
+    if (nextYear !== settlementYear) {
+      onSettlementYearChange(nextYear)
+    }
+    if (nextMonth !== settlementMonth) {
+      onSettlementMonthChange(nextMonth)
+    }
+  }, [selectedHousehold, settlementYear, settlementMonth, startYear, startMonth, currentYear, currentMonth, onSettlementYearChange, onSettlementMonthChange])
+
+  const isCurrentMonth = settlementYear === currentYear && settlementMonth === currentMonth
+
+  // Years from startYear to currentYear
+  const availableYears = []
+  for (let y = startYear; y <= currentYear; y++) {
+    availableYears.push(y)
+  }
+
+  // Months available for the currently selected year
+  const availableMonths = ALL_MONTHS.filter((m) => {
+    if (settlementYear === startYear && m.value < startMonth) return false
+    if (settlementYear === currentYear && m.value > currentMonth) return false
+    return true
+  })
 
   return (
     <section className="card" aria-label="Monthly settlement">
       <h2 className="sectionTitle">
         <span className="sectionTitleIcon" aria-hidden>🧮</span>
         Monthly settlement
+        <Tooltip text="Shows who owes whom for shared expenses this month. Based on income proportion or equal split." position="right" />
         {isCurrentMonth && <span className="currentPeriodBadge">current</span>}
+        {settlement && <span className="sectionBadge" style={{ marginLeft: isCurrentMonth ? '8px' : 'auto' }}>
+            {settlement.effective_settlement_mode === 'exact' ? 'Exact split' : 'Income proportional'}
+        </span>}
       </h2>
 
       {/* Period controls */}
@@ -50,7 +104,7 @@ export function SettlementPanel({
             onChange={(e) => onSettlementYearChange(Number(e.target.value))}
             aria-label="Settlement year"
           >
-            {SETTLEMENT_YEARS.map((y) => (
+            {availableYears.map((y) => (
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
@@ -65,7 +119,7 @@ export function SettlementPanel({
             onChange={(e) => onSettlementMonthChange(Number(e.target.value))}
             aria-label="Settlement month"
           >
-            {SETTLEMENT_MONTHS.map(({ value, label }) => (
+            {availableMonths.map(({ value, label }) => (
               <option key={value} value={value}>{label}</option>
             ))}
           </select>
@@ -166,10 +220,10 @@ export function SettlementPanel({
                       <span className="settlementBalancePct">{pct}%</span>
                     )}
                     <span className="settlementBalancePaid">
-                      paid {formatCurrency(sm.total_paid_cents ?? 0, currency)}
+                      paid {formatCurrency(sm.paid_cents ?? 0, currency)}
                     </span>
                     <span className="settlementBalanceDue">
-                      owes {formatCurrency(sm.total_due_cents ?? 0, currency)}
+                      share {formatCurrency(sm.expected_share ?? 0, currency)}
                     </span>
                   </div>
                 )

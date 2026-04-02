@@ -5,6 +5,8 @@ import "errors"
 var (
 	ErrInvalidMoney = errors.New("invalid money amount")
 	ErrNotFound     = errors.New("resource not found")
+	// ErrForbidden is returned when a caller is authenticated but not allowed to perform the action.
+	ErrForbidden = errors.New("forbidden")
 	// ErrAlreadyDeleted is returned when an expense has already been soft-deleted.
 	ErrAlreadyDeleted = errors.New("expense already deleted")
 	// ErrAlreadyExists is returned when a resource already exists with the same unique identifier.

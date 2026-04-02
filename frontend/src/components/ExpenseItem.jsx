@@ -56,6 +56,7 @@ export function ExpenseItem({ item, isDeleting, isSaving, onDelete, onSave, anim
               {formatRelativeDate(item.created_at)}
               {item.created_at && ' · '}
               {item.expense_type ? `${item.expense_type} · ` : ''}
+              {item.total_installments > 0 ? `${item.total_installments} inst. · ` : ''}
               <span className="expenseId">{item.id.slice(0, 8)}…</span>
             </span>
           </div>

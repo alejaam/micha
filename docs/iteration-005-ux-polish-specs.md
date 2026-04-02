@@ -2,7 +2,28 @@
 
 **Propuesta**: `iteration-005-ux-polish-proposal.md`  
 **Estado**: Especificación  
-**Fecha**: 2026-03-24
+**Fecha**: 2026-03-24  
+**Última revisión**: 2026-04-01
+
+---
+
+## Implementation Status (2026-04-01)
+
+| ID | User Story | Status | Evidence |
+|----|------------|--------|----------|
+| US-001 | Onboarding salary in dollars | ✅ DONE | `OnboardingMemberPage.jsx` line 89 uses `$` prefix |
+| US-002 | Settlement auto-select current month | ✅ DONE | `useSettlement.js` lines 13-14 init with current date |
+| US-003 | "Invite Member" button | ✅ DONE | `AppHeader.jsx` lines 44-53 shows "+ Member" link |
+| US-004 | "Paid by" field always visible | ✅ DONE | `ExpenseModal.jsx` has visible `Paid by` `<select>` outside advanced block |
+| US-005 | Dashboard empty state | ✅ DONE | `DashboardPage.jsx` lines 179-187 |
+| US-006 | Tooltips on key fields | ✅ DONE | `Tooltip.jsx` + usage in `ExpenseModal.jsx` and `SettlementPanel.jsx` |
+| US-007 | Visual polish (icons, colors) | ⚠️ PARTIAL | Icons/animations in place; color refinement still open |
+| US-008 | Members list visible | ✅ DONE | `MembersPanel.jsx` rendered from `DashboardPage.jsx` |
+
+### Remaining Work
+
+1. **US-007**: Final color token refinement and visual QA pass
+2. **Verification**: Run full smoke checklist and mobile viewport validation
 
 ---
 

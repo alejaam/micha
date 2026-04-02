@@ -167,6 +167,7 @@ func (m Member) HouseholdID() string       { return m.householdID }
 func (m Member) Name() string              { return m.name }
 func (m Member) Email() string             { return m.email }
 func (m Member) UserID() string            { return m.userID }
+func (m Member) IsPending() bool           { return strings.TrimSpace(m.userID) == "" }
 func (m Member) MonthlySalaryCents() int64 { return m.monthlySalaryCents }
 func (m Member) CreatedAt() time.Time      { return m.createdAt }
 func (m Member) UpdatedAt() time.Time      { return m.updatedAt }

@@ -17,6 +17,7 @@ import (
 	httpadapter "micha/backend/internal/adapters/http"
 	"micha/backend/internal/adapters/postgres"
 	authapp "micha/backend/internal/application/auth"
+	cardapp "micha/backend/internal/application/card"
 	categoryapp "micha/backend/internal/application/category"
 	expenseapp "micha/backend/internal/application/expense"
 	householdapp "micha/backend/internal/application/household"
@@ -67,9 +68,11 @@ func main() {
 	}
 
 	expenseRepo := postgres.NewExpenseRepository(pool)
+	installmentRepo := postgres.NewInstallmentRepository(pool)
 	recurringExpenseRepo := postgres.NewRecurringExpenseRepository(pool)
 	householdRepo := postgres.NewHouseholdRepository(pool)
 	memberRepo := postgres.NewMemberRepository(pool)
+	cardRepo := postgres.NewCardRepository(pool)
 	categoryRepo := postgres.NewCategoryRepository(pool)
 	userRepo := postgres.NewUserRepository(pool)
 	idGen := uuidGenerator{}
@@ -94,7 +97,7 @@ func main() {
 
 	// Expense use cases and handler dependencies.
 	expenseDeps := httpadapter.ExpenseHandlerDeps{
-		Register: expenseapp.NewRegisterExpenseUseCase(expenseRepo, householdRepo, memberRepo, categoryRepo, idGen),
+		Register: expenseapp.NewRegisterExpenseUseCase(expenseRepo, householdRepo, memberRepo, cardRepo, categoryRepo, installmentRepo, idGen),
 		Get:      expenseapp.NewGetExpenseUseCase(expenseRepo),
 		List:     expenseapp.NewListExpensesUseCase(expenseRepo),
 		Patch:    expenseapp.NewPatchExpenseUseCase(expenseRepo),
@@ -113,7 +116,7 @@ func main() {
 
 	// Household use cases and handler dependencies.
 	householdDeps := httpadapter.HouseholdHandlerDeps{
-		Register: householdapp.NewRegisterHouseholdUseCase(householdRepo, idGen),
+		Register: householdapp.NewRegisterHouseholdUseCase(householdRepo, categoryRepo, idGen),
 		List:     householdapp.NewListHouseholdsUseCase(householdRepo),
 		Get:      householdapp.NewGetHouseholdUseCase(householdRepo),
 		Update:   householdapp.NewUpdateHouseholdUseCase(householdRepo),
@@ -139,6 +142,13 @@ func main() {
 		Delete:   memberapp.NewDeleteMemberUseCase(memberRepo),
 	}
 
+	// Card use cases and handler dependencies.
+	cardDeps := httpadapter.CardHandlerDeps{
+		Register: cardapp.NewRegisterCardUseCase(cardRepo, idGen),
+		List:     cardapp.NewListCardsUseCase(cardRepo),
+		Delete:   cardapp.NewDeleteCardUseCase(cardRepo),
+	}
+
 	// Server dependencies grouped by resource.
 	serverDeps := httpadapter.ServerDependencies{
 		Auth:             authDeps,
@@ -146,8 +156,9 @@ func main() {
 		RecurringExpense: recurringExpenseDeps,
 		Household:        householdDeps,
 		Member:           memberDeps,
+		Card:             cardDeps,
 		Settlement: httpadapter.SettlementHandlerDeps{
-			Calculate: settlementapp.NewCalculateSettlementUseCase(householdRepo, memberRepo, expenseRepo),
+			Calculate: settlementapp.NewCalculateSettlementUseCase(householdRepo, memberRepo, expenseRepo, installmentRepo),
 		},
 		Category:       categoryDeps,
 		SplitConfig:    splitConfigDeps,

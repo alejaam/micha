@@ -31,6 +31,7 @@ export function IncomesPanel({ members = [], settlement = null, currency = 'MXN'
             <h2 className="sectionTitle">
                 <span className="sectionTitleIcon" aria-hidden>$</span>
                 Incomes
+                {hasData && <span className="sectionBadge">{members.length} member{members.length !== 1 ? 's' : ''}</span>}
             </h2>
 
             {!hasData ? (

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { formatCurrency } from '../utils'
 
-const CATEGORY_LABELS = {
+const FALLBACK_LABELS = {
     rent: 'Rent',
     auto: 'Auto',
     streaming: 'Streaming / Services',
@@ -19,8 +19,19 @@ const CATEGORY_LABELS = {
  * @param {Array} items - expense list from API
  * @param {Array} members - member list from API
  * @param {string} currency
+ * @param {Array} categories - dynamic categories from backend (optional)
  */
-export function FixedExpensesPanel({ items = [], members = [], currency = 'MXN' }) {
+export function FixedExpensesPanel({ items = [], members = [], currency = 'MXN', categories = [] }) {
+    // Build label map: prefer dynamic categories, fallback to hardcoded
+    const categoryLabels = useMemo(() => {
+        const labels = { ...FALLBACK_LABELS }
+        for (const c of categories) {
+            labels[c.id] = c.name
+            labels[c.slug] = c.name
+        }
+        return labels
+    }, [categories])
+
     const fixedItems = useMemo(
         () => items.filter((e) => e.expense_type === 'fixed' && e.is_shared),
         [items],
@@ -76,6 +87,7 @@ export function FixedExpensesPanel({ items = [], members = [], currency = 'MXN' 
             <h2 className="sectionTitle">
                 <span className="sectionTitleIcon" aria-hidden>#</span>
                 Fixed expenses
+                {fixedItems.length > 0 && <span className="sectionBadge">{fixedItems.length} expenses • {formatCurrency(grandTotal, currency)}</span>}
             </h2>
 
             <div className="fixedExpensesTable">
@@ -91,7 +103,7 @@ export function FixedExpensesPanel({ items = [], members = [], currency = 'MXN' 
                 {grouped.map(({ category, byMember }) => (
                     <div key={category} className="fixedTableRow">
                         <span className="fixedColConcept fixedCategoryLabel">
-                            {CATEGORY_LABELS[category] ?? category}
+                            {categoryLabels[category] ?? category}
                         </span>
                         {members.map((m) => (
                             <span key={m.id} className="fixedColMember fixedAmount">
