@@ -27,16 +27,17 @@ export function IncomesPanel({ members = [], settlement = null, currency = 'MXN'
     const hasData = members.length > 0 && totalSalaryCents > 0
 
     return (
-        <section className="card" aria-label="Member incomes">
+        <section className="card" aria-label="Sueldos de integrantes">
             <h2 className="sectionTitle">
                 <span className="sectionTitleIcon" aria-hidden>$</span>
-                Incomes
+                Sueldos
+                {hasData && <span className="sectionBadge">{members.length} integrante{members.length !== 1 ? 's' : ''}</span>}
             </h2>
 
             {!hasData ? (
                 <div className="emptyState">
-                    <p className="emptyTitle">No salary data</p>
-                    <p className="emptyHint">Add monthly salary when creating members.</p>
+                    <p className="emptyTitle">Sin sueldos registrados</p>
+                    <p className="emptyHint">Captura el sueldo mensual al crear cada integrante.</p>
                 </div>
             ) : (
                 <div className="incomesGrid">
@@ -61,14 +62,14 @@ export function IncomesPanel({ members = [], settlement = null, currency = 'MXN'
                                     <div
                                         className="incomeBarFill"
                                         style={{ width: `${Math.min(parseFloat(pct), 100)}%` }}
-                                        aria-label={`${pct}% of household income`}
+                                        aria-label={`${pct}% del ingreso del hogar`}
                                     />
                                 </div>
                             </div>
                         )
                     })}
                     <div className="incomeTotalRow">
-                        <span className="incomeTotalLabel">Combined income</span>
+                        <span className="incomeTotalLabel">Ingreso combinado</span>
                         <span className="incomeTotalValue">{formatCurrency(totalSalaryCents, currency)}</span>
                     </div>
                 </div>

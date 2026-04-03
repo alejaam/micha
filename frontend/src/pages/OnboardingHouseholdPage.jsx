@@ -5,6 +5,23 @@ import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
 import { FormField } from '../ui/FormField'
+import { dollarsToCents } from '../utils'
+
+const CURRENCIES = [
+    { code: 'MXN', label: '🇲🇽 MXN — Mexican Peso' },
+    { code: 'USD', label: '🇺🇸 USD — US Dollar' },
+    { code: 'EUR', label: '🇪🇺 EUR — Euro' },
+    { code: 'COP', label: '🇨🇴 COP — Colombian Peso' },
+    { code: 'ARS', label: '🇦🇷 ARS — Argentine Peso' },
+    { code: 'CLP', label: '🇨🇱 CLP — Chilean Peso' },
+    { code: 'PEN', label: '🇵🇪 PEN — Peruvian Sol' },
+    { code: 'BRL', label: '🇧🇷 BRL — Brazilian Real' },
+]
+
+const SETTLEMENT_HINTS = {
+    equal: 'Each member pays the same share regardless of income.',
+    proportional: 'Members who earn more contribute a larger share of expenses.',
+}
 
 export function OnboardingHouseholdPage() {
     const { user, handleProtectedError } = useAuth()
@@ -18,7 +35,7 @@ export function OnboardingHouseholdPage() {
 
     // Member state
     const [memberName, setMemberName] = useState('')
-    const [salary, setSalary] = useState('0')
+    const [salaryDollars, setSalaryDollars] = useState('')
 
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
@@ -35,7 +52,7 @@ export function OnboardingHouseholdPage() {
             const hhOut = await createHousehold({
                 name: hhName.trim(),
                 settlementMode,
-                currency: currency.trim().toUpperCase() || 'MXN',
+                currency,
             })
             
             const createdHouseholdId = hhOut?.household_id ?? hhOut?.id ?? ''
@@ -47,18 +64,19 @@ export function OnboardingHouseholdPage() {
             setHouseholdId(createdHouseholdId)
 
             // 2. Auto-create the creator as the first member
+            const salaryCents = dollarsToCents(salaryDollars) || 0
             await createMember({
                 householdId: createdHouseholdId,
                 name: memberName.trim(),
-                email: user?.email || '', // The backend will link the member to the user via this email
-                monthlySalaryCents: Number(salary) || 0,
+                email: user?.email || '',
+                monthlySalaryCents: salaryCents,
             })
 
             // 3. Refresh households list now that there's a member linked to the user
             await loadHouseholds()
 
-            // 4. Finish onboarding
-            navigate('/', { replace: true })
+            // 4. Continue onboarding with cards setup
+            navigate('/onboarding/cards', { replace: true })
             
         } catch (err) {
             if (!handleProtectedError(err)) setError(err.message)
@@ -88,6 +106,7 @@ export function OnboardingHouseholdPage() {
                             value={hhName}
                             onChange={(e) => setHhName(e.target.value)}
                             disabled={busy}
+                            autoFocus
                         />
                     </FormField>
                     <FormField label="Settlement mode" htmlFor="hhMode">
@@ -101,22 +120,26 @@ export function OnboardingHouseholdPage() {
                             <option value="equal">Equal split</option>
                             <option value="proportional">Proportional to salary</option>
                         </select>
+                        <p className="formHint">{SETTLEMENT_HINTS[settlementMode]}</p>
                     </FormField>
                     <FormField label="Currency" htmlFor="hhCurrency">
-                        <input
+                        <select
                             id="hhCurrency"
                             className="input"
-                            placeholder="MXN"
                             value={currency}
                             onChange={(e) => setCurrency(e.target.value)}
                             disabled={busy}
-                        />
+                        >
+                            {CURRENCIES.map((c) => (
+                                <option key={c.code} value={c.code}>{c.label}</option>
+                            ))}
+                        </select>
                     </FormField>
                 </div>
 
                 <div className="formSection mt-4">
                     <h3 className="sectionTitle">Your Profile</h3>
-                    <p className="text-sm text-dim mb-4 mb-2">
+                    <p className="text-sm text-dim mb-2">
                         You'll be added as the first member. Your email ({user?.email}) is linked automatically.
                     </p>
                     <FormField label="Your name" htmlFor="memName">
@@ -129,17 +152,22 @@ export function OnboardingHouseholdPage() {
                             disabled={busy}
                         />
                     </FormField>
-                    <FormField label="Monthly salary (cents, optional)" htmlFor="memSalary">
-                        <input
-                            id="memSalary"
-                            className="input"
-                            type="number"
-                            min="0"
-                            placeholder="0"
-                            value={salary}
-                            onChange={(e) => setSalary(e.target.value)}
-                            disabled={busy}
-                        />
+                    <FormField label="Monthly salary (optional)" htmlFor="memSalary">
+                        <div className="inputWrap">
+                            <span className="inputPrefix" aria-hidden>$</span>
+                            <input
+                                id="memSalary"
+                                className="input inputWithPrefix"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="e.g. 30000"
+                                value={salaryDollars}
+                                onChange={(e) => setSalaryDollars(e.target.value)}
+                                disabled={busy}
+                            />
+                        </div>
+                        <p className="formHint">Used to calculate proportional splits. You can update this later.</p>
                     </FormField>
                 </div>
 
@@ -148,7 +176,7 @@ export function OnboardingHouseholdPage() {
                     className="btn btnPrimary btnFull mt-6"
                     disabled={busy || !hhName.trim() || !memberName.trim()}
                 >
-                    {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Creating…</> : 'Finish setup →'}
+                    {busy ? <><span className="spinIcon" aria-hidden /> Creating…</> : 'Finish setup'}
                 </button>
             </form>
         </section>

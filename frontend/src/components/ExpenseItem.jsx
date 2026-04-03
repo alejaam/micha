@@ -55,7 +55,13 @@ export function ExpenseItem({ item, isDeleting, isSaving, onDelete, onSave, anim
             <span className="expenseMeta">
               {formatRelativeDate(item.created_at)}
               {item.created_at && ' · '}
-              {item.expense_type ? `${item.expense_type} · ` : ''}
+              {item.expense_type === 'msi' && item.total_installments > 0 
+                ? <span title={`This purchase will be split into ${item.total_installments} monthly installments`}>💳 MSI {item.total_installments}x · </span>
+                : item.expense_type === 'fixed' 
+                  ? '📌 Fixed · '
+                  : item.expense_type === 'variable' 
+                    ? '📝 Variable · '
+                    : item.expense_type ? `${item.expense_type} · ` : ''}
               <span className="expenseId">{item.id.slice(0, 8)}…</span>
             </span>
           </div>
@@ -81,7 +87,7 @@ export function ExpenseItem({ item, isDeleting, isSaving, onDelete, onSave, anim
                 aria-label={`Delete ${item.description}`}
                 title="Delete"
               >
-                {isDeleting ? <span className="spinIcon">⟳</span> : '✕'}
+                {isDeleting ? <span className="spinIcon" aria-hidden /> : 'x'}
               </button>
             </div>
           </div>
@@ -126,7 +132,7 @@ export function ExpenseItem({ item, isDeleting, isSaving, onDelete, onSave, anim
               onClick={handleSave}
               disabled={!isDraftValid || isSaving}
             >
-              {isSaving ? <><span className="spinIcon">⟳</span> Saving…</> : 'Save'}
+              {isSaving ? <><span className="spinIcon" aria-hidden /> Saving…</> : 'Save'}
             </button>
             <button
               type="button"

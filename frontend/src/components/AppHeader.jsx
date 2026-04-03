@@ -11,8 +11,9 @@ export function AppHeader({ health, householdId, onHouseholdChange, onReload, on
     <header className="appHeader">
       {/* Brand */}
       <div className="brand">
-        <div className="brandIcon" aria-hidden>💸</div>
-        <div>
+        <div className="brandMark" aria-hidden />
+        <div className="brandMeta">
+          <div className="brandEyebrow">Personal Ledger</div>
           <div className="brandName">micha</div>
           <div className="brandTagline">Household expense tracker</div>
         </div>
@@ -52,6 +53,16 @@ export function AppHeader({ health, householdId, onHouseholdChange, onReload, on
           </Link>
         )}
 
+        {householdId && (
+          <Link
+            to="/household/settings"
+            className="btn btnGhost btnSm"
+            aria-label="Open household settings"
+          >
+            Settings
+          </Link>
+        )}
+
         {/* Reload */}
         <button
           type="button"
@@ -60,7 +71,7 @@ export function AppHeader({ health, householdId, onHouseholdChange, onReload, on
           disabled={isLoading}
           aria-label="Reload expenses"
         >
-          <span className={isLoading ? 'spinIcon' : ''} aria-hidden>⟳</span>
+          {isLoading && <span className="spinIcon" aria-hidden />}
           {isLoading ? 'Loading…' : 'Reload'}
         </button>
 

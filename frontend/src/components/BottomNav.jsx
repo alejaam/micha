@@ -1,42 +1,47 @@
-import { useLocation, Link } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 /**
  * BottomNav - Mobile bottom navigation bar
  * Shows on screens < 880px, hidden on desktop
  */
-export function BottomNav() {
+export function BottomNav({ activeSection = 'overview', onSectionChange }) {
     const location = useLocation()
-    const currentPath = location.pathname
+    const navigate = useNavigate()
+    const isDashboardRoute = location.pathname === '/'
 
     const navItems = [
-        { path: '/', icon: '~', label: 'Home', exact: true },
-        { path: '/expenses', icon: '$', label: 'Expenses' },
-        { path: '/settlement', icon: '=', label: 'Settle' },
-        { path: '/settings', icon: '*', label: 'Settings' },
+        { section: 'overview', code: '01', label: 'Resumen' },
+        { section: 'planning', code: '02', label: 'Planeacion' },
+        { section: 'activity', code: '03', label: 'Actividad' },
     ]
 
-    // For now, since we only have the dashboard, we'll simplify
-    // and just show visual feedback on the current item
-    const isActive = (item) => {
-        if (item.exact) {
-            return currentPath === item.path
+    const handleSectionClick = (nextSection) => {
+        if (!isDashboardRoute) {
+            navigate('/')
         }
-        return currentPath.startsWith(item.path)
+        if (onSectionChange) {
+            onSectionChange(nextSection)
+        }
     }
 
     return (
-        <nav className="bottomNav" aria-label="Main navigation">
-            {navItems.map((item) => (
-                <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`bottomNavItem ${isActive(item) ? 'active' : ''}`}
-                    aria-current={isActive(item) ? 'page' : undefined}
-                >
-                    <span className="bottomNavIcon" aria-hidden>{item.icon}</span>
-                    <span className="bottomNavLabel">{item.label}</span>
-                </Link>
-            ))}
+        <nav className="bottomNav" aria-label="Dashboard sections">
+            {navItems.map((item) => {
+                const isActive = activeSection === item.section && isDashboardRoute
+                return (
+                    <button
+                        key={item.section}
+                        type="button"
+                        className={`bottomNavItem ${isActive ? 'active' : ''}`}
+                        aria-current={isActive ? 'page' : undefined}
+                        aria-label={`Ir a seccion ${item.label}`}
+                        onClick={() => handleSectionClick(item.section)}
+                    >
+                        <span className="bottomNavCode" aria-hidden>{item.code}</span>
+                        <span className="bottomNavLabel">{item.label}</span>
+                    </button>
+                )
+            })}
         </nav>
     )
 }

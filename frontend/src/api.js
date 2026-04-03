@@ -74,6 +74,42 @@ export async function listHouseholds({ limit = 100, offset = 0 } = {}) {
     return parseResponse(response)
 }
 
+export async function getHousehold({ householdId }) {
+    const response = await fetch(`/v1/households/${householdId}`, {
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
+export async function updateHousehold({ householdId, name, settlementMode, currency }) {
+    const response = await fetch(`/v1/households/${householdId}`, {
+        method: 'PUT',
+        headers: buildProtectedHeaders(),
+        body: JSON.stringify({
+            name,
+            settlement_mode: settlementMode,
+            currency,
+        }),
+    })
+
+    return parseResponse(response)
+}
+
+export async function updateSplitConfig({ householdId, splits }) {
+    const response = await fetch(`/v1/households/${householdId}/split-config`, {
+        method: 'PUT',
+        headers: buildProtectedHeaders(),
+        body: JSON.stringify({
+            splits: (splits || []).map((s) => ({
+                member_id: s.memberId,
+                percentage: s.percentage,
+            })),
+        }),
+    })
+
+    return parseResponse(response)
+}
+
 export async function registerUser({ email, password }) {
     const response = await fetch('/v1/auth/register', {
         method: 'POST',
@@ -122,7 +158,7 @@ export async function createMember({ householdId, name, email, monthlySalaryCent
     return parseResponse(response)
 }
 
-export async function createExpense({ householdId, paidByMemberId, amountCents, description, isShared = true, currency = 'MXN', paymentMethod = 'cash', expenseType = 'variable', cardName = '', category = 'other' }) {
+export async function createExpense({ householdId, paidByMemberId, amountCents, description, isShared = true, currency = 'MXN', paymentMethod = 'cash', expenseType = 'variable', cardId = '', cardName = '', category = 'other', totalInstallments = 0 }) {
     const response = await fetch('/v1/expenses', {
         method: 'POST',
         headers: buildProtectedHeaders(),
@@ -135,8 +171,10 @@ export async function createExpense({ householdId, paidByMemberId, amountCents, 
             currency,
             payment_method: paymentMethod,
             expense_type: expenseType,
+            card_id: cardId,
             card_name: cardName,
             category,
+            total_installments: totalInstallments,
         }),
     })
 
@@ -167,6 +205,34 @@ export async function listMembers({ householdId, limit = 100, offset = 0 }) {
     return parseResponse(response)
 }
 
+export async function listCategories({ householdId }) {
+    const response = await fetch(`/v1/households/${householdId}/categories`, {
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
+export async function listCards({ householdId }) {
+    const response = await fetch(`/v1/households/${householdId}/cards`, {
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
+export async function createCard({ householdId, bankName, cardName, cutoffDay }) {
+    const response = await fetch(`/v1/households/${householdId}/cards`, {
+        method: 'POST',
+        headers: buildProtectedHeaders(),
+        body: JSON.stringify({
+            bank_name: bankName,
+            card_name: cardName,
+            cutoff_day: cutoffDay,
+        }),
+    })
+
+    return parseResponse(response)
+}
+
 export async function patchExpense({ id, amountCents, description }) {
     const body = {}
 
@@ -191,6 +257,24 @@ export async function deleteExpense(id) {
     const response = await fetch(`/v1/expenses/${id}`, {
         method: 'DELETE',
         headers: buildProtectedHeaders(),
+    })
+
+    return parseResponse(response)
+}
+
+export async function generateRecurringExpenses({ householdId, asOfDate = null }) {
+    const body = {
+        household_id: householdId,
+    }
+
+    if (asOfDate) {
+        body.as_of_date = asOfDate
+    }
+
+    const response = await fetch('/v1/recurring-expenses/generate', {
+        method: 'POST',
+        headers: buildProtectedHeaders(),
+        body: JSON.stringify(body),
     })
 
     return parseResponse(response)

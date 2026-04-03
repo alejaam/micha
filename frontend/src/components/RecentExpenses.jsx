@@ -1,4 +1,5 @@
 import { formatCurrency, formatRelativeDate } from '../utils'
+import { getCategoryIcon } from '../utils/categoryIcons'
 
 /**
  * RecentExpenses — shows the last N expense items in a compact read-only list.
@@ -24,7 +25,7 @@ export function RecentExpenses({ items, isLoading, currency = 'MXN', limit = 8 }
     if (visible.length === 0) {
         return (
             <div className="emptyState">
-                <div className="emptyIcon" aria-hidden>🧾</div>
+                <div className="emptyIcon" aria-hidden>[]</div>
                 <p className="emptyTitle">No expenses yet</p>
                 <p className="emptyHint">Tap + to add your first expense.</p>
             </div>
@@ -35,6 +36,7 @@ export function RecentExpenses({ items, isLoading, currency = 'MXN', limit = 8 }
         <ul className="expenseStack">
             {visible.map((item, index) => {
                 const delayMs = Math.min(index * 35, 250)
+                const categoryKey = item.category || item.category_slug || item.category_name || 'other'
                 return (
                     <li
                         key={item.id}
@@ -44,6 +46,7 @@ export function RecentExpenses({ items, isLoading, currency = 'MXN', limit = 8 }
                         <div className="expenseBody">
                             <span className="expenseDesc">{item.description}</span>
                             <span className="expenseMeta">
+                                {getCategoryIcon(categoryKey)} · 
                                 {formatRelativeDate(item.created_at)}
                                 {item.expense_type ? ` · ${item.expense_type}` : ''}
                             </span>

@@ -47,7 +47,7 @@ export function ExpenseList({ items, isLoading, deletingId, savingId, onDelete, 
       {/* ── Empty state ── */}
       {!isLoading && items.length === 0 && (
         <div className="emptyState">
-          <div className="emptyIcon" aria-hidden>🧾</div>
+          <div className="emptyIcon" aria-hidden>[]</div>
           <p className="emptyTitle">No expenses yet</p>
           <p className="emptyHint">Add your first expense using the form.</p>
         </div>

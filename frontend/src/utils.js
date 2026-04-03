@@ -29,6 +29,18 @@ export function dollarsToCents(value) {
     return Math.round(parsed * 100)
 }
 
+export function sanitizeAmountInput(value) {
+    let cleaned = String(value).replace(/[^0-9.]/g, '')
+    const parts = cleaned.split('.')
+    if (parts.length > 2) {
+        cleaned = parts[0] + '.' + parts.slice(1).join('')
+    }
+    if (parts.length === 2 && parts[1].length > 2) {
+        cleaned = parts[0] + '.' + parts[1].slice(0, 2)
+    }
+    return cleaned
+}
+
 /**
  * Format an ISO timestamp as a short relative date label.
  * Falls back to a locale date string when the date is far in the past.
@@ -47,4 +59,45 @@ export function formatRelativeDate(isoString) {
     if (diffHr < 24) return `${diffHr}h ago`
     if (diffDay < 7) return `${diffDay}d ago`
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function getStorage() {
+    if (typeof window === 'undefined') return null
+    return window.localStorage
+}
+
+function recurringAutomationEnabledKey(householdId) {
+    return `micha:recurring:auto-enabled:${householdId}`
+}
+
+function recurringAutomationLastPeriodKey(householdId) {
+    return `micha:recurring:last-period:${householdId}`
+}
+
+export function isRecurringAutomationEnabled(householdId) {
+    if (!householdId) return true
+    const storage = getStorage()
+    if (!storage) return true
+    return storage.getItem(recurringAutomationEnabledKey(householdId)) !== '0'
+}
+
+export function setRecurringAutomationEnabled(householdId, enabled) {
+    if (!householdId) return
+    const storage = getStorage()
+    if (!storage) return
+    storage.setItem(recurringAutomationEnabledKey(householdId), enabled ? '1' : '0')
+}
+
+export function getRecurringAutomationLastPeriod(householdId) {
+    if (!householdId) return ''
+    const storage = getStorage()
+    if (!storage) return ''
+    return storage.getItem(recurringAutomationLastPeriodKey(householdId)) || ''
+}
+
+export function setRecurringAutomationLastPeriod(householdId, periodKey) {
+    if (!householdId || !periodKey) return
+    const storage = getStorage()
+    if (!storage) return
+    storage.setItem(recurringAutomationLastPeriodKey(householdId), periodKey)
 }

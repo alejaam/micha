@@ -33,19 +33,25 @@ func newExpenseHandler(deps ExpenseHandlerDeps) expenseHandler {
 // handleCreate handles POST /v1/expenses.
 func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		HouseholdID    string `json:"household_id"`
-		PaidByMemberID string `json:"paid_by_member_id"`
-		AmountCents    int64  `json:"amount_cents"`
-		Description    string `json:"description"`
-		IsShared       *bool  `json:"is_shared"`
-		Currency       string `json:"currency"`
-		PaymentMethod  string `json:"payment_method"`
-		ExpenseType    string `json:"expense_type"`
-		CardName       string `json:"card_name"`
-		Category       string `json:"category"`
-		CategoryID     string `json:"category_id"`
+		HouseholdID       string `json:"household_id"`
+		PaidByMemberID    string `json:"paid_by_member_id"`
+		AmountCents       int64  `json:"amount_cents"`
+		Description       string `json:"description"`
+		IsShared          *bool  `json:"is_shared"`
+		Currency          string `json:"currency"`
+		PaymentMethod     string `json:"payment_method"`
+		ExpenseType       string `json:"expense_type"`
+		CardID            string `json:"card_id"`
+		CardName          string `json:"card_name"`
+		Category          string `json:"category"`
+		CategoryID        string `json:"category_id"`
+		TotalInstallments int    `json:"total_installments"`
 	}
 	if err := decodeJSON(r, w, &body); err != nil {
+		return
+	}
+	if body.AmountCents <= 0 {
+		writeError(w, http.StatusBadRequest, "INVALID_MONEY", "amount_cents must be greater than zero")
 		return
 	}
 
@@ -64,17 +70,22 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		categoryID = body.Category
 	}
 
+	currentUserID, _ := UserIDFromContext(r.Context())
+
 	input := inbound.RegisterExpenseInput{
-		HouseholdID:    body.HouseholdID,
-		PaidByMemberID: body.PaidByMemberID,
-		AmountCents:    body.AmountCents,
-		Description:    body.Description,
-		IsShared:       isShared,
-		Currency:       currency,
-		PaymentMethod:  body.PaymentMethod,
-		ExpenseType:    body.ExpenseType,
-		CardName:       body.CardName,
-		CategoryID:     categoryID,
+		HouseholdID:       body.HouseholdID,
+		PaidByMemberID:    body.PaidByMemberID,
+		CurrentUserID:     currentUserID,
+		AmountCents:       body.AmountCents,
+		Description:       body.Description,
+		IsShared:          isShared,
+		Currency:          currency,
+		PaymentMethod:     body.PaymentMethod,
+		ExpenseType:       body.ExpenseType,
+		CardID:            body.CardID,
+		CardName:          body.CardName,
+		CategoryID:        categoryID,
+		TotalInstallments: body.TotalInstallments,
 	}
 
 	out, err := h.deps.Register.Execute(r.Context(), input)
@@ -146,6 +157,10 @@ func (h expenseHandler) handlePatch(w http.ResponseWriter, r *http.Request) {
 	if err := decodeJSON(r, w, &body); err != nil {
 		return
 	}
+	if body.AmountCents != nil && *body.AmountCents <= 0 {
+		writeError(w, http.StatusBadRequest, "INVALID_MONEY", "amount_cents must be greater than zero")
+		return
+	}
 
 	e, err := h.deps.Patch.Execute(r.Context(), inbound.PatchExpenseCommand{
 		ID:          id,
@@ -179,19 +194,21 @@ func (h expenseHandler) handleDelete(w http.ResponseWriter, r *http.Request) {
 func expenseJSON(e expense.Expense) map[string]any {
 	attrs := e.Attributes()
 	m := map[string]any{
-		"id":                string(attrs.ID),
-		"household_id":      attrs.HouseholdID,
-		"paid_by_member_id": attrs.PaidByMemberID,
-		"amount_cents":      attrs.AmountCents,
-		"description":       attrs.Description,
-		"is_shared":         attrs.IsShared,
-		"currency":          attrs.Currency,
-		"payment_method":    string(attrs.PaymentMethod),
-		"expense_type":      string(attrs.ExpenseType),
-		"card_name":         attrs.CardName,
-		"category_id":       attrs.CategoryID,
-		"created_at":        attrs.CreatedAt,
-		"updated_at":        attrs.UpdatedAt,
+		"id":                 string(attrs.ID),
+		"household_id":       attrs.HouseholdID,
+		"paid_by_member_id":  attrs.PaidByMemberID,
+		"amount_cents":       attrs.AmountCents,
+		"description":        attrs.Description,
+		"is_shared":          attrs.IsShared,
+		"currency":           attrs.Currency,
+		"payment_method":     string(attrs.PaymentMethod),
+		"expense_type":       string(attrs.ExpenseType),
+		"card_id":            attrs.CardID,
+		"card_name":          attrs.CardName,
+		"category_id":        attrs.CategoryID,
+		"total_installments": attrs.TotalInstallments,
+		"created_at":         attrs.CreatedAt,
+		"updated_at":         attrs.UpdatedAt,
 	}
 	if attrs.DeletedAt != nil {
 		m["deleted_at"] = attrs.DeletedAt
@@ -230,6 +247,8 @@ func writeErrorFromDomain(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, "INVALID_CATEGORY", "category must be rent, auto, streaming, food, personal, savings or other")
 	case errors.Is(err, shared.ErrAlreadyDeleted):
 		writeError(w, http.StatusBadRequest, "ALREADY_DELETED", "expense has already been deleted")
+	case errors.Is(err, shared.ErrForbidden):
+		writeError(w, http.StatusForbidden, "FORBIDDEN", "you are not allowed to register expenses with this member")
 	default:
 		slog.Error("expense handler: internal error", "error", err)
 		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "an internal error occurred")

@@ -10,7 +10,8 @@ export function FAB({ onClick }) {
             aria-label="Add new expense"
             title="Add expense"
         >
-            <span aria-hidden>+</span>
+            <span className="fabIcon" aria-hidden>+</span>
+            <span className="fabLabel">Agregar gasto</span>
         </button>
     )
 }

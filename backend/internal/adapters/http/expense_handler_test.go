@@ -110,6 +110,104 @@ func TestExpenseHandler_Create_DefaultCurrency(t *testing.T) {
 	}
 }
 
+func TestExpenseHandler_Create_PropagatesCurrentUserID(t *testing.T) {
+	t.Parallel()
+
+	register := &mockRegisterExpense{
+		returnOutput: inbound.RegisterExpenseOutput{ExpenseID: "e-context"},
+	}
+
+	server := httpadapter.NewServer("8080", httpadapter.ServerDependencies{
+		Auth: httpadapter.AuthHandlerDeps{
+			Register: &mockRegisterUser{},
+			Login:    &mockLogin{},
+		},
+		Expense: httpadapter.ExpenseHandlerDeps{
+			Register: register,
+			Get:      &mockGetExpense{},
+			List:     &mockListExpenses{},
+			Patch:    &mockPatchExpense{},
+			Delete:   &mockDeleteExpense{},
+		},
+		JWTValidator:   &mockTokenValidator{returnUserID: "user-admin-1", returnEmail: "admin@example.com"},
+		MemberRepo:     newMockMemberRepo(),
+		AllowedOrigins: []string{"*"},
+	})
+
+	body := map[string]any{
+		"household_id":      "household-1",
+		"paid_by_member_id": "member-1",
+		"amount_cents":      11000,
+		"description":       "Internet",
+		"is_shared":         true,
+		"currency":          "MXN",
+		"payment_method":    "transfer",
+		"expense_type":      "fixed",
+		"category":          "internet",
+	}
+
+	req := makeJSONRequest(t, "POST", "/v1/expenses", body)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Errorf("status = %d; want %d", rec.Code, http.StatusCreated)
+	}
+
+	if register.lastInput.CurrentUserID != "user-admin-1" {
+		t.Errorf("current_user_id = %q; want %q", register.lastInput.CurrentUserID, "user-admin-1")
+	}
+}
+
+func TestExpenseHandler_Create_Forbidden(t *testing.T) {
+	t.Parallel()
+
+	server := httpadapter.NewServer("8080", httpadapter.ServerDependencies{
+		Auth: httpadapter.AuthHandlerDeps{
+			Register: &mockRegisterUser{},
+			Login:    &mockLogin{},
+		},
+		Expense: httpadapter.ExpenseHandlerDeps{
+			Register: &mockRegisterExpense{returnErr: shared.ErrForbidden},
+			Get:      &mockGetExpense{},
+			List:     &mockListExpenses{},
+			Patch:    &mockPatchExpense{},
+			Delete:   &mockDeleteExpense{},
+		},
+		JWTValidator:   &mockTokenValidator{returnUserID: "user-member-2", returnEmail: "user2@example.com"},
+		MemberRepo:     newMockMemberRepo(),
+		AllowedOrigins: []string{"*"},
+	})
+
+	body := map[string]any{
+		"household_id":      "household-1",
+		"paid_by_member_id": "member-1",
+		"amount_cents":      15000,
+		"description":       "Unauthorized try",
+		"payment_method":    "card",
+		"expense_type":      "variable",
+		"category":          "food",
+	}
+
+	req := makeJSONRequest(t, "POST", "/v1/expenses", body)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("status = %d; want %d", rec.Code, http.StatusForbidden)
+	}
+
+	resp := parseJSONResponse(t, rec)
+	errObj, _ := resp["error"].(map[string]any)
+	if errObj["code"] != "FORBIDDEN" {
+		t.Errorf("code = %v; want FORBIDDEN", errObj["code"])
+	}
+}
+
 func TestExpenseHandler_Create_InvalidMoney(t *testing.T) {
 	t.Parallel()
 
@@ -154,6 +252,58 @@ func TestExpenseHandler_Create_InvalidMoney(t *testing.T) {
 	errObj, _ := resp["error"].(map[string]any)
 	if errObj["code"] != "INVALID_MONEY" {
 		t.Errorf("code = %v; want INVALID_MONEY", errObj["code"])
+	}
+}
+
+func TestExpenseHandler_Create_RejectsNegativeAmount(t *testing.T) {
+	t.Parallel()
+
+	register := &mockRegisterExpense{returnOutput: inbound.RegisterExpenseOutput{ExpenseID: "must-not-be-used"}}
+	server := httpadapter.NewServer("8080", httpadapter.ServerDependencies{
+		Auth: httpadapter.AuthHandlerDeps{
+			Register: &mockRegisterUser{},
+			Login:    &mockLogin{},
+		},
+		Expense: httpadapter.ExpenseHandlerDeps{
+			Register: register,
+			Get:      &mockGetExpense{},
+			List:     &mockListExpenses{},
+			Patch:    &mockPatchExpense{},
+			Delete:   &mockDeleteExpense{},
+		},
+		JWTValidator:   &mockTokenValidator{returnUserID: "user-1", returnEmail: "test@example.com"},
+		MemberRepo:     newMockMemberRepo(),
+		AllowedOrigins: []string{"*"},
+	})
+
+	body := map[string]any{
+		"household_id":      "household-1",
+		"paid_by_member_id": "member-1",
+		"amount_cents":      -10,
+		"description":       "Invalid",
+		"payment_method":    "card",
+		"expense_type":      "variable",
+		"category":          "food",
+	}
+
+	req := makeJSONRequest(t, "POST", "/v1/expenses", body)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d; want %d", rec.Code, http.StatusBadRequest)
+	}
+
+	resp := parseJSONResponse(t, rec)
+	errObj, _ := resp["error"].(map[string]any)
+	if errObj["code"] != "INVALID_MONEY" {
+		t.Errorf("code = %v; want INVALID_MONEY", errObj["code"])
+	}
+
+	if register.lastInput.HouseholdID != "" {
+		t.Errorf("register use case should not be called when amount is invalid")
 	}
 }
 
@@ -539,6 +689,52 @@ func TestExpenseHandler_Patch_NotFound(t *testing.T) {
 
 	if rec.Code != http.StatusNotFound {
 		t.Errorf("status = %d; want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
+func TestExpenseHandler_Patch_RejectsNonPositiveAmount(t *testing.T) {
+	t.Parallel()
+
+	patch := &mockPatchExpense{}
+	server := httpadapter.NewServer("8080", httpadapter.ServerDependencies{
+		Auth: httpadapter.AuthHandlerDeps{
+			Register: &mockRegisterUser{},
+			Login:    &mockLogin{},
+		},
+		Expense: httpadapter.ExpenseHandlerDeps{
+			Register: &mockRegisterExpense{},
+			Get:      &mockGetExpense{},
+			List:     &mockListExpenses{},
+			Patch:    patch,
+			Delete:   &mockDeleteExpense{},
+		},
+		JWTValidator:   &mockTokenValidator{returnUserID: "user-1", returnEmail: "test@example.com"},
+		MemberRepo:     newMockMemberRepo(),
+		AllowedOrigins: []string{"*"},
+	})
+
+	body := map[string]any{
+		"amount_cents": 0,
+	}
+
+	req := makeJSONRequest(t, "PATCH", "/v1/expenses/550e8400-e29b-41d4-a716-446655440000", body)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d; want %d", rec.Code, http.StatusBadRequest)
+	}
+
+	resp := parseJSONResponse(t, rec)
+	errObj, _ := resp["error"].(map[string]any)
+	if errObj["code"] != "INVALID_MONEY" {
+		t.Errorf("code = %v; want INVALID_MONEY", errObj["code"])
+	}
+
+	if patch.lastInput.ID != "" {
+		t.Errorf("patch use case should not be called when amount is invalid")
 	}
 }
 

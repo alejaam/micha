@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
-import { AuthLayout } from './layouts/AuthLayout'
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
+import { getHealth } from './api'
+import { AppShellContext } from './context/AppShellContext'
+import { useAuth } from './context/AuthContext'
+import { useHouseholds } from './hooks/useHouseholds'
 import { AppLayout } from './layouts/AppLayout'
-import { LoginPage } from './pages/LoginPage'
-import { RegisterPage } from './pages/RegisterPage'
+import { AuthLayout } from './layouts/AuthLayout'
 import { DashboardPage } from './pages/DashboardPage'
+import { HouseholdSettingsPage } from './pages/HouseholdSettingsPage'
+import { LoginPage } from './pages/LoginPage'
+import { OnboardingCardsPage } from './pages/OnboardingCardsPage'
+import { OnboardingFixedExpensesPage } from './pages/OnboardingFixedExpensesPage'
 import { OnboardingHouseholdPage } from './pages/OnboardingHouseholdPage'
 import { OnboardingMemberPage } from './pages/OnboardingMemberPage'
-import { useHouseholds } from './hooks/useHouseholds'
-import { useAuth } from './context/AuthContext'
-import { AppShellContext } from './context/AppShellContext'
-import { getHealth } from './api'
+import { RegisterPage } from './pages/RegisterPage'
 
 /**
  * Static router — created once at module level so React never tears down and
@@ -25,7 +28,10 @@ const router = createBrowserRouter([
             { index: true, element: <DashboardPage /> },
             { path: 'onboarding/household', element: <OnboardingHouseholdPage /> },
             { path: 'onboarding/member', element: <OnboardingMemberPage /> },
+            { path: 'onboarding/cards', element: <OnboardingCardsPage /> },
+            { path: 'onboarding/fixed-expenses', element: <OnboardingFixedExpensesPage /> },
             { path: 'members/new', element: <OnboardingMemberPage /> },
+            { path: 'household/settings', element: <HouseholdSettingsPage /> },
         ],
     },
     {
@@ -45,6 +51,7 @@ const router = createBrowserRouter([
 function AppShell() {
     const { isAuthenticated, handleProtectedError } = useAuth()
     const [health, setHealth] = useState('checking...')
+    const [dashboardSection, setDashboardSection] = useState('overview')
 
     useEffect(() => {
         let active = true
@@ -80,7 +87,9 @@ function AppShell() {
         setHouseholdId,
         loadHouseholds,
         handleReload,
-    }), [health, householdId, households, loadingHouseholds, selectedHousehold, setHouseholdId, loadHouseholds, handleReload])
+        dashboardSection,
+        setDashboardSection,
+    }), [health, householdId, households, loadingHouseholds, selectedHousehold, setHouseholdId, loadHouseholds, handleReload, dashboardSection, setDashboardSection])
 
     return (
         <AppShellContext.Provider value={shellValue}>

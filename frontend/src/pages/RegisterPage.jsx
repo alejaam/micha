@@ -1,29 +1,39 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
 import { FormField } from '../ui/FormField'
 
 export function RegisterPage() {
-    const { register } = useAuth()
+    const { register, login } = useAuth()
     const navigate = useNavigate()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
-    const [message, setMessage] = useState('')
 
-    const canSubmit = email.trim() !== '' && password.trim() !== '' && !busy
+    const passwordsMatch = password === confirmPassword
+    const canSubmit =
+        email.trim() !== '' &&
+        password.trim() !== '' &&
+        confirmPassword.trim() !== '' &&
+        passwordsMatch &&
+        !busy
 
     async function handleSubmit(e) {
         e.preventDefault()
+        if (!passwordsMatch) {
+            setError('Passwords do not match.')
+            return
+        }
         setBusy(true)
         setError('')
-        setMessage('')
         try {
             await register({ email: email.trim(), password })
-            setMessage('Account created. Sign in with your credentials.')
-            setTimeout(() => navigate('/login', { replace: true }), 1200)
+            // Auto-login with the same credentials — no need to type them again
+            await login({ email: email.trim(), password })
+            navigate('/', { replace: true })
         } catch (err) {
             setError(err.message)
         } finally {
@@ -45,7 +55,6 @@ export function RegisterPage() {
             </div>
 
             {error ? <Banner type="error">{error}</Banner> : null}
-            {message ? <Banner type="ok">{message}</Banner> : null}
 
             <form className="formStack" onSubmit={handleSubmit} noValidate>
                 <FormField label="Email" htmlFor="regEmail">
@@ -74,8 +83,24 @@ export function RegisterPage() {
                     />
                 </FormField>
 
+                <FormField label="Confirm password" htmlFor="regConfirmPassword">
+                    <input
+                        id="regConfirmPassword"
+                        className="input"
+                        type="password"
+                        autoComplete="new-password"
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        disabled={busy}
+                    />
+                    {confirmPassword && !passwordsMatch && (
+                        <p className="formHint formHintError">Passwords do not match</p>
+                    )}
+                </FormField>
+
                 <button type="submit" className="btn btnPrimary btnFull" disabled={!canSubmit}>
-                    {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Creating…</> : 'Create account'}
+                    {busy ? <><span className="spinIcon" aria-hidden /> Creating account…</> : 'Create account'}
                 </button>
             </form>
         </section>

@@ -29,10 +29,11 @@ Se actualiza al cierre de cada iteración.
 ## Estado global del roadmap
 
 - Fecha de arranque: 2026-03-07
-- Fase actual: `Phase 4` (pendiente)
+- Fase actual: `Phase 4/5 closure + Phase 6 kickoff` (en progreso)
 - Última fase cerrada: `Iteración 005 (UX Polish)`
 - Estrategia de entrega: incremental por iteraciones cortas
 - Estado general: en progreso
+- Tablero operativo vigente: `docs/iteration-006-execution-board.md`
 
 ---
 
@@ -418,6 +419,38 @@ Eliminar fricción de captura y acelerar resumen mensual.
   - Frontend:
     - `listMembers` en cliente API.
     - carga de miembros por household en `App`.
+
+### Iteración 006 — Integrated execution: Phase 4 closure + Phase 6 kickoff + hardening
+- Fecha: 2026-04-03
+- Fase: Phase 4/5/6 (transición controlada)
+- Objetivo:
+  - cerrar formalmente la recurrencia/MSI ya implementada,
+  - abrir un primer vertical slice de analítica,
+  - reforzar verificación técnica y sincronización documental.
+- MEM:
+  - el principal riesgo no es falta de features, sino desalineación entre código, estado de fases y documentación.
+  - la base funcional de recurrencia/MSI ya está presente en backend/frontend.
+- SEQ:
+  - baseline de validación -> cierre formal de phase 4/5 -> vertical slice phase 6 -> hardening transversal.
+- THINK:
+  - Hipótesis:
+    - formalizar criterios de salida y un tablero único reduce retrabajo y evita abrir fases sin cierre real.
+  - Validación ejecutada:
+    - `cd backend && go test ./...` ✅
+    - `cd backend && go test -race ./...` ✅
+  - Resultado:
+    - ✅ baseline técnico verde para arrancar implementación.
+    - ✅ plan supervisable materializado en tablero operativo.
+    - 🔲 pendiente: evidencias de cierre final de `Phase 4` + primer entregable funcional de `Phase 6`.
+  - Decisión siguiente:
+    - ejecutar tareas T1-T4 del tablero `iteration-006-execution-board.md` y actualizar estado diario.
+- Archivos clave:
+  - `docs/iteration-006-execution-board.md`
+  - `docs/product-roadmap.md`
+  - `docs/architecture-checklist.md`
+  - `backend/internal/application/recurringexpense/generate_recurring_expenses.go`
+  - `backend/internal/application/settlement/calculate_settlement.go`
+  - `frontend/src/pages/DashboardPage.jsx`
     - selector de miembro y estado vacío en `ExpenseForm`.
 - Archivos clave:
   - `frontend/src/api.js`

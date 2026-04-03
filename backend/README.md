@@ -4,7 +4,7 @@ REST API backend for personal expense tracking and household settlement calculat
 
 ## Tech Stack
 
-- **Go 1.23+**
+- **Go 1.24.x**
 - **PostgreSQL 15+**
 - **Architecture**: DDD + Clean Architecture + Hexagonal (Ports & Adapters)
 - **Auth**: JWT-based authentication
@@ -25,7 +25,7 @@ internal/
 
 ## Prerequisites
 
-- Go 1.23 or higher
+- Go 1.24 or higher
 - PostgreSQL 15 or higher
 - Docker & Docker Compose (optional, for containerized deployment)
 
@@ -49,6 +49,7 @@ JWT_SECRET=your-secure-secret-key-here
 # Optional
 HTTP_PORT=8080
 ALLOWED_ORIGINS=http://localhost:3000
+APP_ENV=development
 ```
 
 ### 2. Database Setup
@@ -208,12 +209,20 @@ This starts:
 | `HTTP_PORT` | No | `8080` | HTTP server port |
 | `DATABASE_URL` | **Yes** | - | PostgreSQL connection string |
 | `JWT_SECRET` | **Yes** | - | Secret key for JWT signing |
-| `ALLOWED_ORIGINS` | No | `*` | CORS allowed origins (comma-separated) |
+| `ALLOWED_ORIGINS` | Condicional | `*` fuera de producción | CORS allowed origins (comma-separated). Required in production and wildcard is rejected. |
+| `APP_ENV` / `ENV` | No | - | Runtime environment. Use `production` or `prod` to enforce production config rules. |
+
+### Production Safety Rules
+
+- `JWT_SECRET` must be at least 32 characters.
+- When `APP_ENV` or `ENV` is `production`/`prod`:
+  - `ALLOWED_ORIGINS` is required.
+  - `ALLOWED_ORIGINS` cannot contain `*`.
 
 ## Project Status
 
 **Version**: 1.0.0-rc  
-**Status**: Release Candidate
+**Status**: Release Candidate (backend)
 
 ### Completed Features
 

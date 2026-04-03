@@ -116,7 +116,7 @@ export function OnboardingMemberPage() {
                         className="btn btnPrimary flex-1"
                         disabled={busy || !name.trim() || !email.trim()}
                     >
-                        {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Adding…</> : 'Add member'}
+                        {busy ? <><span className="spinIcon" aria-hidden /> Adding…</> : 'Add member'}
                     </button>
                 </div>
             </form>

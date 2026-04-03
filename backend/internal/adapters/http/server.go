@@ -13,6 +13,7 @@ type ServerDependencies struct {
 	RecurringExpense RecurringExpenseHandlerDeps
 	Household        HouseholdHandlerDeps
 	Member           MemberHandlerDeps
+	Card             CardHandlerDeps
 	Settlement       SettlementHandlerDeps
 	Category         CategoryHandlerDeps
 	SplitConfig      SplitConfigHandlerDeps
@@ -81,6 +82,11 @@ func NewServer(port string, deps ServerDependencies) Server {
 	mux.Handle("GET /v1/households/{household_id}/members", protectHousehold(http.HandlerFunc(mh.handleList)))
 	mux.Handle("PUT /v1/households/{household_id}/members/{member_id}", protectHousehold(http.HandlerFunc(mh.handleUpdate)))
 	mux.Handle("DELETE /v1/households/{household_id}/members/{member_id}", protectHousehold(http.HandlerFunc(mh.handleDelete)))
+
+	cardh := newCardHandler(deps.Card)
+	mux.Handle("POST /v1/households/{household_id}/cards", protectHousehold(http.HandlerFunc(cardh.handleCreate)))
+	mux.Handle("GET /v1/households/{household_id}/cards", protectHousehold(http.HandlerFunc(cardh.handleList)))
+	mux.Handle("DELETE /v1/cards/{card_id}", protect(http.HandlerFunc(cardh.handleDelete)))
 
 	sh := newSettlementHandler(deps.Settlement)
 	mux.Handle("GET /v1/households/{household_id}/settlement", protectHousehold(http.HandlerFunc(sh.handleGetMonthly)))

@@ -31,24 +31,63 @@ func Load() (Config, error) {
 	if jwtSecret == "" {
 		return Config{}, fmt.Errorf("JWT_SECRET environment variable is required")
 	}
+	if len(strings.TrimSpace(jwtSecret)) < 32 {
+		return Config{}, fmt.Errorf("JWT_SECRET must be at least 32 characters")
+	}
+
+	allowedOrigins, err := parseAllowedOrigins(
+		os.Getenv("ALLOWED_ORIGINS"),
+		isProductionEnv(os.Getenv("APP_ENV"), os.Getenv("ENV")),
+	)
+	if err != nil {
+		return Config{}, err
+	}
 
 	return Config{
 		HTTPPort:       port,
 		DatabaseURL:    dbURL,
 		JWTSecret:      jwtSecret,
-		AllowedOrigins: parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS")),
+		AllowedOrigins: allowedOrigins,
 	}, nil
 }
 
 // parseAllowedOrigins splits a comma-separated list of origins.
-// Returns ["*"] if the input is empty (allow all in development).
-func parseAllowedOrigins(raw string) []string {
+// Returns ["*"] when running outside production and no value is provided.
+func parseAllowedOrigins(raw string, production bool) ([]string, error) {
 	if raw == "" {
-		return []string{"*"}
+		if production {
+			return nil, fmt.Errorf("ALLOWED_ORIGINS environment variable is required in production")
+		}
+		return []string{"*"}, nil
 	}
-	origins := strings.Split(raw, ",")
-	for i := range origins {
-		origins[i] = strings.TrimSpace(origins[i])
+
+	parts := strings.Split(raw, ",")
+	origins := make([]string, 0, len(parts))
+	for _, origin := range parts {
+		trimmed := strings.TrimSpace(origin)
+		if trimmed == "" {
+			continue
+		}
+		if production && trimmed == "*" {
+			return nil, fmt.Errorf("ALLOWED_ORIGINS cannot contain wildcard '*' in production")
+		}
+		origins = append(origins, trimmed)
 	}
-	return origins
+
+	if len(origins) == 0 {
+		if production {
+			return nil, fmt.Errorf("ALLOWED_ORIGINS must contain at least one origin in production")
+		}
+		return []string{"*"}, nil
+	}
+
+	return origins, nil
+}
+
+func isProductionEnv(appEnv, env string) bool {
+	active := strings.ToLower(strings.TrimSpace(appEnv))
+	if active == "" {
+		active = strings.ToLower(strings.TrimSpace(env))
+	}
+	return active == "prod" || active == "production"
 }

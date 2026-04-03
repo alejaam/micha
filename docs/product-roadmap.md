@@ -19,10 +19,10 @@
 ## 👥 **MÓDULO 2: Gestión de Hogares & Miembros** ✅ (Parcial)
 - [x] Crear hogar
 - [x] Invitar miembros al hogar
-- [x] Roles (admin, miembro, invitado)
-- [ ] Editar información del hogar (nombre, divisa por defecto)
-- [ ] Listar miembros activos
-- [ ] Remover miembros
+- [ ] Roles formales (admin, miembro, invitado)
+- [x] Editar información del hogar (nombre, divisa por defecto)
+- [x] Listar miembros activos
+- [x] Remover miembros
 - [ ] Historial de cambios en miembros
 - [ ] Configuración de permisos por rol
 
@@ -33,14 +33,14 @@
 ## 💰 **MÓDULO 3: Registro de Gastos** ✅ (Parcial)
 - [x] Crear gasto simple (qué, cuánto, quién pagó)
 - [x] Asignar a qué miembros afecta el gasto
-- [ ] Categorizar gasto (comida, alquiler, utilidades, entretenimiento, etc.)
+- [x] Categorizar gasto (comida, alquiler, utilidades, entretenimiento, etc.)
 - [ ] Etiquetas personalizadas
 - [ ] Archivos adjuntos (tickets, fotos)
-- [ ] Notas/descripción del gasto
-- [ ] Editar/eliminar gastos
+- [x] Notas/descripción del gasto
+- [x] Editar/eliminar gastos
 - [ ] Historial de cambios en gastos
 - [ ] Duplicar gasto (para recurrentes de último momento)
-- [ ] Gastos recurrentes (alquiler mensual, Netflix)
+- [x] Gastos recurrentes (alquiler mensual, Netflix)
 
 **Estado:** En progreso | **Prioridad:** Alta | **Sprint:** 1
 
@@ -192,11 +192,11 @@ Enfoque: Lo mínimo para que un usuario pueda dividir gastos y liquidarlos
 
 ### **Fase 2 (v1.0 - Sprint 1)**
 Enfoque: Mejorar la experiencia y agregar funcionalidades básicas
-- Categorización de gastos
+- ~~Categorización de gastos~~ ✅
 - Presupuestos básicos
 - Reportes simples
 - Historial de gastos
-- Editar/eliminar gastos
+- ~~Editar/eliminar gastos~~ ✅
 
 **Tiempo estimado:** 2 semanas
 
@@ -204,7 +204,7 @@ Enfoque: Mejorar la experiencia y agregar funcionalidades básicas
 
 ### **Fase 3 (v1.5 - Sprint 2)**
 Enfoque: Profundizar en análisis y automatización
-- Gastos recurrentes
+- ~~Gastos recurrentes~~ ✅
 - Notificaciones
 - Múltiples hogares
 - Reportes avanzados (gráficos, tendencias)
@@ -236,4 +236,20 @@ Enfoque: Escalabilidad y features premium
 ---
 
 ## 🔄 **Última actualización**
-Fecha: 2026-03-14 | Versión: 0.1
+Fecha: 2026-04-02 | Versión: 0.2
+
+## 🚦 **Execution Status (2026-04-03)**
+- Active iteration: `Iteration 006` (`docs/iteration-006-execution-board.md`)
+- Integrated tracks in progress:
+	- `Track A`: Phase 4/5 closure with evidence (recurrence + MSI)
+	- `Track B`: Phase 6 kickoff with one analytics vertical slice
+	- `Track C`: hardening and documentation synchronization
+- Quality baseline:
+	- `cd backend && go test ./...` ✅
+	- `cd backend && go test -race ./...` ✅
+- Governance rule:
+	- No phase closure without code evidence + test evidence + documentation sync.
+
+## 📝 **Notas de consistencia (2026-04-02)**
+- El backend ya soporta categorías, edición/eliminación de gastos y gastos recurrentes vía endpoints HTTP.
+- El modelo de roles formal (RBAC explícito con `admin/member/guest`) sigue pendiente; actualmente existe lógica de autorización por membresía y admin implícito en casos puntuales.

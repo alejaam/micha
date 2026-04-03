@@ -5,12 +5,66 @@ import (
 	"sync"
 	"time"
 
+	"micha/backend/internal/domain/card"
 	"micha/backend/internal/domain/category"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/household"
+	"micha/backend/internal/domain/installment"
 	"micha/backend/internal/domain/member"
 	"micha/backend/internal/domain/shared"
 )
+
+type mockInstallmentRepo struct {
+	mu           sync.RWMutex
+	installments map[string]installment.Installment
+}
+
+func newMockInstallmentRepo() *mockInstallmentRepo {
+	return &mockInstallmentRepo{installments: make(map[string]installment.Installment)}
+}
+
+func (m *mockInstallmentRepo) Save(_ context.Context, i installment.Installment) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.installments[string(i.ID())] = i
+	return nil
+}
+
+func (m *mockInstallmentRepo) SaveAll(_ context.Context, insts []installment.Installment) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, i := range insts {
+		m.installments[string(i.ID())] = i
+	}
+	return nil
+}
+
+func (m *mockInstallmentRepo) ListByExpense(_ context.Context, expenseID string) ([]installment.Installment, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var result []installment.Installment
+	for _, i := range m.installments {
+		if i.ExpenseID() == expenseID {
+			result = append(result, i)
+		}
+	}
+	return result, nil
+}
+
+func (m *mockInstallmentRepo) ListByHouseholdAndPeriod(_ context.Context, _ string, _, _ time.Time) ([]installment.Installment, error) {
+	return nil, nil
+}
+
+func (m *mockInstallmentRepo) DeleteByExpense(_ context.Context, expenseID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for id, i := range m.installments {
+		if i.ExpenseID() == expenseID {
+			delete(m.installments, id)
+		}
+	}
+	return nil
+}
 
 // mockRepo is a hand-written in-memory mock for outbound.ExpenseRepository.
 type mockRepo struct {
@@ -164,6 +218,7 @@ func (r *mockMemberRepo) seedMember(id, householdID string) {
 		HouseholdID: householdID,
 		Name:        "Test Member",
 		Email:       "test@example.com",
+		UserID:      "user-linked",
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	})
@@ -191,8 +246,14 @@ func (r *mockMemberRepo) FindByUserIDGlobal(_ context.Context, _ string) (member
 func (r *mockMemberRepo) ListHouseholdIDsByUserID(_ context.Context, _ string) ([]string, error) {
 	return nil, nil
 }
-func (r *mockMemberRepo) ListAllByHousehold(_ context.Context, _ string) ([]member.Member, error) {
-	return nil, nil
+func (r *mockMemberRepo) ListAllByHousehold(_ context.Context, householdID string) ([]member.Member, error) {
+	var result []member.Member
+	for _, m := range r.members {
+		if m.HouseholdID() == householdID {
+			result = append(result, m)
+		}
+	}
+	return result, nil
 }
 func (r *mockMemberRepo) ListByHousehold(_ context.Context, _ string, _, _ int) ([]member.Member, error) {
 	return nil, nil
@@ -206,6 +267,71 @@ func (r *mockMemberRepo) CountActiveByHousehold(_ context.Context, _ string) (in
 type mockCategoryRepoActual struct {
 	mu   sync.Mutex
 	rows map[string]category.Category
+}
+
+type mockCardRepo struct {
+	mu      sync.RWMutex
+	cards   map[string]card.Card
+	findErr error
+}
+
+func newMockCardRepo() *mockCardRepo {
+	return &mockCardRepo{cards: make(map[string]card.Card)}
+}
+
+func (r *mockCardRepo) seedCard(id, householdID, cardName string) {
+	c, _ := card.NewFromAttributes(card.Attributes{
+		ID:          card.ID(id),
+		HouseholdID: householdID,
+		BankName:    "BANAMEX",
+		CardName:    cardName,
+		CutoffDay:   10,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	})
+	r.cards[id] = c
+}
+
+func (r *mockCardRepo) Save(_ context.Context, c card.Card) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.cards[string(c.ID())] = c
+	return nil
+}
+
+func (r *mockCardRepo) FindByID(_ context.Context, id string) (card.Card, error) {
+	if r.findErr != nil {
+		return card.Card{}, r.findErr
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	c, ok := r.cards[id]
+	if !ok {
+		return card.Card{}, shared.ErrNotFound
+	}
+	return c, nil
+}
+
+func (r *mockCardRepo) ListByHousehold(_ context.Context, householdID string) ([]card.Card, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	result := make([]card.Card, 0)
+	for _, c := range r.cards {
+		if c.HouseholdID() == householdID {
+			result = append(result, c)
+		}
+	}
+	return result, nil
+}
+
+func (r *mockCardRepo) Delete(_ context.Context, id string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, ok := r.cards[id]; !ok {
+		return shared.ErrNotFound
+	}
+	delete(r.cards, id)
+	return nil
 }
 
 func newMockCategoryRepo() *mockCategoryRepoActual {

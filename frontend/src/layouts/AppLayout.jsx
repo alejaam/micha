@@ -1,8 +1,8 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { useAppShell } from '../context/AppShellContext'
 import { AppHeader } from '../components/AppHeader'
 import { BottomNav } from '../components/BottomNav'
+import { useAppShell } from '../context/AppShellContext'
+import { useAuth } from '../context/AuthContext'
 
 /**
  * AppLayout — wraps protected routes.
@@ -11,7 +11,16 @@ import { BottomNav } from '../components/BottomNav'
  */
 export function AppLayout() {
     const { isAuthenticated, logout } = useAuth()
-    const { health, householdId, households, setHouseholdId, handleReload, loadingHouseholds } = useAppShell()
+    const {
+        health,
+        householdId,
+        households,
+        setHouseholdId,
+        handleReload,
+        loadingHouseholds,
+        dashboardSection,
+        setDashboardSection,
+    } = useAppShell()
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />
@@ -29,7 +38,10 @@ export function AppLayout() {
                 isLoading={loadingHouseholds}
             />
             <Outlet />
-            <BottomNav />
+            <BottomNav
+                activeSection={dashboardSection}
+                onSectionChange={setDashboardSection}
+            />
         </div>
     )
 }

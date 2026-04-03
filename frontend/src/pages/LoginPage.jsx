@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
 import { FormField } from '../ui/FormField'
@@ -71,7 +71,7 @@ export function LoginPage() {
                 </FormField>
 
                 <button type="submit" className="btn btnPrimary btnFull" disabled={!canSubmit}>
-                    {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Signing in…</> : 'Sign in'}
+                    {busy ? <><span className="spinIcon" aria-hidden /> Signing in…</> : 'Sign in'}
                 </button>
             </form>
         </section>

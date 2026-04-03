@@ -42,30 +42,31 @@ export function CardExpensesPanel({ items = [], members = [], currency = 'MXN' }
 
     if (cardItems.length === 0) {
         return (
-            <section className="card" aria-label="Card expenses">
+            <section className="card" aria-label="Gastos en tarjetas">
                 <h2 className="sectionTitle">
                     <span className="sectionTitleIcon" aria-hidden>&#9646;</span>
-                    Card expenses
+                    Tarjetas
                 </h2>
                 <div className="emptyState">
-                    <p className="emptyTitle">No card expenses yet</p>
-                    <p className="emptyHint">Mark expenses as paid with "Card" when adding them.</p>
+                    <p className="emptyTitle">Sin gastos con tarjeta</p>
+                    <p className="emptyHint">Marca el gasto como pagado con tarjeta al registrarlo.</p>
                 </div>
             </section>
         )
     }
 
     return (
-        <section className="card" aria-label="Card expenses">
+        <section className="card" aria-label="Gastos en tarjetas">
             <h2 className="sectionTitle">
                 <span className="sectionTitleIcon" aria-hidden>&#9646;</span>
-                Card expenses
+                Tarjetas
+                {cardItems.length > 0 && <span className="sectionBadge">{cardItems.length} cargos • {formatCurrency(grandTotal, currency)}</span>}
             </h2>
 
             <div className="cardExpensesTable">
                 {/* Header row */}
                 <div className="cardTableHeader">
-                    <span className="cardColConcept">Card</span>
+                    <span className="cardColConcept">Tarjeta</span>
                     {members.map((m) => (
                         <span key={m.id} className="cardColMember">{m.name}</span>
                     ))}
@@ -96,7 +97,7 @@ export function CardExpensesPanel({ items = [], members = [], currency = 'MXN' }
                 </div>
 
                 <div className="cardGrandTotal">
-                    <span className="cardGrandTotalLabel">Grand total</span>
+                    <span className="cardGrandTotalLabel">Total general</span>
                     <span className="cardGrandTotalValue">{formatCurrency(grandTotal, currency)}</span>
                 </div>
             </div>
