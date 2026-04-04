@@ -59,11 +59,11 @@ Run migrations using your preferred tool. Example with `golang-migrate`:
 migrate -path migrations -database "$DATABASE_URL" up
 ```
 
-Or use the provided Docker Compose setup (includes Postgres):
+Or use the provided Docker Compose setup:
 
 ```bash
-cd ../deploy
-docker-compose up -d postgres
+cd ..
+docker compose up -d
 ```
 
 ### 3. Run the API
@@ -190,15 +190,15 @@ Located in `/migrations`, numbered sequentially:
 
 ## Docker Deployment
 
-See `/deploy/docker-compose.yml` for full stack deployment:
+See `/docker-compose.yml` for full stack deployment:
 
 ```bash
-cd ../deploy
-docker-compose up --build
+cd ..
+docker compose up --build
 ```
 
 This starts:
-- PostgreSQL database
+- Frontend (Nginx)
 - Backend API on port 8080
 
 ## Environment Variables Reference

@@ -11,7 +11,8 @@ Aplicación de finanzas para gastos compartidos (roomies, parejas y familias).
 ## Estructura
 - `backend/`: API y lógica de negocio
 - `frontend/`: SPA React
-- `deploy/`: orquestación de servicios para VPS
+- `Dockerfile`: build principal del backend
+- `docker-compose.yml`: orquestación local
 - `docs/`: principios y ADRs
 
 ## Estado actual

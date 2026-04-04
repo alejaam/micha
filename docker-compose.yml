@@ -1,7 +1,7 @@
 services:
   api:
     build:
-      context: ../backend
+      context: .
       dockerfile: Dockerfile
     container_name: micha-api
     working_dir: /app
@@ -14,7 +14,7 @@ services:
 
   frontend:
     build:
-      context: ../frontend
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: micha-frontend
     volumes:
