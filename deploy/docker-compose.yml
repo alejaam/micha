@@ -1,37 +1,25 @@
 services:
-  db:
-    image: postgres:16
-    container_name: micha-db
-    environment:
-      POSTGRES_DB: micha
-      POSTGRES_USER: micha
-      POSTGRES_PASSWORD: micha_dev_password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U micha -d micha"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   api:
     build:
       context: ../backend
       dockerfile: Dockerfile
     container_name: micha-api
     working_dir: /app
-    environment:
-      HTTP_PORT: "8080"
-      DATABASE_URL: "postgres://micha:micha_dev_password@db:5432/micha?sslmode=disable"
-      JWT_SECRET: "dev-secret-key-change-in-production"
-      ALLOWED_ORIGINS: "*"
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8080:8080"
-    depends_on:
-      db:
-        condition: service_healthy
 
-volumes:
-  postgres_data:
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: micha-frontend
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8081:80"
+    depends_on:
+      - api
