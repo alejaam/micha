@@ -510,8 +510,33 @@ ul {
     line-height: 1.4;
 }
 
-/* ─── Section title ─────────────────────────────────────────────────────────── */
-.sectionTitle {
+.formHintError {
+    color: var(--color-red-600);
+    font-weight: var(--fw-medium);
+}
+
+.formHintWarning {
+    color: var(--color-amber-700);
+    font-weight: var(--fw-medium);
+}
+
+/* ─── Shared toggle ─────────────────────────────────────────────────────────── */
+.sharedToggle {
+    display: grid;
+    gap: 6px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-soft);
+    background: var(--color-surface-2);
+    transition: border-color var(--dur-fast);
+}
+
+.sharedToggle:has(input:checked) {
+    border-color: var(--color-brand-200);
+    background: linear-gradient(135deg, var(--color-brand-50), var(--color-surface-2));
+}
+
+.sharedToggleLabel {
     display: flex;
     align-items: baseline;
     gap: var(--sp-tight);
@@ -1045,6 +1070,12 @@ ul {
     transform: scale(1.1);
 }
 
+.bottomNavItemDisabled {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
+}
+
 .bottomNavLabel {
     font-size: 0.65rem;
     font-weight: var(--fw-semibold);
@@ -1554,11 +1585,11 @@ html {
 .fixedTableHeader {
     display: flex;
     align-items: center;
-    background: var(--color-surface-2);
-    border-bottom: 1px solid var(--color-border);
+    background: var(--color-brand-50);
+    border-bottom: 1px solid var(--color-brand-100);
     padding: 8px 12px;
-    font-weight: var(--fw-medium);
-    color: var(--color-text-3);
+    font-weight: var(--fw-bold);
+    color: var(--color-brand-700);
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -1647,11 +1678,11 @@ html {
 .cardTableHeader {
     display: flex;
     align-items: center;
-    background: var(--color-surface-2);
-    border-bottom: 1px solid var(--color-border);
+    background: var(--color-brand-50);
+    border-bottom: 1px solid var(--color-brand-100);
     padding: 8px 12px;
-    font-weight: var(--fw-medium);
-    color: var(--color-text-3);
+    font-weight: var(--fw-bold);
+    color: var(--color-brand-700);
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -1828,4 +1859,172 @@ html {
 
 .settlementBalanceDue {
     color: var(--color-text-3);
+}
+
+/* ── Tooltip Component ───────────────────────────────────────── */
+
+.tooltipTrigger {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+    cursor: help;
+}
+
+.tooltipIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-size: 0.7rem;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-3);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-soft);
+    border-radius: 50%;
+    transition: all var(--dur-fast) var(--ease-out);
+}
+
+.tooltipTrigger:hover .tooltipIcon,
+.tooltipTrigger:focus .tooltipIcon {
+    background: var(--color-brand-50);
+    border-color: var(--color-brand-300);
+    color: var(--color-brand-600);
+}
+
+.tooltipContent {
+    position: absolute;
+    z-index: 100;
+    max-width: 250px;
+    padding: 8px 12px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    font-size: 0.82rem;
+    font-weight: var(--fw-normal);
+    line-height: 1.4;
+    color: var(--color-text-2);
+    white-space: normal;
+}
+
+/* Tooltip positions */
+.tooltip-top .tooltipContent {
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.tooltip-bottom .tooltipContent {
+    top: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.tooltip-left .tooltipContent {
+    right: 120%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.tooltip-right .tooltipContent {
+    left: 120%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Arrow pointer (optional enhancement) */
+.tooltip-top .tooltipContent::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--color-border);
+}
+
+.tooltip-bottom .tooltipContent::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-bottom-color: var(--color-border);
+}
+
+/* ── Members Panel ─────────────────────────────────────────────── */
+
+.membersList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.memberRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-soft);
+    border-radius: var(--radius-sm);
+    transition: all var(--dur-fast) var(--ease-out);
+}
+
+.memberRow:hover {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+.memberInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.memberName {
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-1);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.memberEmail {
+    font-size: 0.8rem;
+    color: var(--color-text-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.memberStats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.memberSalary {
+    font-size: 0.85rem;
+    font-weight: var(--fw-medium);
+    color: var(--color-text-1);
+}
+
+.memberWeight {
+    font-size: 0.75rem;
+    color: var(--color-brand-600);
+    background: var(--color-brand-50);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+}
+
+.memberNoSalary {
+    font-size: 0.8rem;
+    color: var(--color-text-3);
+    font-style: italic;
 }

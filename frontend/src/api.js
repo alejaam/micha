@@ -122,7 +122,7 @@ export async function createMember({ householdId, name, email, monthlySalaryCent
     return parseResponse(response)
 }
 
-export async function createExpense({ householdId, paidByMemberId, amountCents, description, isShared = true, currency = 'MXN', paymentMethod = 'cash', expenseType = 'variable', cardName = '', category = 'other' }) {
+export async function createExpense({ householdId, paidByMemberId, amountCents, description, isShared = true, currency = 'MXN', paymentMethod = 'cash', expenseType = 'variable', cardId = '', cardName = '', category = 'other', totalInstallments = 0 }) {
     const response = await fetch('/v1/expenses', {
         method: 'POST',
         headers: buildProtectedHeaders(),
@@ -135,8 +135,10 @@ export async function createExpense({ householdId, paidByMemberId, amountCents, 
             currency,
             payment_method: paymentMethod,
             expense_type: expenseType,
+            card_id: cardId,
             card_name: cardName,
             category,
+            total_installments: totalInstallments,
         }),
     })
 
@@ -164,6 +166,34 @@ export async function listMembers({ householdId, limit = 100, offset = 0 }) {
     const response = await fetch(`/v1/households/${householdId}/members?${params.toString()}`, {
         headers: buildProtectedHeaders(),
     })
+    return parseResponse(response)
+}
+
+export async function listCategories({ householdId }) {
+    const response = await fetch(`/v1/households/${householdId}/categories`, {
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
+export async function listCards({ householdId }) {
+    const response = await fetch(`/v1/households/${householdId}/cards`, {
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
+export async function createCard({ householdId, bankName, cardName, cutoffDay }) {
+    const response = await fetch(`/v1/households/${householdId}/cards`, {
+        method: 'POST',
+        headers: buildProtectedHeaders(),
+        body: JSON.stringify({
+            bank_name: bankName,
+            card_name: cardName,
+            cutoff_day: cutoffDay,
+        }),
+    })
+
     return parseResponse(response)
 }
 

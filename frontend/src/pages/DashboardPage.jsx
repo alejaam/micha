@@ -1,26 +1,27 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import {
+    createExpense,
+    deleteExpense,
+    patchExpense,
+} from '../api'
+import { CardExpensesPanel } from '../components/CardExpensesPanel'
+import { ExpenseList } from '../components/ExpenseList'
+import { ExpenseModal } from '../components/ExpenseModal'
+import { ExpenseSummary } from '../components/ExpenseSummary'
+import { FAB } from '../components/FAB'
+import { FixedExpensesPanel } from '../components/FixedExpensesPanel'
+import { IncomesPanel } from '../components/IncomesPanel'
+import { MembersPanel } from '../components/MembersPanel'
+import { RecentExpenses } from '../components/RecentExpenses'
+import { SettlementPanel } from '../components/SettlementPanel'
 import { useAppShell } from '../context/AppShellContext'
+import { useAuth } from '../context/AuthContext'
+import { useCurrentMember } from '../hooks/useCurrentMember'
 import { useExpenses } from '../hooks/useExpenses'
 import { useMembers } from '../hooks/useMembers'
 import { useSettlement } from '../hooks/useSettlement'
-import { useCurrentMember } from '../hooks/useCurrentMember'
-import { ExpenseSummary } from '../components/ExpenseSummary'
-import { RecentExpenses } from '../components/RecentExpenses'
-import { ExpenseList } from '../components/ExpenseList'
-import { SettlementPanel } from '../components/SettlementPanel'
-import { IncomesPanel } from '../components/IncomesPanel'
-import { FixedExpensesPanel } from '../components/FixedExpensesPanel'
-import { CardExpensesPanel } from '../components/CardExpensesPanel'
-import { ExpenseModal } from '../components/ExpenseModal'
-import { FAB } from '../components/FAB'
 import { Banner } from '../ui/Banner'
-import {
-    createExpense,
-    patchExpense,
-    deleteExpense,
-} from '../api'
 
 function isExpectedSettlementOnboardingError(err) {
     return err?.code === 'NO_MEMBERS' || String(err?.message || '').toLowerCase().includes('at least one member')
@@ -108,7 +109,7 @@ export function DashboardPage() {
 
 // No secondary onboarding needed because the household creator is auto-added
 
-    async function handleCreate({ amountCents, description, paidByMemberId, isShared, paymentMethod, expenseType, cardName, category }) {
+    async function handleCreate({ amountCents, description, paidByMemberId, isShared, paymentMethod, expenseType, cardId, cardName, category, totalInstallments }) {
         setMessage('')
         setError('')
         setSubmittingCreate(true)
@@ -122,8 +123,10 @@ export function DashboardPage() {
                 currency: activeCurrency,
                 paymentMethod,
                 expenseType,
+                cardId,
                 cardName,
                 category,
+                totalInstallments,
             })
             setMessage('Expense added.')
             setModalOpen(false)
@@ -186,6 +189,12 @@ export function DashboardPage() {
                 </section>
             ) : (
                 <>
+                    {/* Members overview */}
+                    <MembersPanel
+                        members={members}
+                        currency={activeCurrency}
+                    />
+
                     {/* Incomes */}
                     <IncomesPanel
                         members={members}
@@ -200,6 +209,22 @@ export function DashboardPage() {
                             This month
                         </h2>
                         <ExpenseSummary settlement={settlement} currency={activeCurrency} />
+                    </section>
+
+                    <section className="card" aria-label="Cards quick actions">
+                        <div className="listHeader">
+                            <h2 className="listTitle">Cards</h2>
+                        </div>
+                        <p className="text-sm text-dim mb-3">
+                            Add a new card or change your preferred card for new expenses.
+                        </p>
+                        <button
+                            type="button"
+                            className="btn"
+                            onClick={() => navigate('/onboarding/cards')}
+                        >
+                            Manage cards
+                        </button>
                     </section>
 
                     {/* Fixed expenses breakdown */}
@@ -228,6 +253,7 @@ export function DashboardPage() {
                         loadingSettlement={loadingSettlement}
                         memberIndex={memberIndex}
                         currency={activeCurrency}
+                        selectedHousehold={selectedHousehold}
                     />
 
                     {/* Recent expenses */}
@@ -272,6 +298,7 @@ export function DashboardPage() {
                     members={members}
                     isLoadingMembers={loadingMembers}
                     defaultPaidByMemberId={currentMember?.id ?? ''}
+                    householdId={householdId}
                 />
             )}
         </>

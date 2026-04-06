@@ -54,40 +54,44 @@ type ID string
 
 // ExpenseAttributes is the flat DTO used for construction and rehydration.
 type ExpenseAttributes struct {
-	ID             ID
-	PaidByMemberID string // The member who paid this expense
-	PeriodID       string // The period this expense belongs to
-	CategoryID     string // The category this expense belongs to
-	HouseholdID    string
-	AmountCents    int64
-	Description    string
-	IsShared       bool
-	Currency       string
-	PaymentMethod  PaymentMethod
-	ExpenseType    ExpenseType
-	CardName       string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	DeletedAt      *time.Time
+	ID                ID
+	PaidByMemberID    string // The member who paid this expense
+	PeriodID          string // The period this expense belongs to
+	CategoryID        string // The category this expense belongs to
+	CardID            string // Optional linked card id when payment_method=card
+	HouseholdID       string
+	AmountCents       int64
+	Description       string
+	IsShared          bool
+	Currency          string
+	PaymentMethod     PaymentMethod
+	ExpenseType       ExpenseType
+	CardName          string
+	TotalInstallments int // Only for ExpenseTypeMSI; number of installments (e.g., 3, 6, 12)
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	DeletedAt         *time.Time
 }
 
 // Expense is the aggregate root for an expense record.
 type Expense struct {
-	id            ID
-	memberID      string
-	periodID      string
-	categoryID    string
-	householdID   string
-	amountCents   int64
-	description   string
-	isShared      bool
-	currency      string
-	paymentMethod PaymentMethod
-	expenseType   ExpenseType
-	cardName      string
-	createdAt     time.Time
-	updatedAt     time.Time
-	deletedAt     *time.Time
+	id                ID
+	memberID          string
+	periodID          string
+	categoryID        string
+	cardID            string
+	householdID       string
+	amountCents       int64
+	description       string
+	isShared          bool
+	currency          string
+	paymentMethod     PaymentMethod
+	expenseType       ExpenseType
+	cardName          string
+	totalInstallments int
+	createdAt         time.Time
+	updatedAt         time.Time
+	deletedAt         *time.Time
 }
 
 // New constructs an Expense from individual fields.
@@ -149,27 +153,35 @@ func NewFromAttributes(attrs ExpenseAttributes) (Expense, error) {
 		return Expense{}, ErrInvalidExpenseType
 	}
 
+	// Validate TotalInstallments for MSI expenses
+	totalInstallments := attrs.TotalInstallments
+	if expenseType == ExpenseTypeMSI && totalInstallments <= 0 {
+		return Expense{}, errors.New("MSI expense requires total_installments > 0")
+	}
+
 	updatedAt := attrs.UpdatedAt
 	if updatedAt.IsZero() {
 		updatedAt = attrs.CreatedAt
 	}
 
 	return Expense{
-		id:            attrs.ID,
-		memberID:      memberID,
-		periodID:      strings.TrimSpace(attrs.PeriodID),
-		categoryID:    strings.TrimSpace(attrs.CategoryID),
-		householdID:   attrs.HouseholdID,
-		amountCents:   attrs.AmountCents,
-		description:   attrs.Description,
-		isShared:      attrs.IsShared,
-		currency:      currency,
-		paymentMethod: paymentMethod,
-		expenseType:   expenseType,
-		cardName:      strings.TrimSpace(attrs.CardName),
-		createdAt:     attrs.CreatedAt,
-		updatedAt:     updatedAt,
-		deletedAt:     attrs.DeletedAt,
+		id:                attrs.ID,
+		memberID:          memberID,
+		periodID:          strings.TrimSpace(attrs.PeriodID),
+		categoryID:        strings.TrimSpace(attrs.CategoryID),
+		cardID:            strings.TrimSpace(attrs.CardID),
+		householdID:       attrs.HouseholdID,
+		amountCents:       attrs.AmountCents,
+		description:       attrs.Description,
+		isShared:          attrs.IsShared,
+		currency:          currency,
+		paymentMethod:     paymentMethod,
+		expenseType:       expenseType,
+		cardName:          strings.TrimSpace(attrs.CardName),
+		totalInstallments: totalInstallments,
+		createdAt:         attrs.CreatedAt,
+		updatedAt:         updatedAt,
+		deletedAt:         attrs.DeletedAt,
 	}, nil
 }
 
@@ -203,21 +215,23 @@ func (e *Expense) SoftDelete() error {
 // Attributes returns a copy of all fields as a flat DTO.
 func (e Expense) Attributes() ExpenseAttributes {
 	return ExpenseAttributes{
-		ID:             e.id,
-		PaidByMemberID: e.memberID,
-		PeriodID:       e.periodID,
-		CategoryID:     e.categoryID,
-		HouseholdID:    e.householdID,
-		AmountCents:    e.amountCents,
-		Description:    e.description,
-		IsShared:       e.isShared,
-		Currency:       e.currency,
-		PaymentMethod:  e.paymentMethod,
-		ExpenseType:    e.expenseType,
-		CardName:       e.cardName,
-		CreatedAt:      e.createdAt,
-		UpdatedAt:      e.updatedAt,
-		DeletedAt:      e.deletedAt,
+		ID:                e.id,
+		PaidByMemberID:    e.memberID,
+		PeriodID:          e.periodID,
+		CategoryID:        e.categoryID,
+		CardID:            e.cardID,
+		HouseholdID:       e.householdID,
+		AmountCents:       e.amountCents,
+		Description:       e.description,
+		IsShared:          e.isShared,
+		Currency:          e.currency,
+		PaymentMethod:     e.paymentMethod,
+		ExpenseType:       e.expenseType,
+		CardName:          e.cardName,
+		TotalInstallments: e.totalInstallments,
+		CreatedAt:         e.createdAt,
+		UpdatedAt:         e.updatedAt,
+		DeletedAt:         e.deletedAt,
 	}
 }
 
@@ -225,6 +239,7 @@ func (e Expense) ID() ID                       { return e.id }
 func (e Expense) PaidByMemberID() string       { return e.memberID }
 func (e Expense) PeriodID() string             { return e.periodID }
 func (e Expense) CategoryID() string           { return e.categoryID }
+func (e Expense) CardID() string               { return e.cardID }
 func (e Expense) HouseholdID() string          { return e.householdID }
 func (e Expense) AmountCents() int64           { return e.amountCents }
 func (e Expense) Description() string          { return e.description }
@@ -233,6 +248,7 @@ func (e Expense) Currency() string             { return e.currency }
 func (e Expense) PaymentMethod() PaymentMethod { return e.paymentMethod }
 func (e Expense) ExpenseType() ExpenseType     { return e.expenseType }
 func (e Expense) CardName() string             { return e.cardName }
+func (e Expense) TotalInstallments() int       { return e.totalInstallments }
 func (e Expense) CreatedAt() time.Time         { return e.createdAt }
 func (e Expense) UpdatedAt() time.Time         { return e.updatedAt }
 func (e Expense) DeletedAt() *time.Time        { return e.deletedAt }

@@ -14,9 +14,10 @@ var _ inbound.CalculateSettlementUseCase = CalculateSettlementUseCase{}
 
 // CalculateSettlementUseCase computes a household monthly settlement report.
 type CalculateSettlementUseCase struct {
-	householdRepo outbound.HouseholdRepository
-	memberRepo    outbound.MemberRepository
-	expenseRepo   outbound.ExpenseRepository
+	householdRepo   outbound.HouseholdRepository
+	memberRepo      outbound.MemberRepository
+	expenseRepo     outbound.ExpenseRepository
+	installmentRepo outbound.InstallmentRepository
 }
 
 // NewCalculateSettlementUseCase constructs CalculateSettlementUseCase.
@@ -24,11 +25,13 @@ func NewCalculateSettlementUseCase(
 	householdRepo outbound.HouseholdRepository,
 	memberRepo outbound.MemberRepository,
 	expenseRepo outbound.ExpenseRepository,
+	installmentRepo outbound.InstallmentRepository,
 ) CalculateSettlementUseCase {
 	return CalculateSettlementUseCase{
-		householdRepo: householdRepo,
-		memberRepo:    memberRepo,
-		expenseRepo:   expenseRepo,
+		householdRepo:   householdRepo,
+		memberRepo:      memberRepo,
+		expenseRepo:     expenseRepo,
+		installmentRepo: installmentRepo,
 	}
 }
 
@@ -62,7 +65,12 @@ func (u CalculateSettlementUseCase) Execute(ctx context.Context, input inbound.C
 		return inbound.CalculateSettlementOutput{}, fmt.Errorf("calculate settlement: list expenses: %w", err)
 	}
 
-	calc, err := settlement.Calculate(householdEntity.SettlementMode(), members, expenses)
+	installments, err := u.installmentRepo.ListByHouseholdAndPeriod(ctx, input.HouseholdID, from, to)
+	if err != nil {
+		return inbound.CalculateSettlementOutput{}, fmt.Errorf("calculate settlement: list installments: %w", err)
+	}
+
+	calc, err := settlement.Calculate(householdEntity.SettlementMode(), members, expenses, installments)
 	if err != nil {
 		return inbound.CalculateSettlementOutput{}, fmt.Errorf("calculate settlement: %w", err)
 	}

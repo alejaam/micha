@@ -7,6 +7,7 @@ import (
 	"time"
 
 	householdapp "micha/backend/internal/application/household"
+	"micha/backend/internal/domain/category"
 	"micha/backend/internal/domain/household"
 	"micha/backend/internal/ports/inbound"
 )
@@ -82,10 +83,36 @@ func (m *mockHouseholdRepo) ListByUserID(_ context.Context, _ string, limit, off
 	return result[offset:end], nil
 }
 
+// mockCategoryRepo implements outbound.CategoryRepository for tests.
+type mockCategoryRepo struct {
+	categories []category.Category
+}
+
+func newMockCategoryRepo() *mockCategoryRepo {
+	return &mockCategoryRepo{}
+}
+
+func (m *mockCategoryRepo) Save(_ context.Context, c category.Category) error {
+	m.categories = append(m.categories, c)
+	return nil
+}
+
+func (m *mockCategoryRepo) FindBySlug(_ context.Context, _, _ string) (category.Category, error) {
+	return category.Category{}, errors.New("not found")
+}
+
+func (m *mockCategoryRepo) ListByHousehold(_ context.Context, _ string) ([]category.Category, error) {
+	return m.categories, nil
+}
+
+func (m *mockCategoryRepo) Delete(_ context.Context, _ string) error {
+	return nil
+}
+
 func TestRegisterHousehold_Success(t *testing.T) {
 	t.Parallel()
 	repo := newMockHouseholdRepo()
-	uc := householdapp.NewRegisterHouseholdUseCase(repo, staticHouseholdIDGen("hh-1"))
+	uc := householdapp.NewRegisterHouseholdUseCase(repo, newMockCategoryRepo(), staticHouseholdIDGen("hh-1"))
 
 	out, err := uc.Execute(context.Background(), inbound.RegisterHouseholdInput{
 		Name:           "Casa",
@@ -103,7 +130,7 @@ func TestRegisterHousehold_Success(t *testing.T) {
 func TestRegisterHousehold_InvalidName(t *testing.T) {
 	t.Parallel()
 	repo := newMockHouseholdRepo()
-	uc := householdapp.NewRegisterHouseholdUseCase(repo, staticHouseholdIDGen("hh-1"))
+	uc := householdapp.NewRegisterHouseholdUseCase(repo, newMockCategoryRepo(), staticHouseholdIDGen("hh-1"))
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterHouseholdInput{
 		Name:           " ",
