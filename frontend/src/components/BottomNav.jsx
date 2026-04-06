@@ -9,10 +9,9 @@ export function BottomNav() {
     const currentPath = location.pathname
 
     const navItems = [
-        { path: '/', icon: '🏠', label: 'Home', exact: true, enabled: true },
-        { path: '/expenses', icon: '💰', label: 'Expenses', enabled: false },
-        { path: '/settlement', icon: '⚖️', label: 'Settle', enabled: false },
-        { path: '/settings', icon: '⚙️', label: 'Settings', enabled: false },
+        { path: '/', label: 'DASHBOARD', exact: true, enabled: true },
+        { path: '/members', label: 'MEMBERS', enabled: true },
+        { path: '/settings', label: 'CONFIG', enabled: true },
     ]
 
     const isActive = (item) => {
@@ -23,7 +22,7 @@ export function BottomNav() {
     }
 
     return (
-        <nav className="bottomNav" aria-label="Main navigation">
+        <nav className="bottomNav" aria-label="Main navigation" style={{ padding: '0 24px', justifyContent: 'space-between' }}>
             {navItems.map((item) =>
                 item.enabled ? (
                     <Link
@@ -31,8 +30,8 @@ export function BottomNav() {
                         to={item.path}
                         className={`bottomNavItem ${isActive(item) ? 'active' : ''}`}
                         aria-current={isActive(item) ? 'page' : undefined}
+                        style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.1em' }}
                     >
-                        <span className="bottomNavIcon" aria-hidden>{item.icon}</span>
                         <span className="bottomNavLabel">{item.label}</span>
                     </Link>
                 ) : (
@@ -40,9 +39,8 @@ export function BottomNav() {
                         key={item.path}
                         className="bottomNavItem bottomNavItemDisabled"
                         aria-disabled="true"
-                        title="Coming soon"
+                        style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', letterSpacing: '0.1em', opacity: 0.3 }}
                     >
-                        <span className="bottomNavIcon" aria-hidden>{item.icon}</span>
                         <span className="bottomNavLabel">{item.label}</span>
                     </span>
                 ),

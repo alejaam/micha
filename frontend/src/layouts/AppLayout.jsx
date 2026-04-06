@@ -18,17 +18,10 @@ export function AppLayout() {
     }
 
     return (
-        <div className="page">
-            <AppHeader
-                health={health}
-                householdId={householdId}
-                households={households}
-                onHouseholdChange={setHouseholdId}
-                onReload={handleReload}
-                onLogout={logout}
-                isLoading={loadingHouseholds}
-            />
-            <Outlet />
+        <div className="page" style={{ paddingTop: 'env(safe-area-inset-top, 24px)' }}>
+            <main style={{ minHeight: '100dvh' }}>
+                <Outlet />
+            </main>
             <BottomNav />
         </div>
     )

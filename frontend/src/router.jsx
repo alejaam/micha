@@ -7,11 +7,13 @@ import { useHouseholds } from './hooks/useHouseholds'
 import { AppLayout } from './layouts/AppLayout'
 import { AuthLayout } from './layouts/AuthLayout'
 import { DashboardPage } from './pages/DashboardPage'
+import { MembersPage } from './pages/MembersPage'
+import { SettingsPage } from './pages/SettingsPage'
 import { LoginPage } from './pages/LoginPage'
-import { OnboardingCardsPage } from './pages/OnboardingCardsPage'
+import { RegisterPage } from './pages/RegisterPage'
 import { OnboardingHouseholdPage } from './pages/OnboardingHouseholdPage'
 import { OnboardingMemberPage } from './pages/OnboardingMemberPage'
-import { RegisterPage } from './pages/RegisterPage'
+import { OnboardingCardsPage } from './pages/OnboardingCardsPage'
 
 /**
  * Static router — created once at module level so React never tears down and
@@ -24,10 +26,12 @@ const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
             { index: true, element: <DashboardPage /> },
+            { path: 'members', element: <MembersPage /> },
+            { path: 'members/new', element: <OnboardingMemberPage /> },
+            { path: 'settings', element: <SettingsPage /> },
             { path: 'onboarding/household', element: <OnboardingHouseholdPage /> },
             { path: 'onboarding/member', element: <OnboardingMemberPage /> },
             { path: 'onboarding/cards', element: <OnboardingCardsPage /> },
-            { path: 'members/new', element: <OnboardingMemberPage /> },
         ],
     },
     {

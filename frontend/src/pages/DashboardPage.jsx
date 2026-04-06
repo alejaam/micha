@@ -174,9 +174,37 @@ export function DashboardPage() {
     const hasExpenses = items.length > 0
 
     return (
-        <>
+        <div className="dashboardWrapper">
             {error && <Banner type="error" onDismiss={() => setError('')}>{error}</Banner>}
             {message && <Banner type="ok" onDismiss={() => setMessage('')}>{message}</Banner>}
+
+            {/* HERO SECTION — IDENTITY & HERO METRIC */}
+            <header className="dashboardHero" style={{ marginBottom: 'var(--sp-wide)', padding: '0 var(--sp-md)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'var(--sp-tight)' }}>
+                    <div>
+                        <span className="heroContext" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                            [ HOUSEHOLD : {selectedHousehold?.name?.toUpperCase()} ]
+                        </span>
+                        <h1 className="heroTitle" style={{ fontSize: '1.2rem', fontWeight: 'var(--fw-bold)', color: 'var(--color-text-1)', letterSpacing: '-0.02em', margin: '4px 0 0 0' }}>micha.dashboard</h1>
+                    </div>
+                    
+                    <div className="heroMetadata" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                         <button 
+                            className="btn" 
+                            style={{ padding: '4px 8px', fontSize: '0.65rem', fontFamily: 'var(--font-mono)', background: 'transparent', border: '1px solid var(--color-border-soft)' }}
+                            onClick={() => loadSettlement()}
+                            disabled={loadingSettlement}
+                        >
+                            {loadingSettlement ? 'SYNCING...' : 'RELOAD_DATA'}
+                        </button>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', opacity: 0.4 }}>LIVE_STATUS: OK</span>
+                    </div>
+                </div>
+                
+                <div className="heroMetric" style={{ borderTop: '2px solid var(--color-text-1)', paddingTop: '12px' }}>
+                    <ExpenseSummary settlement={settlement} currency={activeCurrency} />
+                </div>
+            </header>
 
             {!hasExpenses && !loadingList ? (
                 /* Empty state when no expenses */
@@ -188,103 +216,89 @@ export function DashboardPage() {
                     </p>
                 </section>
             ) : (
-                <>
-                    {/* Members overview */}
-                    <MembersPanel
-                        members={members}
-                        currency={activeCurrency}
-                    />
-
-                    {/* Incomes */}
-                    <IncomesPanel
-                        members={members}
-                        settlement={settlement}
-                        currency={activeCurrency}
-                    />
-
-                    {/* Summary strip */}
-                    <section className="card dashboardSummaryCard" aria-label="This month">
-                        <h2 className="sectionTitle">
-                            <span className="sectionTitleIcon" aria-hidden style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', background: 'var(--color-text-1)', color: 'var(--color-bg)', padding: '4px' }}>M</span>
-                            This month
-                        </h2>
-                        <ExpenseSummary settlement={settlement} currency={activeCurrency} />
-                    </section>
-
-                    <section className="card" aria-label="Cards quick actions">
-                        <div className="listHeader">
-                            <h2 className="listTitle">Cards</h2>
-                        </div>
-                        <p className="text-sm text-dim mb-3">
-                            Add a new card or change your preferred card for new expenses.
-                        </p>
-                        <button
-                            type="button"
-                            className="btn"
-                            onClick={() => navigate('/onboarding/cards')}
-                        >
-                            Manage cards
-                        </button>
-                    </section>
-
-                    {/* Fixed expenses breakdown */}
-                    <FixedExpensesPanel
-                        items={items}
-                        members={members}
-                        currency={activeCurrency}
-                    />
-
-                    {/* Card expenses breakdown */}
-                    <CardExpensesPanel
-                        items={items}
-                        members={members}
-                        currency={activeCurrency}
-                    />
-
-                    {/* Settlement */}
-                    <SettlementPanel
-                        settlement={settlement}
-                        settlementYear={settlementYear}
-                        settlementMonth={settlementMonth}
-                        onSettlementYearChange={setSettlementYear}
-                        onSettlementMonthChange={setSettlementMonth}
-                        onRefresh={loadSettlement}
-                        onResetToCurrentMonth={resetToCurrentMonth}
-                        loadingSettlement={loadingSettlement}
-                        memberIndex={memberIndex}
-                        currency={activeCurrency}
-                        selectedHousehold={selectedHousehold}
-                    />
-
-                    {/* Recent expenses */}
-                    <section className="card" aria-label="Recent expenses">
-                        <div className="listHeader">
-                            <h2 className="listTitle">Recent expenses</h2>
-                            {items.length > 0 && (
-                                <span className="listCount">{items.length} total</span>
-                            )}
-                        </div>
-                        <RecentExpenses
-                            items={items}
-                            isLoading={loadingList}
-                            currency={activeCurrency}
-                            limit={8}
-                        />
-                    </section>
-
-                    {/* Full expense list with edit/delete */}
-                    {items.length > 0 && (
-                        <ExpenseList
-                            items={items}
-                            isLoading={loadingList}
-                            deletingId={deletingId}
-                            savingId={savingId}
-                            onDelete={handleDelete}
-                            onSave={handleSave}
+                <div className="dashboardGrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--sp-medium)' }}>
+                    {/* LEFT / STATUS COLUMN */}
+                    <div className="dashboardCol dashboardColStatus" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-medium)' }}>
+                        {/* Members overview */}
+                        <MembersPanel
+                            members={members}
                             currency={activeCurrency}
                         />
-                    )}
-                </>
+
+                        {/* Incomes */}
+                        <IncomesPanel
+                            members={members}
+                            settlement={settlement}
+                            currency={activeCurrency}
+                        />
+
+                        {/* Settlement */}
+                        <SettlementPanel
+                            settlement={settlement}
+                            settlementYear={settlementYear}
+                            settlementMonth={settlementMonth}
+                            onSettlementYearChange={setSettlementYear}
+                            onSettlementMonthChange={setSettlementMonth}
+                            onRefresh={loadSettlement}
+                            onResetToCurrentMonth={resetToCurrentMonth}
+                            loadingSettlement={loadingSettlement}
+                            memberIndex={memberIndex}
+                            currency={activeCurrency}
+                            selectedHousehold={selectedHousehold}
+                        />
+
+                         <section className="card" aria-label="Cards quick actions">
+                            <div className="listHeader">
+                                <h2 className="listTitle" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', textTransform: 'uppercase' }}>Config: Cards</h2>
+                            </div>
+                            <p style={{ fontSize: '0.8rem', opacity: 0.6, marginBottom: '16px', fontFamily: 'var(--font-mono)' }}>
+                                Managed payment instruments for this household.
+                            </p>
+                            <button
+                                type="button"
+                                className="btn"
+                                style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', border: '1px solid var(--color-text-1)' }}
+                                onClick={() => navigate('/onboarding/cards')}
+                            >
+                                [ MANAGE_CARDS ]
+                            </button>
+                        </section>
+                    </div>
+
+                    {/* RIGHT / ACTIVITY COLUMN */}
+                    <div className="dashboardCol dashboardColActivity" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-medium)' }}>
+                        {/* Recent expenses */}
+                        <section className="card" aria-label="Recent expenses" style={{ borderLeft: '1px solid var(--color-border)' }}>
+                            <div className="listHeader" style={{ borderBottom: '1px solid var(--color-border-soft)', paddingBottom: '12px', marginBottom: '16px' }}>
+                                <h2 className="listTitle" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', textTransform: 'uppercase' }}>Feed: Recent_Activity</h2>
+                                {items.length > 0 && (
+                                    <span className="listCount" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem' }}>{items.length}_ITEMS</span>
+                                )}
+                            </div>
+                            <RecentExpenses
+                                items={items}
+                                isLoading={loadingList}
+                                currency={activeCurrency}
+                                limit={8}
+                            />
+                        </section>
+
+                        {/* Full expense list with edit/delete */}
+                        {items.length > 0 && (
+                            <div style={{ opacity: 0.8 }}>
+                                <ExpenseList
+                                    items={items}
+                                    isLoading={loadingList}
+                                    deletingId={deletingId}
+                                    savingId={savingId}
+                                    onDelete={handleDelete}
+                                    onSave={handleSave}
+                                    currency={activeCurrency}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </div>
             )}
 
             {/* FAB + Modal */}
@@ -301,6 +315,6 @@ export function DashboardPage() {
                     householdId={householdId}
                 />
             )}
-        </>
+        </div>
     )
 }
