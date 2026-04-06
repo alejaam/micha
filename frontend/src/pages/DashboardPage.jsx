@@ -178,10 +178,10 @@ export function DashboardPage() {
             {!hasExpenses && !loadingList ? (
                 /* Empty state when no expenses */
                 <section className="card dashboardEmptyState" aria-label="No expenses yet">
-                    <div className="emptyStateIcon" aria-hidden>💸</div>
-                    <h2 className="emptyStateTitle">No expenses yet</h2>
-                    <p className="emptyStateHint">
-                        Tap the <strong>+</strong> button below to add your first expense and start tracking!
+                    <div className="emptyStateIcon" aria-hidden style={{ fontFamily: 'var(--font-display)', fontSize: '3rem' }}>[ NO DATA ]</div>
+                    <h2 className="emptyStateTitle" style={{ marginTop: '1rem' }}>Zero expenses logged</h2>
+                    <p className="emptyStateHint" style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase', fontSize: '0.8rem' }}>
+                        Tap the + button below to add your first expense and start tracking.
                     </p>
                 </section>
             ) : (
@@ -196,7 +196,7 @@ export function DashboardPage() {
                     {/* Summary strip */}
                     <section className="card dashboardSummaryCard" aria-label="This month">
                         <h2 className="sectionTitle">
-                            <span className="sectionTitleIcon" aria-hidden>📊</span>
+                            <span className="sectionTitleIcon" aria-hidden style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', background: 'var(--color-text-1)', color: 'var(--color-bg)', padding: '4px' }}>M</span>
                             This month
                         </h2>
                         <ExpenseSummary settlement={settlement} currency={activeCurrency} />

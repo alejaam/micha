@@ -11,7 +11,7 @@ export function AppHeader({ health, householdId, onHouseholdChange, onReload, on
     <header className="appHeader">
       {/* Brand */}
       <div className="brand">
-        <div className="brandIcon" aria-hidden>💸</div>
+        <div className="brandIcon" aria-hidden>M</div>
         <div>
           <div className="brandName">micha</div>
           <div className="brandTagline">Household expense tracker</div>
