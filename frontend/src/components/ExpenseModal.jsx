@@ -31,6 +31,7 @@ export function ExpenseModal({
     onClose,
     onSubmit,
     isSubmitting,
+    isMutationLocked = false,
     members = [],
     isLoadingMembers = false,
     defaultPaidByMemberId = '',
@@ -163,6 +164,7 @@ export function ExpenseModal({
 
     async function handleSubmit(e) {
         e.preventDefault()
+        if (isMutationLocked) return
         const amountCents = dollarsToCents(amount)
         if (amountCents === null) return
 
@@ -388,7 +390,7 @@ export function ExpenseModal({
                     <button
                         type="submit"
                         className="btn btnPrimary btnFull"
-                        disabled={!isValid || isSubmitting || isLoadingMembers || !hasMembers}
+                        disabled={!isValid || isSubmitting || isLoadingMembers || !hasMembers || isMutationLocked}
                     >
                         {isSubmitting
                             ? <><span className="spinIcon" aria-hidden>⟳</span> Saving…</>

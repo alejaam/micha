@@ -11,7 +11,16 @@ import { BottomNav } from '../components/BottomNav'
  */
 export function AppLayout() {
     const { isAuthenticated, logout } = useAuth()
-    const { health, householdId, households, setHouseholdId, handleReload, loadingHouseholds } = useAppShell()
+    const {
+        health,
+        householdId,
+        households,
+        setHouseholdId,
+        handleReload,
+        loadingHouseholds,
+        periodStatus,
+        isMutationLocked,
+    } = useAppShell()
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />
@@ -27,6 +36,8 @@ export function AppLayout() {
                 onReload={handleReload}
                 onLogout={logout}
                 isLoading={loadingHouseholds}
+                periodStatus={periodStatus}
+                isMutationLocked={isMutationLocked}
             />
             <Outlet />
             <BottomNav />

@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import {
     createExpense,
     deleteExpense,
@@ -29,7 +30,12 @@ function isExpectedSettlementOnboardingError(err) {
 
 export function DashboardPage() {
     const { isAuthenticated, handleProtectedError } = useAuth()
-    const { householdId, selectedHousehold, loadHouseholds, setHouseholdId } = useAppShell()
+    const {
+        householdId,
+        selectedHousehold,
+        setPeriodStatus,
+        isMutationLocked,
+    } = useAppShell()
     const navigate = useNavigate()
 
     const [message, setMessage] = useState('')
@@ -83,6 +89,29 @@ export function DashboardPage() {
     const hasHouseholds = !!householdId
     const hasMembers = members.length > 0
 
+    const derivedPeriodStatus = useMemo(() => {
+        if (settlement?.is_closed === true) {
+            return 'closed'
+        }
+
+        const now = new Date()
+        const currentYear = now.getUTCFullYear()
+        const currentMonth = now.getUTCMonth() + 1
+        const isCurrentPeriod = settlementYear === currentYear && settlementMonth === currentMonth
+
+        return isCurrentPeriod ? 'open' : 'review'
+    }, [settlement, settlementYear, settlementMonth])
+
+    useEffect(() => {
+        setPeriodStatus(derivedPeriodStatus)
+    }, [derivedPeriodStatus, setPeriodStatus])
+
+    useEffect(() => {
+        if (isMutationLocked && modalOpen) {
+            setModalOpen(false)
+        }
+    }, [isMutationLocked, modalOpen])
+
     // Redirect to onboarding if needed
     if (!hasHouseholds) {
         return (
@@ -110,6 +139,11 @@ export function DashboardPage() {
 // No secondary onboarding needed because the household creator is auto-added
 
     async function handleCreate({ amountCents, description, paidByMemberId, isShared, paymentMethod, expenseType, cardId, cardName, category, totalInstallments }) {
+        if (isMutationLocked) {
+            setError('Period is under review or closed. Mutating actions are disabled.')
+            return
+        }
+
         setMessage('')
         setError('')
         setSubmittingCreate(true)
@@ -140,6 +174,11 @@ export function DashboardPage() {
     }
 
     async function handleSave({ id, amountCents, description }) {
+        if (isMutationLocked) {
+            setError('Period is under review or closed. Mutating actions are disabled.')
+            return
+        }
+
         setMessage('')
         setError('')
         setSavingId(id)
@@ -156,6 +195,11 @@ export function DashboardPage() {
     }
 
     async function handleDelete(id) {
+        if (isMutationLocked) {
+            setError('Period is under review or closed. Mutating actions are disabled.')
+            return
+        }
+
         setMessage('')
         setError('')
         setDeletingId(id)
@@ -188,113 +232,146 @@ export function DashboardPage() {
                     </p>
                 </section>
             ) : (
-                <>
-                    {/* Members overview */}
-                    <MembersPanel
-                        members={members}
-                        currency={activeCurrency}
-                    />
-
-                    {/* Incomes */}
-                    <IncomesPanel
-                        members={members}
-                        settlement={settlement}
-                        currency={activeCurrency}
-                    />
-
-                    {/* Summary strip */}
-                    <section className="card dashboardSummaryCard" aria-label="This month">
-                        <h2 className="sectionTitle">
-                            <span className="sectionTitleIcon" aria-hidden>📊</span>
-                            This month
-                        </h2>
-                        <ExpenseSummary settlement={settlement} currency={activeCurrency} />
-                    </section>
-
-                    <section className="card" aria-label="Cards quick actions">
-                        <div className="listHeader">
-                            <h2 className="listTitle">Cards</h2>
-                        </div>
-                        <p className="text-sm text-dim mb-3">
-                            Add a new card or change your preferred card for new expenses.
-                        </p>
-                        <button
-                            type="button"
-                            className="btn"
-                            onClick={() => navigate('/onboarding/cards')}
-                        >
-                            Manage cards
-                        </button>
-                    </section>
-
-                    {/* Fixed expenses breakdown */}
-                    <FixedExpensesPanel
-                        items={items}
-                        members={members}
-                        currency={activeCurrency}
-                    />
-
-                    {/* Card expenses breakdown */}
-                    <CardExpensesPanel
-                        items={items}
-                        members={members}
-                        currency={activeCurrency}
-                    />
-
-                    {/* Settlement */}
-                    <SettlementPanel
-                        settlement={settlement}
-                        settlementYear={settlementYear}
-                        settlementMonth={settlementMonth}
-                        onSettlementYearChange={setSettlementYear}
-                        onSettlementMonthChange={setSettlementMonth}
-                        onRefresh={loadSettlement}
-                        onResetToCurrentMonth={resetToCurrentMonth}
-                        loadingSettlement={loadingSettlement}
-                        memberIndex={memberIndex}
-                        currency={activeCurrency}
-                        selectedHousehold={selectedHousehold}
-                    />
-
-                    {/* Recent expenses */}
-                    <section className="card" aria-label="Recent expenses">
-                        <div className="listHeader">
-                            <h2 className="listTitle">Recent expenses</h2>
-                            {items.length > 0 && (
-                                <span className="listCount">{items.length} total</span>
-                            )}
-                        </div>
-                        <RecentExpenses
-                            items={items}
-                            isLoading={loadingList}
+                <motion.div 
+                    className="pageGrid"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.25, ease: "easeOut", staggerChildren: 0.1 }}
+                >
+                    {/* LEFT COLUMN (Desktop) / TOP (Mobile) */}
+                    <motion.div 
+                        className="dashboardCol"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                    >
+                        {/* Settlement */}
+                        <SettlementPanel
+                            settlement={settlement}
+                            settlementYear={settlementYear}
+                            settlementMonth={settlementMonth}
+                            onSettlementYearChange={setSettlementYear}
+                            onSettlementMonthChange={setSettlementMonth}
+                            onRefresh={loadSettlement}
+                            onResetToCurrentMonth={resetToCurrentMonth}
+                            loadingSettlement={loadingSettlement}
+                            memberIndex={memberIndex}
                             currency={activeCurrency}
-                            limit={8}
+                            selectedHousehold={selectedHousehold}
                         />
-                    </section>
 
-                    {/* Full expense list with edit/delete */}
-                    {items.length > 0 && (
-                        <ExpenseList
-                            items={items}
-                            isLoading={loadingList}
-                            deletingId={deletingId}
-                            savingId={savingId}
-                            onDelete={handleDelete}
-                            onSave={handleSave}
+                        {/* Summary strip */}
+                        <section className="card dashboardSummaryCard" aria-label="This month">
+                            <h2 className="sectionTitle">
+                                <span className="sectionTitleIcon" aria-hidden>📊</span>
+                                This month
+                            </h2>
+                            <ExpenseSummary settlement={settlement} currency={activeCurrency} />
+                        </section>
+
+                        {/* Members overview */}
+                        <MembersPanel
+                            members={members}
                             currency={activeCurrency}
                         />
-                    )}
-                </>
+
+                        {/* Incomes */}
+                        <IncomesPanel
+                            members={members}
+                            settlement={settlement}
+                            currency={activeCurrency}
+                        />
+
+                        <section className="card" aria-label="Cards quick actions">
+                            <div className="listHeader">
+                                <h2 className="listTitle">Cards</h2>
+                            </div>
+                            <p className="text-sm text-dim mb-3">
+                                Add a new card or change your preferred card for new expenses.
+                            </p>
+                            <button
+                                type="button"
+                                className="btn"
+                                onClick={() => navigate('/onboarding/cards')}
+                                disabled={isMutationLocked}
+                            >
+                                Manage cards
+                            </button>
+                        </section>
+                    </motion.div>
+
+                    {/* RIGHT COLUMN (Desktop) / BOTTOM (Mobile) */}
+                    <motion.div 
+                        className="dashboardCol"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2, ease: "easeOut", delay: 0.05 }}
+                    >
+                        {/* Fixed expenses breakdown */}
+                        <FixedExpensesPanel
+                            items={items}
+                            members={members}
+                            currency={activeCurrency}
+                        />
+
+                        {/* Card expenses breakdown */}
+                        <CardExpensesPanel
+                            items={items}
+                            members={members}
+                            currency={activeCurrency}
+                        />
+
+                        {/* Recent expenses */}
+                        <section className="card" aria-label="Recent expenses">
+                            <div className="listHeader">
+                                <h2 className="listTitle">Recent expenses</h2>
+                                {items.length > 0 && (
+                                    <span className="listCount">{items.length} total</span>
+                                )}
+                            </div>
+                            <RecentExpenses
+                                items={items}
+                                isLoading={loadingList}
+                                currency={activeCurrency}
+                                limit={8}
+                            />
+                        </section>
+
+                        {/* Full expense list with edit/delete */}
+                        {items.length > 0 && (
+                            <ExpenseList
+                                items={items}
+                                isLoading={loadingList}
+                                deletingId={deletingId}
+                                savingId={savingId}
+                                onDelete={handleDelete}
+                                onSave={handleSave}
+                                currency={activeCurrency}
+                                isMutationLocked={isMutationLocked}
+                            />
+                        )}
+                    </motion.div>
+                </motion.div>
             )}
 
             {/* FAB + Modal */}
-            <FAB onClick={() => setModalOpen(true)} />
+            <FAB
+                onClick={() => {
+                    if (isMutationLocked) {
+                        setError('Period is under review or closed. Mutating actions are disabled.')
+                        return
+                    }
+                    setModalOpen(true)
+                }}
+                disabled={isMutationLocked}
+            />
 
             {modalOpen && (
                 <ExpenseModal
                     onClose={() => setModalOpen(false)}
                     onSubmit={handleCreate}
                     isSubmitting={submittingCreate}
+                    isMutationLocked={isMutationLocked}
                     members={members}
                     isLoadingMembers={loadingMembers}
                     defaultPaidByMemberId={currentMember?.id ?? ''}

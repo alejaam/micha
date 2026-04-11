@@ -13,7 +13,16 @@ import { ExpenseItem } from './ExpenseItem'
  * @param {(id:string)=>void}     onDelete
  * @param {(data)=>void}          onSave
  */
-export function ExpenseList({ items, isLoading, deletingId, savingId, onDelete, onSave, currency = 'MXN' }) {
+export function ExpenseList({
+  items,
+  isLoading,
+  deletingId,
+  savingId,
+  onDelete,
+  onSave,
+  currency = 'MXN',
+  isMutationLocked = false,
+}) {
   const totalCents = useMemo(
     () => items.reduce((sum, item) => sum + item.amount_cents, 0),
     [items],
@@ -63,6 +72,7 @@ export function ExpenseList({ items, isLoading, deletingId, savingId, onDelete, 
               animIndex={index}
               isDeleting={deletingId === item.id}
               isSaving={savingId === item.id}
+              isMutationLocked={isMutationLocked}
               onDelete={onDelete}
               onSave={onSave}
               currency={currency}

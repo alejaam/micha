@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { formatCurrency } from '../utils'
 import { Tooltip } from '../ui/Tooltip'
+import { SemanticSettlementCard } from './SemanticSettlementCard'
 
 const ALL_MONTHS = [
   { value: 1, label: '01 - Jan' }, { value: 2, label: '02 - Feb' },
@@ -183,11 +185,14 @@ export function SettlementPanel({
                 const from = memberIndex[t.from_member_id] ?? t.from_member_id.slice(0, 8)
                 const to = memberIndex[t.to_member_id] ?? t.to_member_id.slice(0, 8)
                 return (
-                  <div
+                  <motion.div
                     key={`${t.from_member_id}-${t.to_member_id}-${idx}`}
                     className="adjustmentCallout"
                     role="status"
                     aria-label={`${from} owes ${to} ${formatCurrency(t.amount_cents, currency)}`}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.15, ease: "easeOut", delay: idx * 0.05 }}
                   >
                     <div className="adjustmentRow">
                       <span className="adjustmentDebtor">{from}</span>
@@ -197,7 +202,7 @@ export function SettlementPanel({
                     <span className="adjustmentAmount">
                       {formatCurrency(t.amount_cents, currency)}
                     </span>
-                  </div>
+                  </motion.div>
                 )
               })}
             </div>
@@ -207,25 +212,41 @@ export function SettlementPanel({
 
           {/* Per-member balance summary */}
           {Array.isArray(settlement.members) && settlement.members.length > 0 && (
-            <div className="settlementBalances">
-              {settlement.members.map((sm) => {
+            <div className="settlementBalances" aria-label="Member balance cards">
+              {settlement.members.map((sm, idx) => {
                 const name = memberIndex[sm.member_id] ?? sm.member_id.slice(0, 8)
                 const pct = sm.salary_weight_bps != null
                   ? (sm.salary_weight_bps / 100).toFixed(1)
                   : null
                 return (
-                  <div key={sm.member_id} className="settlementBalanceRow">
-                    <span className="settlementBalanceName">{name}</span>
-                    {pct !== null && (
-                      <span className="settlementBalancePct">{pct}%</span>
-                    )}
-                    <span className="settlementBalancePaid">
-                      paid {formatCurrency(sm.paid_cents ?? 0, currency)}
-                    </span>
-                    <span className="settlementBalanceDue">
-                      share {formatCurrency(sm.expected_share ?? 0, currency)}
-                    </span>
-                  </div>
+                  <motion.div 
+                    key={sm.member_id} 
+                    className="settlementBalanceRow"
+                    initial={{ opacity: 0, x: -5 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.15, ease: "easeOut", delay: idx * 0.05 }}
+                  >
+                    <div className="settlementBalanceRowHeader">
+                      {pct !== null && (
+                        <span className="settlementBalancePct" aria-label={`Weight ${pct}%`}>
+                          {pct}%
+                        </span>
+                      )}
+                    </div>
+                    <SemanticSettlementCard
+                      memberName={name}
+                      netBalanceCents={sm.net_balance_cents ?? 0}
+                      currency={currency}
+                    />
+                    <div className="settlementBalanceMeta" aria-label={`Paid and share details for ${name}`}>
+                      <span className="settlementBalancePaid">
+                        PAID {formatCurrency(sm.paid_cents ?? 0, currency)}
+                      </span>
+                      <span className="settlementBalanceDue">
+                        SHARE {formatCurrency(sm.expected_share ?? 0, currency)}
+                      </span>
+                    </div>
+                  </motion.div>
                 )
               })}
             </div>

@@ -13,7 +13,16 @@ import { dollarsToCents, formatCurrency, formatRelativeDate } from '../utils'
  * @param {({id,amountCents,description})=>void} onSave
  * @param {number} animIndex     - Staggered entrance delay index
  */
-export function ExpenseItem({ item, isDeleting, isSaving, onDelete, onSave, animIndex, currency = 'MXN' }) {
+export function ExpenseItem({
+  item,
+  isDeleting,
+  isSaving,
+  onDelete,
+  onSave,
+  animIndex,
+  currency = 'MXN',
+  isMutationLocked = false,
+}) {
   const [editing, setEditing]         = useState(false)
   const [draftAmount, setDraftAmount] = useState('')
   const [draftDesc, setDraftDesc]     = useState('')
@@ -68,7 +77,7 @@ export function ExpenseItem({ item, isDeleting, isSaving, onDelete, onSave, anim
                 type="button"
                 className="btn btnGhost btnSm btnIcon"
                 onClick={startEdit}
-                disabled={isDeleting}
+                disabled={isDeleting || isMutationLocked}
                 aria-label={`Edit ${item.description}`}
                 title="Edit"
               >
@@ -78,7 +87,7 @@ export function ExpenseItem({ item, isDeleting, isSaving, onDelete, onSave, anim
                 type="button"
                 className="btn btnGhostDanger btnSm btnIcon"
                 onClick={() => onDelete(item.id)}
-                disabled={isDeleting}
+                disabled={isDeleting || isMutationLocked}
                 aria-label={`Delete ${item.description}`}
                 title="Delete"
               >

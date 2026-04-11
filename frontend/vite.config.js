@@ -3,6 +3,11 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
     plugins: [react()],
+    test: {
+        globals: true,
+        environment: 'jsdom',
+        setupFiles: './src/setupTests.js',
+    },
     server: {
         port: 5173,
         proxy: {

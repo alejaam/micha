@@ -1,10 +1,21 @@
 import { Link } from 'react-router-dom'
+import { PeriodStatusRibbon } from './PeriodStatusRibbon'
 
 /**
  * AppHeader — top bar with brand identity, household selector, reload
  * action, and backend health indicator.
  */
-export function AppHeader({ health, householdId, onHouseholdChange, onReload, onLogout, isLoading, households = [] }) {
+export function AppHeader({
+  health,
+  householdId,
+  onHouseholdChange,
+  onReload,
+  onLogout,
+  isLoading,
+  households = [],
+  periodStatus = 'open',
+  isMutationLocked = false,
+}) {
   const isLive = health === 'ok'
 
   return (
@@ -45,8 +56,15 @@ export function AppHeader({ health, householdId, onHouseholdChange, onReload, on
         {householdId && (
           <Link
             to="/members/new"
-            className="btn btnGhost btnSm"
+            className={`btn btnGhost btnSm${isMutationLocked ? ' btnDisabled' : ''}`}
             aria-label="Invite a new member"
+            aria-disabled={isMutationLocked}
+            tabIndex={isMutationLocked ? -1 : 0}
+            onClick={(event) => {
+              if (isMutationLocked) {
+                event.preventDefault()
+              }
+            }}
           >
             + Member
           </Link>
@@ -79,6 +97,8 @@ export function AppHeader({ health, householdId, onHouseholdChange, onReload, on
           {isLive ? 'live' : health}
         </span>
       </div>
+
+      <PeriodStatusRibbon status={periodStatus} />
     </header>
   )
 }

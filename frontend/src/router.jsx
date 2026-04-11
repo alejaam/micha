@@ -4,6 +4,7 @@ import { getHealth } from './api'
 import { AppShellContext } from './context/AppShellContext'
 import { useAuth } from './context/AuthContext'
 import { useHouseholds } from './hooks/useHouseholds'
+import { useDashboardUxState } from './hooks/useDashboardUxState'
 import { AppLayout } from './layouts/AppLayout'
 import { AuthLayout } from './layouts/AuthLayout'
 import { DashboardPage } from './pages/DashboardPage'
@@ -64,6 +65,12 @@ function AppShell() {
         loadHouseholds,
     } = useHouseholds({ isAuthenticated, handleProtectedError })
 
+    const {
+        periodStatus,
+        setPeriodStatus,
+        isMutationLocked,
+    } = useDashboardUxState('open')
+
     const selectedHousehold = useMemo(
         () => households.find((h) => h.id === householdId) ?? null,
         [householdId, households],
@@ -82,7 +89,22 @@ function AppShell() {
         setHouseholdId,
         loadHouseholds,
         handleReload,
-    }), [health, householdId, households, loadingHouseholds, selectedHousehold, setHouseholdId, loadHouseholds, handleReload])
+        periodStatus,
+        setPeriodStatus,
+        isMutationLocked,
+    }), [
+        health,
+        householdId,
+        households,
+        loadingHouseholds,
+        selectedHousehold,
+        setHouseholdId,
+        loadHouseholds,
+        handleReload,
+        periodStatus,
+        setPeriodStatus,
+        isMutationLocked,
+    ])
 
     return (
         <AppShellContext.Provider value={shellValue}>
