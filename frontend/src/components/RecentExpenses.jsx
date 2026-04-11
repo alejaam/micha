@@ -1,5 +1,6 @@
 import { formatCurrency, formatRelativeDate } from '../utils'
 import { getCategoryIcon } from '../utils/categoryIcons'
+import { EmptyState } from '../ui/EmptyState'
 
 /**
  * RecentExpenses — shows the last N expense items in a compact read-only list.
@@ -9,7 +10,7 @@ import { getCategoryIcon } from '../utils/categoryIcons'
  * @param {string}  currency
  * @param {number}  [limit=8] - How many to show
  */
-export function RecentExpenses({ items, isLoading, currency = 'MXN', limit = 8 }) {
+export function RecentExpenses({ items, isLoading, currency = 'MXN', limit = 8, onQuickAdd }) {
     if (isLoading) {
         return (
             <ul className="expenseStack" aria-label="Loading recent expenses" aria-busy>
@@ -24,11 +25,14 @@ export function RecentExpenses({ items, isLoading, currency = 'MXN', limit = 8 }
 
     if (visible.length === 0) {
         return (
-            <div className="emptyState">
-                <div className="emptyIcon" aria-hidden>🧾</div>
-                <p className="emptyTitle">No expenses yet</p>
-                <p className="emptyHint">Tap + to add your first expense.</p>
-            </div>
+            <EmptyState
+                title="No recent expenses"
+                description="Add your first expense to unlock trends and history."
+                ctaLabel="Quick add"
+                onCta={onQuickAdd}
+                icon="[+]"
+                compact
+            />
         )
     }
 

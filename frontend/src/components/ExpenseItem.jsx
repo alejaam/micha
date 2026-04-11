@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ConsensusProgressRing } from './ConsensusProgressRing'
 import { FormField } from '../ui/FormField'
 import { dollarsToCents, formatCurrency, formatRelativeDate } from '../utils'
 
@@ -50,6 +51,9 @@ export function ExpenseItem({
   }
 
   const delayMs = Math.min(animIndex * 45, 300)
+  const totalInstallments = Number(item.total_installments) || 0
+  const currentInstallment = Number(item.current_installment) || Math.min(1, totalInstallments)
+  const hasMsi = item.expense_type === 'msi' && totalInstallments > 0
 
   return (
     <li
@@ -65,13 +69,27 @@ export function ExpenseItem({
               {formatRelativeDate(item.created_at)}
               {item.created_at && ' · '}
               {item.expense_type ? `${item.expense_type} · ` : ''}
-              {item.total_installments > 0 ? `${item.total_installments} inst. · ` : ''}
+              {hasMsi ? `MSI · ` : ''}
               <span className="expenseId">{item.id.slice(0, 8)}…</span>
             </span>
+            {hasMsi ? (
+              <span className="expenseMsiMeta" aria-label="MSI installments progress">
+                <span className="expenseMsiChip">MSI</span>
+                <span className="expenseMsiFraction">{currentInstallment}/{totalInstallments}</span>
+              </span>
+            ) : null}
           </div>
 
           <div className="expenseRight">
             <span className="expenseAmount">{formatCurrency(item.amount_cents, item.currency || currency)}</span>
+            {hasMsi ? (
+              <ConsensusProgressRing
+                approved={currentInstallment}
+                total={totalInstallments}
+                label="MSI"
+                source="derived"
+              />
+            ) : null}
             <div className="expenseActions">
               <button
                 type="button"

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { AppHeader } from '../AppHeader'
 import { PeriodStatusRibbon } from '../PeriodStatusRibbon'
+import { buildRibbonState } from '../../hooks/useDashboardUxState'
 
 describe('PeriodStatusRibbon', () => {
   it('renders review variant with accessible status text', () => {
@@ -43,5 +44,14 @@ describe('AppHeader mutation lock wiring', () => {
     const inviteLink = screen.getByRole('link', { name: /invite a new member/i })
     expect(inviteLink).toHaveAttribute('aria-disabled', 'true')
     expect(inviteLink).toHaveClass('btnDisabled')
+  })
+})
+
+describe('ribbon state derivation', () => {
+  it('maps closed state to expected content', () => {
+    expect(buildRibbonState('closed')).toMatchObject({
+      status: 'closed',
+      stateLabel: '[CLOSED]',
+    })
   })
 })

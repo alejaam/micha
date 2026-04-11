@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { formatCurrency } from '../utils'
+import { EmptyState } from '../ui/EmptyState'
 import { Tooltip } from '../ui/Tooltip'
 import { SemanticSettlementCard } from './SemanticSettlementCard'
 
@@ -253,11 +254,12 @@ export function SettlementPanel({
           )}
         </div>
       ) : (
-        <div className="emptyState">
-          <div className="emptyIcon" aria-hidden>~</div>
-          <p className="emptyTitle">No settlement data</p>
-          <p className="emptyHint">No expenses recorded for this period.</p>
-        </div>
+        <EmptyState
+          title="No settlement data"
+          description="No expenses recorded for this period."
+          icon="[~]"
+          compact
+        />
       )}
     </section>
   )

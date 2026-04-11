@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { formatCurrency } from '../utils'
+import { EmptyState } from '../ui/EmptyState'
 import { ExpenseItem } from './ExpenseItem'
 
 /**
@@ -22,6 +23,7 @@ export function ExpenseList({
   onSave,
   currency = 'MXN',
   isMutationLocked = false,
+  onQuickAdd,
 }) {
   const totalCents = useMemo(
     () => items.reduce((sum, item) => sum + item.amount_cents, 0),
@@ -55,11 +57,14 @@ export function ExpenseList({
 
       {/* ── Empty state ── */}
       {!isLoading && items.length === 0 && (
-        <div className="emptyState">
-          <div className="emptyIcon" aria-hidden>🧾</div>
-          <p className="emptyTitle">No expenses yet</p>
-          <p className="emptyHint">Add your first expense using the form.</p>
-        </div>
+        <EmptyState
+          title="No expenses yet"
+          description="Add your first expense using quick add."
+          ctaLabel="Quick add"
+          onCta={onQuickAdd}
+          icon="[+]"
+          compact
+        />
       )}
 
       {/* ── Expense rows ── */}

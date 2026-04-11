@@ -6,8 +6,12 @@ import {
     deleteExpense,
     patchExpense,
 } from '../api'
+import { BottomSheet } from '../components/BottomSheet'
 import { CardExpensesPanel } from '../components/CardExpensesPanel'
+import { DynamicChartsPanel } from '../components/DynamicChartsPanel'
+import { HistorySection } from '../components/HistorySection'
 import { ExpenseList } from '../components/ExpenseList'
+import { ExpenseForm } from '../components/ExpenseForm'
 import { ExpenseModal } from '../components/ExpenseModal'
 import { ExpenseSummary } from '../components/ExpenseSummary'
 import { FAB } from '../components/FAB'
@@ -19,9 +23,12 @@ import { SettlementPanel } from '../components/SettlementPanel'
 import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { useCurrentMember } from '../hooks/useCurrentMember'
+import { useDashboardDerivedData } from '../hooks/useDashboardDerivedData'
 import { useExpenses } from '../hooks/useExpenses'
+import { useHistoricalPeriods } from '../hooks/useHistoricalPeriods'
 import { useMembers } from '../hooks/useMembers'
 import { useSettlement } from '../hooks/useSettlement'
+import { EmptyState } from '../ui/EmptyState'
 import { Banner } from '../ui/Banner'
 
 function isExpectedSettlementOnboardingError(err) {
@@ -44,6 +51,7 @@ export function DashboardPage() {
     const [savingId, setSavingId] = useState('')
     const [deletingId, setDeletingId] = useState('')
     const [modalOpen, setModalOpen] = useState(false)
+    const [quickAddOpen, setQuickAddOpen] = useState(false)
 
     const onErrorClear = useCallback(() => setError(''), [])
     const onUnexpectedError = useCallback((err) => setError(err.message), [])
@@ -110,7 +118,46 @@ export function DashboardPage() {
         if (isMutationLocked && modalOpen) {
             setModalOpen(false)
         }
-    }, [isMutationLocked, modalOpen])
+        if (isMutationLocked && quickAddOpen) {
+            setQuickAddOpen(false)
+        }
+    }, [isMutationLocked, modalOpen, quickAddOpen])
+
+    const {
+        categoryTotals,
+        memberActualVsExpected,
+        msiProgress,
+        spendingTrend,
+    } = useDashboardDerivedData({
+        expenses: items,
+        members,
+        settlement,
+    })
+
+    const {
+        closedPeriods,
+        selectedPeriodKey,
+        setSelectedPeriodKey,
+        comparisonSeries,
+        memberBalanceTrend,
+        completedMsi,
+        selectedPeriodSnapshot,
+        isLoading: loadingHistory,
+        isProvisional,
+        provisionalReason,
+    } = useHistoricalPeriods({
+        householdId,
+        expenses: items,
+        members,
+    })
+
+    const handleOpenQuickAdd = useCallback(() => {
+        if (isMutationLocked) {
+            setError('Period is under review or closed. Mutating actions are disabled.')
+            return
+        }
+        setQuickAddOpen(true)
+    }, [isMutationLocked])
 
     // Redirect to onboarding if needed
     if (!hasHouseholds) {
@@ -224,13 +271,31 @@ export function DashboardPage() {
 
             {!hasExpenses && !loadingList ? (
                 /* Empty state when no expenses */
-                <section className="card dashboardEmptyState" aria-label="No expenses yet">
-                    <div className="emptyStateIcon" aria-hidden>💸</div>
-                    <h2 className="emptyStateTitle">No expenses yet</h2>
-                    <p className="emptyStateHint">
-                        Tap the <strong>+</strong> button below to add your first expense and start tracking!
-                    </p>
-                </section>
+                <>
+                    <section className="card dashboardEmptyState" aria-label="No expenses yet">
+                        <EmptyState
+                            title="No expenses yet"
+                            description="Use quick add to capture your first expense and unlock dashboards."
+                            ctaLabel="Quick add"
+                            onCta={handleOpenQuickAdd}
+                            icon="[+]"
+                        />
+                    </section>
+                    <HistorySection
+                        closedPeriods={closedPeriods}
+                        selectedPeriodKey={selectedPeriodKey}
+                        onSelectPeriod={setSelectedPeriodKey}
+                        comparisonSeries={comparisonSeries}
+                        memberBalanceTrend={memberBalanceTrend}
+                        completedMsi={completedMsi}
+                        selectedPeriodSnapshot={selectedPeriodSnapshot}
+                        currency={activeCurrency}
+                        isLoading={loadingHistory}
+                        isProvisional={isProvisional}
+                        provisionalReason={provisionalReason}
+                        onQuickAdd={handleOpenQuickAdd}
+                    />
+                </>
             ) : (
                 <motion.div 
                     className="pageGrid"
@@ -308,6 +373,15 @@ export function DashboardPage() {
                         transition={{ duration: 0.2, ease: "easeOut", delay: 0.05 }}
                     >
                         {/* Fixed expenses breakdown */}
+                        <DynamicChartsPanel
+                            categoryTotals={categoryTotals}
+                            memberActualVsExpected={memberActualVsExpected}
+                            msiProgress={msiProgress}
+                            spendingTrend={spendingTrend}
+                            currency={activeCurrency}
+                        />
+
+                        {/* Fixed expenses breakdown */}
                         <FixedExpensesPanel
                             items={items}
                             members={members}
@@ -334,8 +408,24 @@ export function DashboardPage() {
                                 isLoading={loadingList}
                                 currency={activeCurrency}
                                 limit={8}
+                                onQuickAdd={handleOpenQuickAdd}
                             />
                         </section>
+
+                        <HistorySection
+                            closedPeriods={closedPeriods}
+                            selectedPeriodKey={selectedPeriodKey}
+                            onSelectPeriod={setSelectedPeriodKey}
+                            comparisonSeries={comparisonSeries}
+                            memberBalanceTrend={memberBalanceTrend}
+                            completedMsi={completedMsi}
+                            selectedPeriodSnapshot={selectedPeriodSnapshot}
+                            currency={activeCurrency}
+                            isLoading={loadingHistory}
+                            isProvisional={isProvisional}
+                            provisionalReason={provisionalReason}
+                            onQuickAdd={handleOpenQuickAdd}
+                        />
 
                         {/* Full expense list with edit/delete */}
                         {items.length > 0 && (
@@ -348,6 +438,7 @@ export function DashboardPage() {
                                 onSave={handleSave}
                                 currency={activeCurrency}
                                 isMutationLocked={isMutationLocked}
+                                onQuickAdd={handleOpenQuickAdd}
                             />
                         )}
                     </motion.div>
@@ -378,6 +469,23 @@ export function DashboardPage() {
                     householdId={householdId}
                 />
             )}
+
+            <BottomSheet
+                open={quickAddOpen}
+                title="Quick add"
+                onClose={() => setQuickAddOpen(false)}
+            >
+                <ExpenseForm
+                    onSubmit={async (payload) => {
+                        await handleCreate(payload)
+                        setQuickAddOpen(false)
+                    }}
+                    isSubmitting={submittingCreate}
+                    isLoadingMembers={loadingMembers}
+                    members={members}
+                    defaultPaidByMemberId={currentMember?.id ?? ''}
+                />
+            </BottomSheet>
         </>
     )
 }

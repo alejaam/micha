@@ -1441,6 +1441,166 @@ ul {
     background: linear-gradient(135deg, var(--color-surface), var(--color-brand-50));
 }
 
+/* ─── Dynamic charts panel ───────────────────────────────────────────────────── */
+.dynamicChartsPanel {
+    display: grid;
+    gap: 16px;
+}
+
+.dynamicChartsHeader {
+    display: grid;
+    gap: 6px;
+}
+
+.dynamicChartsSubtitle {
+    margin: 0;
+    color: var(--color-text-3);
+    font-size: 0.86rem;
+}
+
+.dynamicChartsGrid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr;
+}
+
+.chartPanelCard {
+    border: 1px solid #E8E8E8;
+    border-radius: var(--radius-lg);
+    background: #FFFFFF;
+    padding: 12px;
+    display: grid;
+    gap: 10px;
+}
+
+.chartPanelLabel {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #666666;
+}
+
+.chartPanelTitle {
+    margin: 0;
+    font-size: 0.96rem;
+    letter-spacing: -0.01em;
+    color: #000000;
+}
+
+.chartCanvas {
+    width: 100%;
+    height: 220px;
+}
+
+.chartCanvasDonut {
+    height: 250px;
+}
+
+.chartLegend {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+}
+
+.chartLegendRow {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.82rem;
+}
+
+.chartLegendName {
+    color: #666666;
+}
+
+.chartLegendValue {
+    color: #000000;
+    font-family: var(--font-mono);
+}
+
+.chartSummary {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #666666;
+}
+
+.msiProgressList {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.msiProgressRow {
+    display: grid;
+    gap: 6px;
+}
+
+.msiProgressHeader {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.msiProgressName {
+    font-size: 0.84rem;
+    color: #000000;
+}
+
+.msiProgressFraction {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: #666666;
+}
+
+.msiProgressTrack {
+    width: 100%;
+    height: 8px;
+    background: #E8E8E8;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.msiProgressFill {
+    display: block;
+    height: 100%;
+    background: #0A0A0A;
+    border-radius: 8px;
+    transition: width 180ms var(--ease-out);
+}
+
+.msiProgressMeta {
+    margin: 0;
+    font-size: 0.74rem;
+    color: #666666;
+}
+
+.dynamicChartsNarrative {
+    display: grid;
+    gap: 4px;
+    border-top: 1px solid #E8E8E8;
+    padding-top: 10px;
+}
+
+.dynamicChartsNarrative p {
+    margin: 0;
+    font-size: 0.84rem;
+    color: #1A1A1A;
+}
+
+.valueSemanticSuccess {
+    color: #4A9E5C;
+}
+
+.valueSemanticWarning {
+    color: #D4A843;
+}
+
 /* ─── Onboarding ─────────────────────────────────────────────────────────────── */
 .dashboardOnboarding {
     display: grid;
@@ -1620,6 +1780,10 @@ ul {
 @media (min-width: 1040px) {
     .pageGrid {
         grid-template-columns: 340px 1fr;
+    }
+
+    .dynamicChartsGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -1834,6 +1998,261 @@ html {
     font-size: 1rem;
     font-weight: var(--fw-bold);
     color: var(--color-brand-700);
+}
+
+/* ─── EmptyState reusable ────────────────────────────────────────────────────── */
+.emptyStateBlock {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    text-align: center;
+    padding: 28px 16px;
+    border: 1px solid #E8E8E8;
+    border-radius: var(--radius-md);
+    background: #FFFFFF;
+}
+
+.emptyStateBlockCompact {
+    padding: 18px 12px;
+}
+
+.emptyStateBlockIcon {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 18px;
+    letter-spacing: 0.08em;
+    color: #666666;
+}
+
+.emptyStateBlockTitle {
+    margin: 0;
+    font-size: 1rem;
+    color: #000000;
+}
+
+.emptyStateBlockDescription {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666666;
+    max-width: 320px;
+}
+
+/* ─── History section ────────────────────────────────────────────────────────── */
+.historySection {
+    display: grid;
+    gap: 12px;
+}
+
+.historyProvisionalTag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: #D4A843;
+}
+
+.historyProvisionalNote {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #666666;
+}
+
+.historyGrid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr;
+}
+
+.historyPanel {
+    border: 1px solid #E8E8E8;
+    border-radius: var(--radius-md);
+    padding: 12px;
+    display: grid;
+    gap: 10px;
+    background: #FFFFFF;
+}
+
+.historyPanelLabel {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: #666666;
+}
+
+.historyPeriodList {
+    display: grid;
+    gap: 8px;
+}
+
+.historyPeriodButton {
+    width: 100%;
+    border: 1px solid #E8E8E8;
+    border-radius: var(--radius-sm);
+    background: #FFFFFF;
+    color: #1A1A1A;
+    padding: 8px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.84rem;
+}
+
+.historyPeriodButton.isSelected {
+    border-color: #0A0A0A;
+}
+
+.historyPeriodValue,
+.historyMsiFraction,
+.expenseMsiFraction {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: #666666;
+}
+
+.historyChartCanvas {
+    width: 100%;
+    height: 220px;
+}
+
+.historyMsiList {
+    display: grid;
+    gap: 8px;
+}
+
+.historyMsiItem {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.84rem;
+    color: #1A1A1A;
+}
+
+.historyPanelFootnote {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #666666;
+}
+
+/* ─── Bottom sheet ───────────────────────────────────────────────────────────── */
+.bottomSheetOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.38);
+    z-index: var(--z-modal);
+    display: flex;
+    align-items: flex-end;
+}
+
+.bottomSheetPanel {
+    width: 100%;
+    max-height: 88dvh;
+    overflow: auto;
+    background: #FFFFFF;
+    border-top: 1px solid #E8E8E8;
+    border-left: 1px solid #E8E8E8;
+    border-right: 1px solid #E8E8E8;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    padding: 8px 14px 18px;
+}
+
+.bottomSheetHandle {
+    display: block;
+    width: 52px;
+    height: 6px;
+    margin: 2px auto 10px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: #CCCCCC;
+    cursor: pointer;
+}
+
+.bottomSheetHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.bottomSheetTitle {
+    margin: 0;
+    font-size: 1rem;
+    color: #000000;
+}
+
+.bottomSheetBody .card {
+    border-radius: var(--radius-md);
+    border: 1px solid #E8E8E8;
+    background: #FFFFFF;
+    padding: 14px;
+}
+
+@media (min-width: 880px) {
+    .historyGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .bottomSheetPanel {
+        max-width: 620px;
+        margin: 0 auto;
+    }
+}
+
+/* ─── Consensus + MSI indicators ─────────────────────────────────────────────── */
+.consensusRing {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+}
+
+.consensusRingLabel {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: #666666;
+    text-transform: uppercase;
+}
+
+.consensusRingCanvas {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    display: grid;
+    place-items: center;
+}
+
+.consensusRingValue {
+    position: absolute;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: #0A0A0A;
+}
+
+.consensusRingMeta {
+    margin: 0;
+    font-size: 11px;
+    color: #666666;
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+}
+
+.expenseMsiMeta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.expenseMsiChip {
+    border: 1px solid #0A0A0A;
+    border-radius: var(--radius-pill);
+    padding: 1px 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #0A0A0A;
 }
 
 /* ─── CardExpensesPanel ──────────────────────────────────────────────────────── */
