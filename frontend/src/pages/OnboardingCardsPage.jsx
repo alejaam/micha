@@ -25,6 +25,7 @@ export function OnboardingCardsPage() {
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [message, setMessage] = useState('')
+    const [showForm, setShowForm] = useState(true)
 
     const hasCards = cards.length > 0
 
@@ -83,7 +84,8 @@ export function OnboardingCardsPage() {
             setBankName(MEXICAN_BANKS[0].value)
             setCardName('')
             setCutoffDay('15')
-            setMessage('Card added.')
+            setMessage('Card added successfully.')
+            setShowForm(false)
             await loadCards()
         } catch (err) {
             if (!handleProtectedError(err)) setError(err.message)
@@ -114,10 +116,29 @@ export function OnboardingCardsPage() {
             </div>
 
             {error ? <Banner type="error">{error}</Banner> : null}
-            {message ? <Banner type="ok">{message}</Banner> : null}
+            {message && !showForm ? <Banner type="ok">{message}</Banner> : null}
 
-            <form className="formStack" onSubmit={handleCreateCard}>
-                <FormField label="Bank" htmlFor="onboardingBankName">
+            {!showForm && hasCards && (
+                <div className="card mt-4 p-4 border border-dim rounded-md bg-secondary">
+                    <label className="sharedToggleLabel mb-0 flex items-center gap-2 cursor-pointer" htmlFor="addAnotherCard">
+                        <input
+                            id="addAnotherCard"
+                            type="checkbox"
+                            className="w-5 h-5 accent-primary"
+                            checked={showForm}
+                            onChange={(e) => {
+                                setShowForm(e.target.checked)
+                                if (e.target.checked) setMessage('')
+                            }}
+                        />
+                        <span className="font-medium text-primary">Add another card</span>
+                    </label>
+                </div>
+            )}
+
+            {showForm && (
+                <form className="formStack mt-4" onSubmit={handleCreateCard}>
+                    <FormField label="Bank" htmlFor="onboardingBankName">
                     <select
                         id="onboardingBankName"
                         className="input"
@@ -155,12 +176,13 @@ export function OnboardingCardsPage() {
                     />
                 </FormField>
 
-                <button type="submit" className="btn btnPrimary" disabled={!canCreate || saving}>
-                    {saving ? 'Adding...' : 'Add card'}
+                <button type="submit" className="btn btnPrimary w-full" disabled={!canCreate || saving}>
+                    {saving ? 'Adding...' : 'Save card'}
                 </button>
             </form>
+            )}
 
-            <div className="formSection mt-4">
+            <div className="formSection mt-8">
                 <h3 className="sectionTitle">Your cards</h3>
                 {loading ? (
                     <p className="text-sm text-dim">Loading cards...</p>
@@ -187,11 +209,6 @@ export function OnboardingCardsPage() {
             </div>
 
             <div className="flex gap-4 mt-4">
-                {hasCards ? (
-                    <button type="button" className="btn flex-1" onClick={handleContinue}>Continue to dashboard</button>
-                ) : (
-                    <p className="formHint">Add your first card to continue.</p>
-                )}
                 <button type="button" className="btn btnPrimary flex-1" onClick={handleContinue} disabled={!hasCards}>Continue to dashboard</button>
             </div>
         </section>
