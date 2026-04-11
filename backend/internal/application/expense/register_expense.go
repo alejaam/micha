@@ -2,8 +2,10 @@ package expenseapp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"sort"
 	"strings"
 	"time"
 
@@ -12,20 +14,31 @@ import (
 	appshared "micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/installment"
+	"micha/backend/internal/domain/member"
 	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
 )
 
+var (
+	ErrExpenseTypeNotAllowedByRole = errors.New("expense type not allowed by role")
+)
+
+const (
+	roleOwner  = "owner"
+	roleMember = "member"
+)
+
 type RegisterExpenseUseCase struct {
-	repo            outbound.ExpenseRepository
-	householdRepo   outbound.HouseholdRepository
-	memberRepo      outbound.MemberRepository
-	cardRepo        outbound.CardRepository
-	categoryRepo    outbound.CategoryRepository
-	installmentRepo outbound.InstallmentRepository
-	idGenerator     appshared.IDGenerator
-	now             func() time.Time
+	repo               outbound.ExpenseRepository
+	householdRepo      outbound.HouseholdRepository
+	memberRepo         outbound.MemberRepository
+	cardRepo           outbound.CardRepository
+	categoryRepo       outbound.CategoryRepository
+	installmentRepo    outbound.InstallmentRepository
+	idGenerator        appshared.IDGenerator
+	now                func() time.Time
+	allowOwnerOnBehalf bool
 }
 
 func NewRegisterExpenseUseCase(
@@ -37,15 +50,38 @@ func NewRegisterExpenseUseCase(
 	installmentRepo outbound.InstallmentRepository,
 	idGenerator appshared.IDGenerator,
 ) RegisterExpenseUseCase {
+	return NewRegisterExpenseUseCaseWithPolicy(
+		repo,
+		householdRepo,
+		memberRepo,
+		cardRepo,
+		categoryRepo,
+		installmentRepo,
+		idGenerator,
+		true,
+	)
+}
+
+func NewRegisterExpenseUseCaseWithPolicy(
+	repo outbound.ExpenseRepository,
+	householdRepo outbound.HouseholdRepository,
+	memberRepo outbound.MemberRepository,
+	cardRepo outbound.CardRepository,
+	categoryRepo outbound.CategoryRepository,
+	installmentRepo outbound.InstallmentRepository,
+	idGenerator appshared.IDGenerator,
+	allowOwnerOnBehalf bool,
+) RegisterExpenseUseCase {
 	return RegisterExpenseUseCase{
-		repo:            repo,
-		householdRepo:   householdRepo,
-		memberRepo:      memberRepo,
-		cardRepo:        cardRepo,
-		categoryRepo:    categoryRepo,
-		installmentRepo: installmentRepo,
-		idGenerator:     idGenerator,
-		now:             time.Now,
+		repo:               repo,
+		householdRepo:      householdRepo,
+		memberRepo:         memberRepo,
+		cardRepo:           cardRepo,
+		categoryRepo:       categoryRepo,
+		installmentRepo:    installmentRepo,
+		idGenerator:        idGenerator,
+		now:                time.Now,
+		allowOwnerOnBehalf: allowOwnerOnBehalf,
 	}
 }
 
@@ -69,9 +105,13 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", shared.ErrForbidden)
 	}
 
-	// NEW: Validate session authorization — only the member can register their own expenses,
-	// UNLESS the current user is the admin (first/creator member of the household).
-	if err := u.validateSessionAuthorization(ctx, input.HouseholdID, input.PaidByMemberID, input.CurrentUserID); err != nil {
+	actorRole, err := u.resolveSessionRole(ctx, input.HouseholdID, input.PaidByMemberID, input.CurrentUserID)
+	if err != nil {
+		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
+	}
+
+	normalizedExpenseType := normalizeExpenseType(input.ExpenseType)
+	if err := validateRoleExpenseType(actorRole, normalizedExpenseType); err != nil {
 		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
 	}
 
@@ -95,7 +135,7 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		IsShared:          input.IsShared,
 		Currency:          input.Currency,
 		PaymentMethod:     expense.PaymentMethod(input.PaymentMethod),
-		ExpenseType:       expense.ExpenseType(input.ExpenseType),
+		ExpenseType:       expense.ExpenseType(normalizedExpenseType),
 		CardID:            cardID,
 		CardName:          cardName,
 		CategoryID:        categoryID,
@@ -206,44 +246,88 @@ func (u RegisterExpenseUseCase) resolveCardDetails(ctx context.Context, input in
 	return string(c.ID()), c.CardName(), nil
 }
 
-// validateSessionAuthorization verifies that the current user is authorized to register an expense
-// for the specified member. Rules:
-// 1. A user can always register an expense for their own member (m.UserID() == currentUserID)
-// 2. A user can register expenses for other members if they are the admin (first member linked to the household creator)
-func (u RegisterExpenseUseCase) validateSessionAuthorization(ctx context.Context, householdID, paidByMemberID, currentUserID string) error {
+func (u RegisterExpenseUseCase) resolveSessionRole(ctx context.Context, householdID, paidByMemberID, currentUserID string) (string, error) {
 	if strings.TrimSpace(currentUserID) == "" {
-		return shared.ErrForbidden // No user context
+		return "", shared.ErrForbidden
 	}
 
 	// Get the member paying for the expense
 	paidByMember, err := u.memberRepo.FindByID(ctx, paidByMemberID)
 	if err != nil {
-		return err
+		return "", err
+	}
+	if paidByMember.HouseholdID() != householdID {
+		return "", shared.ErrForbidden
 	}
 
-	// Rule 1: User can register their own expenses
+	members, err := u.memberRepo.ListAllByHousehold(ctx, householdID)
+	if err != nil {
+		return "", err
+	}
+
+	ownerUserID := resolveOwnerUserID(members)
+	if ownerUserID == currentUserID {
+		if paidByMember.UserID() != currentUserID && !u.allowOwnerOnBehalf {
+			return "", shared.ErrForbidden
+		}
+		return roleOwner, nil
+	}
+
+	// Members can only register their own expenses.
 	if paidByMember.UserID() == currentUserID {
+		return roleMember, nil
+	}
+
+	return "", shared.ErrForbidden
+}
+
+func resolveOwnerUserID(members []member.Member) string {
+	linked := make([]member.Member, 0, len(members))
+	for _, m := range members {
+		if strings.TrimSpace(m.UserID()) != "" {
+			linked = append(linked, m)
+		}
+	}
+	if len(linked) == 0 {
+		return ""
+	}
+
+	sort.SliceStable(linked, func(i, j int) bool {
+		return linked[i].CreatedAt().Before(linked[j].CreatedAt())
+	})
+
+	return linked[0].UserID()
+}
+
+func normalizeExpenseType(expenseType string) string {
+	t := strings.ToLower(strings.TrimSpace(expenseType))
+	if t == "occasional" {
+		return string(expense.ExpenseTypeVariable)
+	}
+	return t
+}
+
+func validateRoleExpenseType(role, expenseType string) error {
+	if expenseType != string(expense.ExpenseTypeFixed) &&
+		expenseType != string(expense.ExpenseTypeMSI) &&
+		expenseType != string(expense.ExpenseTypeVariable) {
 		return nil
 	}
 
-	// Rule 2: User must be the admin (first member of household with a user_id)
-	members, err := u.memberRepo.ListAllByHousehold(ctx, householdID)
-	if err != nil {
-		return err
-	}
-
-	// Find the admin: first member with a non-empty user_id
-	for _, m := range members {
-		if strings.TrimSpace(m.UserID()) != "" {
-			// Found the first member with a user_id; they are the admin
-			if m.UserID() == currentUserID {
-				return nil // Current user is the admin, allowed
-			}
-			break // Stop checking; this is the admin and it's not the current user
+	switch role {
+	case roleOwner:
+		if expenseType != string(expense.ExpenseTypeFixed) {
+			return ErrExpenseTypeNotAllowedByRole
 		}
+	case roleMember:
+		if expenseType != string(expense.ExpenseTypeMSI) && expenseType != string(expense.ExpenseTypeVariable) {
+			return ErrExpenseTypeNotAllowedByRole
+		}
+	default:
+		return shared.ErrForbidden
 	}
 
-	return shared.ErrForbidden
+	return nil
 }
 
 var _ inbound.RegisterExpenseUseCase = RegisterExpenseUseCase{}

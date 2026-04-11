@@ -3,15 +3,17 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
 // Config holds all runtime configuration values.
 type Config struct {
-	HTTPPort       string
-	DatabaseURL    string
-	JWTSecret      string
-	AllowedOrigins []string
+	HTTPPort           string
+	DatabaseURL        string
+	JWTSecret          string
+	AllowedOrigins     []string
+	AllowOwnerOnBehalf bool
 }
 
 // Load reads configuration from environment variables.
@@ -33,10 +35,11 @@ func Load() (Config, error) {
 	}
 
 	return Config{
-		HTTPPort:       port,
-		DatabaseURL:    dbURL,
-		JWTSecret:      jwtSecret,
-		AllowedOrigins: parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS")),
+		HTTPPort:           port,
+		DatabaseURL:        dbURL,
+		JWTSecret:          jwtSecret,
+		AllowedOrigins:     parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS")),
+		AllowOwnerOnBehalf: parseBoolDefaultTrue(os.Getenv("ALLOW_OWNER_ON_BEHALF")),
 	}, nil
 }
 
@@ -51,4 +54,15 @@ func parseAllowedOrigins(raw string) []string {
 		origins[i] = strings.TrimSpace(origins[i])
 	}
 	return origins
+}
+
+func parseBoolDefaultTrue(raw string) bool {
+	if strings.TrimSpace(raw) == "" {
+		return true
+	}
+	v, err := strconv.ParseBool(strings.TrimSpace(raw))
+	if err != nil {
+		return true
+	}
+	return v
 }

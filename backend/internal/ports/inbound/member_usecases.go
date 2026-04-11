@@ -12,6 +12,9 @@ type RegisterMemberInput struct {
 	Name               string
 	Email              string
 	MonthlySalaryCents int64
+	// CallerMemberID is the authenticated member id in the target household.
+	// It may be empty only in bootstrap flow (first member creation).
+	CallerMemberID string
 	// UserID optionally links the new member to an authenticated user. Empty means no link.
 	UserID string
 	// CallerUserID is the authenticated user's ID — used for auto-linking when emails match.

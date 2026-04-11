@@ -72,12 +72,14 @@ func main() {
 	recurringExpenseRepo := postgres.NewRecurringExpenseRepository(pool)
 	householdRepo := postgres.NewHouseholdRepository(pool)
 	memberRepo := postgres.NewMemberRepository(pool)
+	memberInvitationRepo := postgres.NewMemberInvitationRepository(pool)
 	cardRepo := postgres.NewCardRepository(pool)
 	categoryRepo := postgres.NewCategoryRepository(pool)
 	userRepo := postgres.NewUserRepository(pool)
 	idGen := uuidGenerator{}
 
 	hasher := infraauth.NewBcryptHasher()
+	inviteSender := infraauth.NewLogInviteCodeSender()
 	signer, err := infraauth.NewJWTSigner(cfg.JWTSecret)
 	if err != nil {
 		slog.Error("failed to create JWT signer", "error", err)
@@ -93,11 +95,12 @@ func main() {
 	authDeps := httpadapter.AuthHandlerDeps{
 		Register: authapp.NewRegisterUserUseCase(userRepo, idGen, hasher),
 		Login:    authapp.NewLoginUseCase(userRepo, hasher, signer),
+		Members:  memberRepo,
 	}
 
 	// Expense use cases and handler dependencies.
 	expenseDeps := httpadapter.ExpenseHandlerDeps{
-		Register: expenseapp.NewRegisterExpenseUseCase(expenseRepo, householdRepo, memberRepo, cardRepo, categoryRepo, installmentRepo, idGen),
+		Register: expenseapp.NewRegisterExpenseUseCaseWithPolicy(expenseRepo, householdRepo, memberRepo, cardRepo, categoryRepo, installmentRepo, idGen, cfg.AllowOwnerOnBehalf),
 		Get:      expenseapp.NewGetExpenseUseCase(expenseRepo),
 		List:     expenseapp.NewListExpensesUseCase(expenseRepo),
 		Patch:    expenseapp.NewPatchExpenseUseCase(expenseRepo),
@@ -136,7 +139,7 @@ func main() {
 
 	// Member use cases and handler dependencies.
 	memberDeps := httpadapter.MemberHandlerDeps{
-		Register: memberapp.NewRegisterMemberUseCase(memberRepo, idGen),
+		Register: memberapp.NewRegisterMemberUseCaseWithInvites(memberRepo, idGen, memberInvitationRepo, inviteSender),
 		List:     memberapp.NewListMembersUseCase(memberRepo),
 		Update:   memberapp.NewUpdateMemberUseCase(memberRepo),
 		Delete:   memberapp.NewDeleteMemberUseCase(memberRepo),

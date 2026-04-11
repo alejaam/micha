@@ -225,6 +225,19 @@ func (r *mockMemberRepo) seedMember(id, householdID string) {
 	r.members[id] = m
 }
 
+func (r *mockMemberRepo) seedMemberWithUser(id, householdID, userID string, createdAt time.Time) {
+	m, _ := member.NewFromAttributes(member.Attributes{
+		ID:          member.ID(id),
+		HouseholdID: householdID,
+		Name:        "Test Member",
+		Email:       id + "@example.com",
+		UserID:      userID,
+		CreatedAt:   createdAt,
+		UpdatedAt:   createdAt,
+	})
+	r.members[id] = m
+}
+
 func (r *mockMemberRepo) FindByID(_ context.Context, id string) (member.Member, error) {
 	if r.findErr != nil {
 		return member.Member{}, r.findErr
@@ -246,8 +259,14 @@ func (r *mockMemberRepo) FindByUserIDGlobal(_ context.Context, _ string) (member
 func (r *mockMemberRepo) ListHouseholdIDsByUserID(_ context.Context, _ string) ([]string, error) {
 	return nil, nil
 }
-func (r *mockMemberRepo) ListAllByHousehold(_ context.Context, _ string) ([]member.Member, error) {
-	return nil, nil
+func (r *mockMemberRepo) ListAllByHousehold(_ context.Context, householdID string) ([]member.Member, error) {
+	res := make([]member.Member, 0, len(r.members))
+	for _, m := range r.members {
+		if m.HouseholdID() == householdID {
+			res = append(res, m)
+		}
+	}
+	return res, nil
 }
 func (r *mockMemberRepo) ListByHousehold(_ context.Context, _ string, _, _ int) ([]member.Member, error) {
 	return nil, nil

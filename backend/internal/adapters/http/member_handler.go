@@ -51,12 +51,14 @@ func (h memberHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 	// Pass caller identity so the use case can apply the auto-link rule.
 	userID, _ := UserIDFromContext(r.Context())
 	authEmail, _ := EmailFromContext(r.Context())
+	callerMemberID, _ := MemberIDFromContext(r.Context())
 
 	out, err := h.deps.Register.Execute(r.Context(), inbound.RegisterMemberInput{
 		HouseholdID:        householdID,
 		Name:               body.Name,
 		Email:              body.Email,
 		MonthlySalaryCents: body.MonthlySalaryCents,
+		CallerMemberID:     callerMemberID,
 		CallerUserID:       userID,
 		CallerEmail:        authEmail,
 	})

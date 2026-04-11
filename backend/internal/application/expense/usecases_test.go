@@ -32,12 +32,13 @@ func TestRegisterExpense_Success(t *testing.T) {
 	out, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
 		PaidByMemberID: "m-1",
+		CurrentUserID:  "user-linked",
 		AmountCents:    1500,
 		Description:    "Taxi",
 		IsShared:       true,
 		Currency:       "MXN",
 		PaymentMethod:  "cash",
-		ExpenseType:    "variable",
+		ExpenseType:    "fixed",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -62,11 +63,12 @@ func TestRegisterExpense_InvalidMoney(t *testing.T) {
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
 		PaidByMemberID: "m-1",
+		CurrentUserID:  "user-linked",
 		AmountCents:    0,
 		IsShared:       true,
 		Currency:       "MXN",
 		PaymentMethod:  "cash",
-		ExpenseType:    "variable",
+		ExpenseType:    "fixed",
 	})
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -88,6 +90,7 @@ func TestRegisterExpense_InvalidExpenseType(t *testing.T) {
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
 		PaidByMemberID: "m-1",
+		CurrentUserID:  "user-linked",
 		AmountCents:    1500,
 		Description:    "Taxi",
 		IsShared:       true,
@@ -105,7 +108,9 @@ func TestRegisterExpense_MSI_GeneratesInstallments(t *testing.T) {
 	repo := newMockRepo()
 	hhRepo := newMockHouseholdRepo("hh-1")
 	mRepo := newMockMemberRepo()
-	mRepo.seedMember("m-1", "hh-1")
+	now := time.Now()
+	mRepo.seedMemberWithUser("m-owner", "hh-1", "u-owner", now)
+	mRepo.seedMemberWithUser("m-1", "hh-1", "user-linked", now.Add(time.Minute))
 	cardRepo := newMockCardRepo()
 	catRepo := newMockCategoryRepo()
 	catRepo.seedCategory("cat-other", "hh-1", "other")
@@ -117,6 +122,7 @@ func TestRegisterExpense_MSI_GeneratesInstallments(t *testing.T) {
 	out, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:       "hh-1",
 		PaidByMemberID:    "m-1",
+		CurrentUserID:     "user-linked",
 		AmountCents:       1000,
 		Description:       "iPhone",
 		IsShared:          true,
@@ -177,6 +183,7 @@ func TestRegisterExpense_PendingMember_Rejected(t *testing.T) {
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
 		PaidByMemberID: "m-pending",
+		CurrentUserID:  "user-linked",
 		AmountCents:    1000,
 		ExpenseType:    "variable",
 	})
@@ -201,12 +208,13 @@ func TestRegisterExpense_WithCardID_UsesRegisteredCardName(t *testing.T) {
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
 		PaidByMemberID: "m-1",
+		CurrentUserID:  "user-linked",
 		AmountCents:    2200,
 		Description:    "Uber",
 		IsShared:       true,
 		Currency:       "MXN",
 		PaymentMethod:  "card",
-		ExpenseType:    "variable",
+		ExpenseType:    "fixed",
 		CardID:         "card-1",
 		CardName:       "Manual Name",
 	})
@@ -224,6 +232,95 @@ func TestRegisterExpense_WithCardID_UsesRegisteredCardName(t *testing.T) {
 	}
 	if e.CardName() != "Banamex Oro" {
 		t.Errorf("CardName = %q; want %q", e.CardName(), "Banamex Oro")
+	}
+}
+
+func TestRegisterExpense_OwnerOnlyFixed(t *testing.T) {
+	t.Parallel()
+	repo := newMockRepo()
+	hhRepo := newMockHouseholdRepo("hh-1")
+	mRepo := newMockMemberRepo()
+	now := time.Now()
+	mRepo.seedMemberWithUser("m-owner", "hh-1", "u-owner", now)
+	cardRepo := newMockCardRepo()
+	catRepo := newMockCategoryRepo()
+	catRepo.seedCategory("cat-other", "hh-1", "other")
+	instRepo := newMockInstallmentRepo()
+	uc := expenseapp.NewRegisterExpenseUseCaseWithPolicy(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"), true)
+
+	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
+		HouseholdID:    "hh-1",
+		PaidByMemberID: "m-owner",
+		CurrentUserID:  "u-owner",
+		AmountCents:    1200,
+		Description:    "test",
+		IsShared:       true,
+		Currency:       "MXN",
+		PaymentMethod:  "cash",
+		ExpenseType:    "msi",
+	})
+	if !errors.Is(err, expenseapp.ErrExpenseTypeNotAllowedByRole) {
+		t.Fatalf("expected ErrExpenseTypeNotAllowedByRole, got %v", err)
+	}
+}
+
+func TestRegisterExpense_MemberCannotCreateFixed(t *testing.T) {
+	t.Parallel()
+	repo := newMockRepo()
+	hhRepo := newMockHouseholdRepo("hh-1")
+	mRepo := newMockMemberRepo()
+	now := time.Now()
+	mRepo.seedMemberWithUser("m-owner", "hh-1", "u-owner", now)
+	mRepo.seedMemberWithUser("m-member", "hh-1", "u-member", now.Add(time.Minute))
+	cardRepo := newMockCardRepo()
+	catRepo := newMockCategoryRepo()
+	catRepo.seedCategory("cat-other", "hh-1", "other")
+	instRepo := newMockInstallmentRepo()
+	uc := expenseapp.NewRegisterExpenseUseCaseWithPolicy(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"), true)
+
+	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
+		HouseholdID:    "hh-1",
+		PaidByMemberID: "m-member",
+		CurrentUserID:  "u-member",
+		AmountCents:    1200,
+		Description:    "test",
+		IsShared:       true,
+		Currency:       "MXN",
+		PaymentMethod:  "cash",
+		ExpenseType:    "fixed",
+	})
+	if !errors.Is(err, expenseapp.ErrExpenseTypeNotAllowedByRole) {
+		t.Fatalf("expected ErrExpenseTypeNotAllowedByRole, got %v", err)
+	}
+}
+
+func TestRegisterExpense_OwnerOnBehalfControlledByFlag(t *testing.T) {
+	t.Parallel()
+	repo := newMockRepo()
+	hhRepo := newMockHouseholdRepo("hh-1")
+	mRepo := newMockMemberRepo()
+	now := time.Now()
+	mRepo.seedMemberWithUser("m-owner", "hh-1", "u-owner", now)
+	mRepo.seedMemberWithUser("m-member", "hh-1", "u-member", now.Add(time.Minute))
+	cardRepo := newMockCardRepo()
+	catRepo := newMockCategoryRepo()
+	catRepo.seedCategory("cat-other", "hh-1", "other")
+	instRepo := newMockInstallmentRepo()
+	uc := expenseapp.NewRegisterExpenseUseCaseWithPolicy(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"), false)
+
+	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
+		HouseholdID:    "hh-1",
+		PaidByMemberID: "m-member",
+		CurrentUserID:  "u-owner",
+		AmountCents:    1200,
+		Description:    "test",
+		IsShared:       true,
+		Currency:       "MXN",
+		PaymentMethod:  "cash",
+		ExpenseType:    "fixed",
+	})
+	if !errors.Is(err, shared.ErrForbidden) {
+		t.Fatalf("expected shared.ErrForbidden, got %v", err)
 	}
 }
 
