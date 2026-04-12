@@ -96,10 +96,15 @@ func (h authHandler) handleMe(w http.ResponseWriter, r *http.Request) {
 				if roleErr != nil {
 					continue
 				}
+				selectableMembers, membersErr := selectableMembersForSession(r.Context(), h.deps.Members, hhID, userID, role)
+				if membersErr != nil {
+					continue
+				}
 				roles = append(roles, map[string]any{
-					"household_id": hhID,
-					"role":         role,
-					"permissions":  permissionsByRole(role),
+					"household_id":       hhID,
+					"role":               role,
+					"permissions":        permissionsByRole(role),
+					"selectable_members": selectableMembers,
 				})
 			}
 
@@ -159,6 +164,37 @@ func resolveOwnerUserIDForSession(members []member.Member) string {
 	})
 
 	return linked[0].UserID()
+}
+
+func selectableMembersForSession(ctx context.Context, repo outbound.MemberRepository, householdID, userID, role string) ([]map[string]any, error) {
+	toJSON := func(items []member.Member) []map[string]any {
+		result := make([]map[string]any, 0, len(items))
+		for _, item := range items {
+			attrs := item.Attributes()
+			result = append(result, map[string]any{
+				"id":         string(attrs.ID),
+				"name":       attrs.Name,
+				"email":      attrs.Email,
+				"user_id":    attrs.UserID,
+				"is_pending": item.IsPending(),
+			})
+		}
+		return result
+	}
+
+	if role == "owner" {
+		members, err := repo.ListAllByHousehold(ctx, householdID)
+		if err != nil {
+			return nil, err
+		}
+		return toJSON(members), nil
+	}
+
+	memberRecord, err := repo.FindByUserID(ctx, householdID, userID)
+	if err != nil {
+		return nil, err
+	}
+	return toJSON([]member.Member{memberRecord}), nil
 }
 
 func permissionsByRole(role string) []string {

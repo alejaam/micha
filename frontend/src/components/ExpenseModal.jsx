@@ -55,10 +55,25 @@ export function ExpenseModal({
     const [cards, setCards] = useState([])
     const [loadingCards, setLoadingCards] = useState(false)
 
-    const eligibleMembers = useMemo(
-        () => members.filter((member) => member.user_id && String(member.user_id).trim() !== ''),
-        [members],
-    )
+    const isCurrentUserOwner = useMemo(() => {
+        if (!defaultPaidByMemberId) return false
+
+        const linkedMembers = members
+            .filter((member) => member.user_id && String(member.user_id).trim() !== '')
+            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+        if (linkedMembers.length === 0) return false
+
+        return linkedMembers[0].id === defaultPaidByMemberId
+    }, [members, defaultPaidByMemberId])
+
+    const eligibleMembers = useMemo(() => {
+        if (isCurrentUserOwner) {
+            return members
+        }
+
+        return members.filter((member) => member.id === defaultPaidByMemberId)
+    }, [members, isCurrentUserOwner, defaultPaidByMemberId])
 
     useEffect(() => {
         if (!householdId) return
@@ -238,8 +253,11 @@ export function ExpenseModal({
                     {isCurrentMemberSelected && (
                         <p className="formHint">Defaults to you — your linked member.</p>
                     )}
+                    {isCurrentUserOwner && hasMembers && (
+                        <p className="formHint">As household owner, you can register expenses on behalf of other members.</p>
+                    )}
                     {!isLoadingMembers && !hasMembers && (
-                        <p className="formHint formHintError">Pending members cannot register expenses. Link your account to a member first.</p>
+                        <p className="formHint formHintError">Link your account to a member first to register expenses.</p>
                     )}
                 </FormField>
 
