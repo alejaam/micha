@@ -1,10 +1,25 @@
-.vscode/launch.json
-backend/cmd/api/__debug_*
+# VSCode
+.vscode/
+
+# Environment
+.env
+
+# Backend (Go)
+backend/bin/
 backend/api
-.github/copilot-instructions.md
+backend/coverage.out
+backend/cmd/api/__debug_*
+
+# Frontend (Node/React)
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
-.env
+frontend/coverage/
+
+# Tools
+.golangci-lint/
+
+# Project specifics
+.github/copilot-instructions.md
 .github/instructions
 .github/instructions/go.instructions.md

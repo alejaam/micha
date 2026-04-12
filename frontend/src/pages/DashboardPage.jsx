@@ -58,7 +58,7 @@ export function DashboardPage() {
     const onErrorClear = useCallback(() => setError(''), [])
     const onUnexpectedError = useCallback((err) => setError(err.message), [])
 
-    const { members, loadingMembers, loadMembers } = useMembers({
+    const { members, loadingMembers } = useMembers({
         isAuthenticated,
         householdId,
         handleProtectedError,
@@ -97,7 +97,6 @@ export function DashboardPage() {
 
     const activeCurrency = selectedHousehold?.currency || 'MXN'
     const hasHouseholds = !!householdId
-    const hasMembers = members.length > 0
 
     const derivedPeriodStatus = useMemo(() => {
         if (settlement?.is_closed === true) {
@@ -126,7 +125,6 @@ export function DashboardPage() {
     }, [isMutationLocked, modalOpen, quickAddOpen])
 
     const {
-        totalSpentCents,
         fixedTotalCents,
         categoryTotals,
         memberActualVsExpected,

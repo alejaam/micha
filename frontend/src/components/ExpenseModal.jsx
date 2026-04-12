@@ -109,6 +109,7 @@ export function ExpenseModal({
                 if (!cancelled) setLoadingCategories(false)
             })
         return () => { cancelled = true }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [householdId])
 
     useEffect(() => {
@@ -138,6 +139,7 @@ export function ExpenseModal({
         return () => {
             cancelled = true
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [householdId])
 
     useEffect(() => {

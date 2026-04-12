@@ -181,7 +181,6 @@ export function useHistoricalPeriods({
       setProvisionalReason('')
       for (const period of closedPeriods) {
         if (cancelled) return
-        // eslint-disable-next-line no-await-in-loop
         await ensurePeriodSnapshot(period)
       }
       if (!cancelled) setIsLoading(false)
@@ -230,10 +229,12 @@ export function useHistoricalPeriods({
       }
       return row
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheVersion, closedPeriods])
 
   const selectedPeriodSnapshot = useMemo(
     () => (selectedPeriod ? settlementCacheRef.current.get(selectedPeriod.key) ?? null : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [cacheVersion, selectedPeriod],
   )
 

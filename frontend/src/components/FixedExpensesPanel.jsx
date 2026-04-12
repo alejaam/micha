@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
 import { formatCurrency } from '../utils'
 
 const FALLBACK_LABELS = {
@@ -43,39 +43,38 @@ export function FixedExpensesPanel({ items = [], recurringItems = [], members = 
         return [...fixedExpenses, ...agnosticTemplates]
     }, [items, recurringItems])
 
-    const resolveConcept = (item) => {
+    const resolveConcept = useCallback((item) => {
         const description = String(item.description ?? '').trim()
         if (description) return description
-
         const key = item.category || item.category_id || 'other'
         return categoryLabels[key] ?? FALLBACK_LABELS[key] ?? 'Other'
+    }, [categoryLabels])
+
+// Group by concept, accumulating totals per member.
+const grouped = useMemo(() => {
+    const map = {}
+
+    const addAgnosticSplit = (target, amountCents) => {
+        if (members.length === 0) return
+        const base = Math.floor(amountCents / members.length)
+        const remainder = amountCents % members.length
+        members.forEach((member, index) => {
+            const extra = index < remainder ? 1 : 0
+            target[member.id] = (target[member.id] ?? 0) + base + extra
+        })
     }
 
-    // Group by concept, accumulating totals per member.
-    const grouped = useMemo(() => {
-        const map = {}
-
-        const addAgnosticSplit = (target, amountCents) => {
-            if (members.length === 0) return
-            const base = Math.floor(amountCents / members.length)
-            const remainder = amountCents % members.length
-            members.forEach((member, index) => {
-                const extra = index < remainder ? 1 : 0
-                target[member.id] = (target[member.id] ?? 0) + base + extra
-            })
-        }
-
-        for (const e of fixedItems) {
-            const concept = resolveConcept(e)
-            if (!map[concept]) map[concept] = { concept, items: [], byMember: {}, totalCents: 0 }
-            map[concept].items.push(e)
-            map[concept].totalCents += e.amount_cents
-            // Fixed expenses are always treated as household-shared in this panel:
-            // no single member is considered the payer for display distribution.
-            addAgnosticSplit(map[concept].byMember, e.amount_cents)
-        }
-        return Object.values(map)
-    }, [fixedItems, members])
+    for (const e of fixedItems) {
+        const concept = resolveConcept(e)
+        if (!map[concept]) map[concept] = { concept, items: [], byMember: {}, totalCents: 0 }
+        map[concept].items.push(e)
+        map[concept].totalCents += e.amount_cents
+        // Fixed expenses are always treated as household-shared in this panel:
+        // no single member is considered the payer for display distribution.
+        addAgnosticSplit(map[concept].byMember, e.amount_cents)
+    }
+    return Object.values(map)
+}, [fixedItems, members, resolveConcept])
 
     // Total per member across all fixed
     const totalByMember = useMemo(() => {
@@ -106,7 +105,7 @@ export function FixedExpensesPanel({ items = [], recurringItems = [], members = 
                 </h2>
                 <div className="emptyState">
                     <p className="emptyTitle">No fixed expenses yet</p>
-                    <p className="emptyHint">Mark expenses as "Fixed" when adding them.</p>
+                    <p className="emptyHint">Mark expenses as &quot;Fixed&quot; when adding them.</p>
                 </div>
             </section>
         )
