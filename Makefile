@@ -21,7 +21,7 @@ backend-test:
 backend-lint:
 	@echo "==> Running Backend Linter (golangci-lint)..."
 	@if command -v golangci-lint >/dev/null; then \
-		cd backend && golangci-lint run ./... || (echo "Linter failed. If you see 'unsupported version: 2', please update golangci-lint to v1.61.0+ (brew upgrade golangci-lint)"; exit 1); \
+		cd backend && golangci-lint run ./... || (echo "Linter failed. If you see 'unsupported version: 2', please update golangci-lint to v1.64.0+ (brew upgrade golangci-lint)"; exit 1); \
 	else \
 		echo "Skipping golangci-lint (not installed). Use 'brew install golangci-lint' or equivalent."; \
 	fi
