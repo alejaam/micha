@@ -1,7 +1,12 @@
-# SKILL: test-db — Reset & Seed de PostgreSQL para Testing
-
-Esta SKILL contiene todos los scripts para resetear, sembrar y gestionar la base de datos de **micha** en ambientes de test local. Úsala para probar diferentes flujos sin tocar staging.
-
+---
+name: "test-db"
+description: "Esta skill contiene scripts SQL para poblar la base de datos con datos de prueba. Útil para desarrollo local y pruebas de integración."
+user-invocable: true
+disable-model-invocation: true
+metadata:
+  - name: "reset.sh"
+    description: "Script bash para reset completo de la DB (migraciones + seed)"
+    author: "jalamar"
 ---
 
 ## Archivos
