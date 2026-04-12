@@ -1,11 +1,14 @@
 package httpadapter_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	httpadapter "micha/backend/internal/adapters/http"
+	"micha/backend/internal/domain/member"
 	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/domain/user"
 	"micha/backend/internal/ports/inbound"
@@ -282,6 +285,76 @@ func TestAuthHandler_Me_Success(t *testing.T) {
 	}
 	if data["email"] != "test@example.com" {
 		t.Errorf("email = %v; want test@example.com", data["email"])
+	}
+}
+
+func TestAuthHandler_Me_OwnerSessionIncludesSelectableMembers(t *testing.T) {
+	t.Parallel()
+
+	repo := newMockMemberRepo()
+	now := time.Now()
+	owner, err := member.NewFromAttributes(member.Attributes{
+		ID:          member.ID("member-owner"),
+		HouseholdID: "household-1",
+		Name:        "Owner",
+		Email:       "owner@example.com",
+		UserID:      "user-owner",
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	})
+	if err != nil {
+		t.Fatalf("owner seed: %v", err)
+	}
+	other, err := member.NewFromAttributes(member.Attributes{
+		ID:          member.ID("member-other"),
+		HouseholdID: "household-1",
+		Name:        "Other",
+		Email:       "other@example.com",
+		CreatedAt:   now.Add(time.Minute),
+		UpdatedAt:   now.Add(time.Minute),
+	})
+	if err != nil {
+		t.Fatalf("other seed: %v", err)
+	}
+	repo.Save(context.Background(), owner)
+	repo.Save(context.Background(), other)
+
+	server := httpadapter.NewServer("8080", httpadapter.ServerDependencies{
+		Auth: httpadapter.AuthHandlerDeps{
+			Register: &mockRegisterUser{},
+			Login:    &mockLogin{},
+			Members:  repo,
+		},
+		JWTValidator:   &mockTokenValidator{returnUserID: "user-owner", returnEmail: "owner@example.com"},
+		MemberRepo:     repo,
+		AllowedOrigins: []string{"*"},
+	})
+
+	req := makeJSONRequest(t, "GET", "/v1/auth/me?household_id=household-1", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d; want %d", rec.Code, http.StatusOK)
+	}
+
+	resp := parseJSONResponse(t, rec)
+	data, ok := resp["data"].(map[string]any)
+	if !ok {
+		t.Fatal("expected data object in response")
+	}
+	session, ok := data["session"].(map[string]any)
+	if !ok {
+		t.Fatal("expected session object in response")
+	}
+	selectable, ok := session["selectable_members"].([]any)
+	if !ok {
+		t.Fatal("expected selectable_members array in session")
+	}
+	if len(selectable) != 2 {
+		t.Fatalf("selectable_members len = %d; want 2", len(selectable))
 	}
 }
 
