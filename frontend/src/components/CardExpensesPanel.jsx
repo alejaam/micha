@@ -49,7 +49,7 @@ export function CardExpensesPanel({ items = [], members = [], currency = 'MXN' }
                 </h2>
                 <div className="emptyState">
                     <p className="emptyTitle">No card expenses yet</p>
-                    <p className="emptyHint">Mark expenses as paid with "Card" when adding them.</p>
+                    <p className="emptyHint">Mark expenses as paid with &quot;Card&quot; when adding them.</p>
                 </div>
             </section>
         )

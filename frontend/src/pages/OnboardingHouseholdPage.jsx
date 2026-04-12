@@ -140,7 +140,7 @@ export function OnboardingHouseholdPage() {
                 <div className="formSection mt-4">
                     <h3 className="sectionTitle">Your Profile</h3>
                     <p className="text-sm text-dim mb-2">
-                        You'll be added as the first member. Your email ({user?.email}) is linked automatically.
+                        You&apos;ll be added as the first member. Your email ({user?.email}) is linked automatically.
                     </p>
                     <FormField label="Your name" htmlFor="memName">
                         <input
