@@ -12,6 +12,7 @@ import (
 var (
 	ErrInvalidHouseholdID        = errors.New("invalid household id")
 	ErrInvalidPaidByMemberID     = errors.New("invalid paid by member id")
+	ErrAgnosticRequiresFixedType = errors.New("agnostic recurring expense must be fixed")
 	ErrInvalidRecurrencePattern  = errors.New("invalid recurrence pattern")
 	ErrInvalidDateRange          = errors.New("end date must be after start date")
 	ErrInvalidNextGenerationDate = errors.New("next generation date cannot be before start date")
@@ -34,6 +35,7 @@ type RecurringExpenseAttributes struct {
 	ID                 ID
 	HouseholdID        string
 	PaidByMemberID     string
+	IsAgnostic         bool
 	AmountCents        int64
 	Description        string
 	CategoryID         string
@@ -53,6 +55,7 @@ type RecurringExpense struct {
 	id                 ID
 	householdID        string
 	paidByMemberID     string
+	isAgnostic         bool
 	amountCents        int64
 	description        string
 	categoryID         string
@@ -84,6 +87,7 @@ func New(
 		ID:                 id,
 		HouseholdID:        householdID,
 		PaidByMemberID:     paidByMemberID,
+		IsAgnostic:         false,
 		AmountCents:        amountCents,
 		Description:        description,
 		CategoryID:         categoryID,
@@ -109,7 +113,7 @@ func NewFromAttributes(attrs RecurringExpenseAttributes) (RecurringExpense, erro
 	}
 
 	paidByMemberID := strings.TrimSpace(attrs.PaidByMemberID)
-	if paidByMemberID == "" {
+	if !attrs.IsAgnostic && paidByMemberID == "" {
 		return RecurringExpense{}, ErrInvalidPaidByMemberID
 	}
 
@@ -125,6 +129,9 @@ func NewFromAttributes(attrs RecurringExpenseAttributes) (RecurringExpense, erro
 		attrs.ExpenseType != expense.ExpenseTypeVariable &&
 		attrs.ExpenseType != expense.ExpenseTypeMSI {
 		return RecurringExpense{}, expense.ErrInvalidExpenseType
+	}
+	if attrs.IsAgnostic && attrs.ExpenseType != expense.ExpenseTypeFixed {
+		return RecurringExpense{}, ErrAgnosticRequiresFixedType
 	}
 
 	// Validate date range
@@ -146,6 +153,7 @@ func NewFromAttributes(attrs RecurringExpenseAttributes) (RecurringExpense, erro
 		id:                 attrs.ID,
 		householdID:        attrs.HouseholdID,
 		paidByMemberID:     paidByMemberID,
+		isAgnostic:         attrs.IsAgnostic,
 		amountCents:        attrs.AmountCents,
 		description:        attrs.Description,
 		categoryID:         strings.TrimSpace(attrs.CategoryID),
@@ -235,6 +243,7 @@ func (r RecurringExpense) Attributes() RecurringExpenseAttributes {
 		ID:                 r.id,
 		HouseholdID:        r.householdID,
 		PaidByMemberID:     r.paidByMemberID,
+		IsAgnostic:         r.isAgnostic,
 		AmountCents:        r.amountCents,
 		Description:        r.description,
 		CategoryID:         r.categoryID,
@@ -253,6 +262,7 @@ func (r RecurringExpense) Attributes() RecurringExpenseAttributes {
 func (r RecurringExpense) ID() ID                               { return r.id }
 func (r RecurringExpense) HouseholdID() string                  { return r.householdID }
 func (r RecurringExpense) PaidByMemberID() string               { return r.paidByMemberID }
+func (r RecurringExpense) IsAgnostic() bool                     { return r.isAgnostic }
 func (r RecurringExpense) AmountCents() int64                   { return r.amountCents }
 func (r RecurringExpense) Description() string                  { return r.description }
 func (r RecurringExpense) CategoryID() string                   { return r.categoryID }

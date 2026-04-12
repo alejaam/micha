@@ -38,6 +38,7 @@ vi.mock('recharts', () => ({
 const mockCreateExpense = vi.fn()
 const mockDeleteExpense = vi.fn()
 const mockPatchExpense = vi.fn()
+const mockListRecurringExpenses = vi.fn()
 
 vi.mock('../../api', async () => {
   const actual = await vi.importActual('../../api')
@@ -46,6 +47,7 @@ vi.mock('../../api', async () => {
     createExpense: (...args) => mockCreateExpense(...args),
     deleteExpense: (...args) => mockDeleteExpense(...args),
     patchExpense: (...args) => mockPatchExpense(...args),
+    listRecurringExpenses: (...args) => mockListRecurringExpenses(...args),
   }
 })
 
@@ -202,6 +204,7 @@ describe('DashboardPage integration', () => {
     mockCreateExpense.mockResolvedValue(undefined)
     mockDeleteExpense.mockResolvedValue(undefined)
     mockPatchExpense.mockResolvedValue(undefined)
+    mockListRecurringExpenses.mockResolvedValue([])
   })
 
   it('renders composed dashboard sections and chart summaries when data exists', () => {

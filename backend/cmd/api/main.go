@@ -161,7 +161,7 @@ func main() {
 		Member:           memberDeps,
 		Card:             cardDeps,
 		Settlement: httpadapter.SettlementHandlerDeps{
-			Calculate: settlementapp.NewCalculateSettlementUseCase(householdRepo, memberRepo, expenseRepo, installmentRepo),
+			Calculate: settlementapp.NewCalculateSettlementUseCase(householdRepo, memberRepo, expenseRepo, installmentRepo, recurringExpenseRepo),
 		},
 		Category:       categoryDeps,
 		SplitConfig:    splitConfigDeps,

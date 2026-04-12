@@ -34,9 +34,16 @@ func newRecurringExpenseHandler(deps RecurringExpenseHandlerDeps) recurringExpen
 
 // handleCreate handles POST /v1/recurring-expenses.
 func (h recurringExpenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
+	currentUserID, ok := UserIDFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing authentication")
+		return
+	}
+
 	var body struct {
 		HouseholdID       string  `json:"household_id"`
 		PaidByMemberID    string  `json:"paid_by_member_id"`
+		IsAgnostic        bool    `json:"is_agnostic"`
 		AmountCents       int64   `json:"amount_cents"`
 		Description       string  `json:"description"`
 		CategoryID        string  `json:"category_id"`
@@ -66,8 +73,10 @@ func (h recurringExpenseHandler) handleCreate(w http.ResponseWriter, r *http.Req
 	}
 
 	input := inbound.CreateRecurringExpenseInput{
+		CurrentUserID:     currentUserID,
 		HouseholdID:       body.HouseholdID,
 		PaidByMemberID:    body.PaidByMemberID,
+		IsAgnostic:        body.IsAgnostic,
 		AmountCents:       body.AmountCents,
 		Description:       body.Description,
 		CategoryID:        body.CategoryID,
@@ -225,6 +234,7 @@ func recurringExpenseJSON(re recurringexpense.RecurringExpense) map[string]any {
 		"id":                   string(attrs.ID),
 		"household_id":         attrs.HouseholdID,
 		"paid_by_member_id":    attrs.PaidByMemberID,
+		"is_agnostic":          attrs.IsAgnostic,
 		"amount_cents":         attrs.AmountCents,
 		"description":          attrs.Description,
 		"category_id":          attrs.CategoryID,
@@ -266,6 +276,8 @@ func writeRecurringExpenseError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, "INVALID_HOUSEHOLD_ID", "household_id is required")
 	case errors.Is(err, recurringexpense.ErrInvalidPaidByMemberID):
 		writeError(w, http.StatusBadRequest, "INVALID_PAID_BY_MEMBER_ID", "paid_by_member_id is required")
+	case errors.Is(err, recurringexpense.ErrAgnosticRequiresFixedType):
+		writeError(w, http.StatusBadRequest, "INVALID_AGNOSTIC_EXPENSE_TYPE", "agnostic recurring expense must use expense_type=fixed")
 	case errors.Is(err, recurringexpense.ErrInvalidRecurrencePattern):
 		writeError(w, http.StatusBadRequest, "INVALID_RECURRENCE_PATTERN", "recurrence_pattern must be monthly, biweekly or weekly")
 	case errors.Is(err, recurringexpense.ErrInvalidDateRange):

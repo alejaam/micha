@@ -102,6 +102,35 @@ func TestCalculate_ProportionalFallsBackToEqualWhenSalaryIsZero(t *testing.T) {
 	}
 }
 
+func TestApplyAdditionalShared_RebalancesWithoutPayer(t *testing.T) {
+	t.Parallel()
+	members := []member.Member{
+		mustMember(t, "m-1", "hh-1", "Ana", 300000),
+		mustMember(t, "m-2", "hh-1", "Luis", 100000),
+	}
+	expenses := []expense.Expense{
+		mustExpense(t, expense.ExpenseAttributes{ID: "e-1", HouseholdID: "hh-1", PaidByMemberID: "m-1", AmountCents: 10000, Description: "food", IsShared: true, Currency: "MXN", PaymentMethod: expense.PaymentMethodCash, CreatedAt: time.Now()}),
+	}
+
+	res, err := settlement.Calculate(household.SettlementModeProportional, members, expenses, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Add 20,000 shared fixed agnostic amount (no payer).
+	res = settlement.ApplyAdditionalShared(res, household.SettlementModeProportional, members, 20000, 1)
+
+	// Total = 30,000. Proportional 3:1 -> expected: 22,500 / 7,500.
+	if res.TotalSharedCents != 30000 {
+		t.Fatalf("total shared = %d, want 30000", res.TotalSharedCents)
+	}
+	// No payer exists for the agnostic amount, so balances can be negative for all
+	// members and there should be no internal transfer suggestions.
+	if len(res.Transfers) != 0 {
+		t.Fatalf("transfers = %d, want 0", len(res.Transfers))
+	}
+}
+
 func mustMember(t *testing.T, id, householdID, name string, salary int64) member.Member {
 	t.Helper()
 	m, err := member.New(member.ID(id), householdID, name, name+"@mail.com", salary, time.Now())

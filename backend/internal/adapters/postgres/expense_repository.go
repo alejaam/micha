@@ -63,7 +63,7 @@ func (r ExpenseRepository) Save(ctx context.Context, e expense.Expense) error {
 	_, err := r.db.Exec(ctx,
 		`INSERT INTO expenses (id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
-		string(attrs.ID), attrs.HouseholdID, attrs.PaidByMemberID, attrs.AmountCents,
+		string(attrs.ID), attrs.HouseholdID, nullIfEmpty(attrs.PaidByMemberID), attrs.AmountCents,
 		attrs.Description, attrs.IsShared, attrs.Currency, string(attrs.PaymentMethod),
 		string(attrs.ExpenseType), nullIfEmpty(attrs.CardID), attrs.CardName, attrs.CategoryID,
 		attrs.TotalInstallments, attrs.CreatedAt, attrs.UpdatedAt,
@@ -146,7 +146,7 @@ func (r ExpenseRepository) Update(ctx context.Context, e expense.Expense) error 
 			updated_at        = $12,
 			deleted_at        = $13
 		WHERE id = $14`,
-		attrs.PaidByMemberID, attrs.AmountCents, attrs.Description,
+		nullIfEmpty(attrs.PaidByMemberID), attrs.AmountCents, attrs.Description,
 		attrs.IsShared, attrs.Currency, string(attrs.PaymentMethod),
 		string(attrs.ExpenseType), nullIfEmpty(attrs.CardID), attrs.CardName, attrs.CategoryID,
 		attrs.TotalInstallments, attrs.UpdatedAt, attrs.DeletedAt, string(attrs.ID),
@@ -180,7 +180,7 @@ func scanExpense(r row) (expense.Expense, error) {
 	var (
 		id                string
 		householdID       string
-		paidByMemberID    string
+		paidByMemberID    *string
 		amountCents       int64
 		description       string
 		isShared          bool
@@ -208,7 +208,7 @@ func scanExpense(r row) (expense.Expense, error) {
 	return expense.NewFromAttributes(expense.ExpenseAttributes{
 		ID:                expense.ID(id),
 		HouseholdID:       householdID,
-		PaidByMemberID:    paidByMemberID,
+		PaidByMemberID:    valueOrEmptyString(paidByMemberID),
 		AmountCents:       amountCents,
 		Description:       description,
 		IsShared:          isShared,
@@ -223,4 +223,11 @@ func scanExpense(r row) (expense.Expense, error) {
 		UpdatedAt:         updatedAt,
 		DeletedAt:         deletedAt,
 	})
+}
+
+func valueOrEmptyString(v *string) string {
+	if v == nil {
+		return ""
+	}
+	return *v
 }

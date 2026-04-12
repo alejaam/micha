@@ -145,6 +145,51 @@ export async function createExpense({ householdId, paidByMemberId, amountCents, 
     return parseResponse(response)
 }
 
+export async function createRecurringExpense({
+    householdId,
+    paidByMemberId = '',
+    isAgnostic = false,
+    amountCents,
+    description,
+    category = 'other',
+    expenseType = 'fixed',
+    recurrencePattern = 'monthly',
+    startDate,
+    endDate = null,
+}) {
+    const body = {
+        household_id: householdId,
+        paid_by_member_id: paidByMemberId,
+        is_agnostic: isAgnostic,
+        amount_cents: amountCents,
+        description,
+        category_id: category,
+        expense_type: expenseType,
+        recurrence_pattern: recurrencePattern,
+        start_date: startDate,
+    }
+    if (endDate) body.end_date = endDate
+
+    const response = await fetch('/v1/recurring-expenses', {
+        method: 'POST',
+        headers: buildProtectedHeaders(),
+        body: JSON.stringify(body),
+    })
+    return parseResponse(response)
+}
+
+export async function listRecurringExpenses({ householdId, limit = 100, offset = 0 }) {
+    const params = new URLSearchParams({
+        household_id: householdId,
+        limit: String(limit),
+        offset: String(offset),
+    })
+    const response = await fetch(`/v1/recurring-expenses?${params.toString()}`, {
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
 export async function getSettlement({ householdId, year, month }) {
     const params = new URLSearchParams({
         year: String(year),

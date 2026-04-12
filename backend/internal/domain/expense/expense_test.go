@@ -131,6 +131,21 @@ func TestNew_InvalidExpenseType(t *testing.T) {
 	}
 }
 
+func TestNew_FixedExpense_AllowsEmptyPaidByMember(t *testing.T) {
+	t.Parallel()
+	attrs := baseAttrs
+	attrs.ExpenseType = expense.ExpenseTypeFixed
+	attrs.PaidByMemberID = ""
+
+	e, err := expense.NewFromAttributes(attrs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if e.PaidByMemberID() != "" {
+		t.Fatalf("PaidByMemberID = %q, want empty", e.PaidByMemberID())
+	}
+}
+
 func TestSoftDelete(t *testing.T) {
 	t.Parallel()
 	t.Run("sets deletedAt", func(t *testing.T) {

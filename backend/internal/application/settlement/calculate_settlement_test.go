@@ -11,6 +11,7 @@ import (
 	"micha/backend/internal/domain/household"
 	"micha/backend/internal/domain/installment"
 	"micha/backend/internal/domain/member"
+	"micha/backend/internal/domain/recurringexpense"
 	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
 )
@@ -21,7 +22,8 @@ func TestCalculateSettlementUseCase_Execute_Success(t *testing.T) {
 	mm := newMemberMock(t)
 	ee := newExpenseMock(t)
 	ii := &installmentMock{}
-	uc := settlementapp.NewCalculateSettlementUseCase(hh, mm, ee, ii)
+	rr := &recurringExpenseMock{}
+	uc := settlementapp.NewCalculateSettlementUseCase(hh, mm, ee, ii, rr)
 
 	out, err := uc.Execute(context.Background(), inbound.CalculateSettlementInput{
 		HouseholdID: "hh-1",
@@ -47,7 +49,8 @@ func TestCalculateSettlementUseCase_Execute_HouseholdNotFound(t *testing.T) {
 	mm := newMemberMock(t)
 	ee := newExpenseMock(t)
 	ii := &installmentMock{}
-	uc := settlementapp.NewCalculateSettlementUseCase(hh, mm, ee, ii)
+	rr := &recurringExpenseMock{}
+	uc := settlementapp.NewCalculateSettlementUseCase(hh, mm, ee, ii, rr)
 
 	_, err := uc.Execute(context.Background(), inbound.CalculateSettlementInput{
 		HouseholdID: "missing",
@@ -65,7 +68,8 @@ func TestCalculateSettlementUseCase_Execute_InvalidMonth(t *testing.T) {
 	mm := newMemberMock(t)
 	ee := newExpenseMock(t)
 	ii := &installmentMock{}
-	uc := settlementapp.NewCalculateSettlementUseCase(hh, mm, ee, ii)
+	rr := &recurringExpenseMock{}
+	uc := settlementapp.NewCalculateSettlementUseCase(hh, mm, ee, ii, rr)
 
 	_, err := uc.Execute(context.Background(), inbound.CalculateSettlementInput{
 		HouseholdID: "hh-1",
@@ -77,10 +81,56 @@ func TestCalculateSettlementUseCase_Execute_InvalidMonth(t *testing.T) {
 	}
 }
 
+func TestCalculateSettlementUseCase_Execute_IncludesAgnosticFixedRecurring(t *testing.T) {
+	t.Parallel()
+	hh := newHouseholdMock(t)
+	mm := newMemberMock(t)
+	ee := newExpenseMock(t)
+	ii := &installmentMock{}
+
+	start := time.Date(2026, time.March, 1, 0, 0, 0, 0, time.UTC)
+	re, err := recurringexpense.NewFromAttributes(recurringexpense.RecurringExpenseAttributes{
+		ID:                 "re-1",
+		HouseholdID:        "hh-1",
+		PaidByMemberID:     "",
+		IsAgnostic:         true,
+		AmountCents:        10000,
+		Description:        "Rent",
+		CategoryID:         "cat-rent",
+		ExpenseType:        expense.ExpenseTypeFixed,
+		RecurrencePattern:  recurringexpense.RecurrencePatternMonthly,
+		StartDate:          start,
+		NextGenerationDate: start,
+		IsActive:           true,
+		CreatedAt:          start,
+		UpdatedAt:          start,
+	})
+	if err != nil {
+		t.Fatalf("recurringexpense.NewFromAttributes: %v", err)
+	}
+
+	rr := &recurringExpenseMock{items: []recurringexpense.RecurringExpense{re}}
+	uc := settlementapp.NewCalculateSettlementUseCase(hh, mm, ee, ii, rr)
+
+	out, err := uc.Execute(context.Background(), inbound.CalculateSettlementInput{
+		HouseholdID: "hh-1",
+		Year:        2026,
+		Month:       3,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// 15,000 regular shared + 10,000 agnostic fixed.
+	if out.TotalSharedCents != 25000 {
+		t.Fatalf("total shared = %d, want 25000", out.TotalSharedCents)
+	}
+}
+
 type installmentMock struct{}
 
-func (m *installmentMock) Save(context.Context, installment.Installment) error             { return nil }
-func (m *installmentMock) SaveAll(context.Context, []installment.Installment) error        { return nil }
+func (m *installmentMock) Save(context.Context, installment.Installment) error      { return nil }
+func (m *installmentMock) SaveAll(context.Context, []installment.Installment) error { return nil }
 func (m *installmentMock) ListByExpense(context.Context, string) ([]installment.Installment, error) {
 	return nil, nil
 }
@@ -88,6 +138,26 @@ func (m *installmentMock) ListByHouseholdAndPeriod(_ context.Context, _ string, 
 	return nil, nil
 }
 func (m *installmentMock) DeleteByExpense(context.Context, string) error { return nil }
+
+type recurringExpenseMock struct {
+	items []recurringexpense.RecurringExpense
+}
+
+func (m *recurringExpenseMock) Save(context.Context, recurringexpense.RecurringExpense) error {
+	return nil
+}
+func (m *recurringExpenseMock) FindByID(context.Context, string) (recurringexpense.RecurringExpense, error) {
+	return recurringexpense.RecurringExpense{}, shared.ErrNotFound
+}
+func (m *recurringExpenseMock) List(_ context.Context, _ string, _, _ int) ([]recurringexpense.RecurringExpense, error) {
+	return m.items, nil
+}
+func (m *recurringExpenseMock) ListDueForGeneration(context.Context, time.Time) ([]recurringexpense.RecurringExpense, error) {
+	return nil, nil
+}
+func (m *recurringExpenseMock) Update(context.Context, recurringexpense.RecurringExpense) error {
+	return nil
+}
 
 type householdMock struct {
 	house   household.Household

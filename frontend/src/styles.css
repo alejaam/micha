@@ -1952,6 +1952,14 @@ html {
     color: var(--color-text-2);
 }
 
+.fixedColTotal {
+    width: 100px;
+    text-align: right;
+    flex-shrink: 0;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-1);
+}
+
 .fixedColMember {
     width: 100px;
     text-align: right;

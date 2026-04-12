@@ -124,8 +124,20 @@ func NewFromAttributes(attrs ExpenseAttributes) (Expense, error) {
 		return Expense{}, ErrInvalidHouseholdID
 	}
 
+	expenseType := attrs.ExpenseType
+	if expenseType == "" {
+		expenseType = ExpenseTypeVariable
+	}
+	if expenseType != ExpenseTypeFixed && expenseType != ExpenseTypeVariable && expenseType != ExpenseTypeMSI {
+		return Expense{}, ErrInvalidExpenseType
+	}
+
 	memberID := strings.TrimSpace(attrs.PaidByMemberID)
-	if memberID == "" {
+	if expenseType == ExpenseTypeFixed {
+		// Household-level fixed expenses are owner-agnostic by design.
+		memberID = ""
+	}
+	if expenseType != ExpenseTypeFixed && memberID == "" {
 		return Expense{}, ErrInvalidPaidByMemberID
 	}
 
@@ -143,14 +155,6 @@ func NewFromAttributes(attrs ExpenseAttributes) (Expense, error) {
 	}
 	if paymentMethod != PaymentMethodCash && paymentMethod != PaymentMethodCard && paymentMethod != PaymentMethodTransfer && paymentMethod != PaymentMethodVoucher {
 		return Expense{}, ErrInvalidPaymentMethod
-	}
-
-	expenseType := attrs.ExpenseType
-	if expenseType == "" {
-		expenseType = ExpenseTypeVariable
-	}
-	if expenseType != ExpenseTypeFixed && expenseType != ExpenseTypeVariable && expenseType != ExpenseTypeMSI {
-		return Expense{}, ErrInvalidExpenseType
 	}
 
 	// Validate TotalInstallments for MSI expenses

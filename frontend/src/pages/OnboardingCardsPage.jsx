@@ -95,7 +95,7 @@ export function OnboardingCardsPage() {
     }
 
     function handleContinue() {
-        navigate('/', { replace: true })
+        navigate('/onboarding/fixed-expenses', { replace: true })
     }
 
     if (!householdId) {
@@ -110,7 +110,7 @@ export function OnboardingCardsPage() {
     return (
         <section className="card onboardingCard" aria-label="Set up your cards">
             <div className="onboardingHeader">
-                <p className="authEyebrow">Final step</p>
+                <p className="authEyebrow">Setup step</p>
                 <h2 className="authTitle">Add your cards</h2>
                 <p className="authMeta">Create at least one card so it is ready when you register your first expense.</p>
             </div>
@@ -209,7 +209,7 @@ export function OnboardingCardsPage() {
             </div>
 
             <div className="flex gap-4 mt-4">
-                <button type="button" className="btn btnPrimary flex-1" onClick={handleContinue} disabled={!hasCards}>Continue to dashboard</button>
+                <button type="button" className="btn btnPrimary flex-1" onClick={handleContinue} disabled={!hasCards}>Continue to fixed expenses</button>
             </div>
         </section>
     )

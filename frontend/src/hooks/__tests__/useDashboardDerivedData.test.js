@@ -103,4 +103,71 @@ describe('buildDashboardDerivedData', () => {
     expect(result.msiProgress[0].currentInstallment).toBeLessThanOrEqual(6)
     expect(result.msiProgress[0].progressPercent).toBeGreaterThan(0)
   })
+
+  it('calculates totalSpentCents prioritizing settlement total_shared_cents', () => {
+    const result = buildDashboardDerivedData({
+      expenses: [
+        { id: 'e-1', amount_cents: 1000, category: 'food', paid_by_member_id: 'm-1' }
+      ],
+      members: [
+        { id: 'm-1', name: 'Ana', monthly_salary_cents: 50000 }
+      ],
+      settlement: {
+        total_shared_cents: 5500, // 1000 (var) + 2000 (msi) + 2500 (fixed)
+      },
+    })
+
+    // Current implementation will return 1000 (only variables)
+    // Desired implementation should return 5500
+    expect(result.totalSpentCents).toBe(5500)
+  })
+
+  it('amortizes MSI expenses in category totals', () => {
+    const result = buildDashboardDerivedData({
+      expenses: [
+        {
+          id: 'e-msi',
+          amount_cents: 6000,
+          expense_type: 'msi',
+          total_installments: 6,
+          category: 'tech',
+          category_name: 'Tech',
+        },
+      ],
+      members: [],
+      settlement: null,
+    })
+
+    // Should contribute 1000 (6000 / 6) instead of 6000
+    expect(result.categoryTotals[0]).toMatchObject({
+      key: 'tech',
+      totalCents: 1000,
+    })
+  })
+
+  it('maps member balances directly from settlement net_balance_cents', () => {
+    const result = buildDashboardDerivedData({
+      expenses: [],
+      members: [
+        { id: 'm-1', name: 'Ana' },
+      ],
+      settlement: {
+        members: [
+          {
+            member_id: 'm-1',
+            expected_share: 5000,
+            paid_cents: 2000,
+            net_balance_cents: -3000, // Ana owes 3000
+          },
+        ],
+      },
+    })
+
+    expect(result.memberActualVsExpected[0]).toMatchObject({
+      memberId: 'm-1',
+      actualCents: 2000,
+      expectedCents: 5000,
+      deltaCents: -3000,
+    })
+  })
 })

@@ -29,13 +29,16 @@ func NewRecurringExpenseRepository(db *pgxpool.Pool) RecurringExpenseRepository 
 // Save persists a new recurring expense record.
 func (r RecurringExpenseRepository) Save(ctx context.Context, re recurringexpense.RecurringExpense) error {
 	attrs := re.Attributes()
+	paidByMemberID := any(attrs.PaidByMemberID)
+	if attrs.IsAgnostic || attrs.PaidByMemberID == "" {
+		paidByMemberID = nil
+	}
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO recurring_expenses (id, household_id, paid_by_member_id, amount_cents, description, category_id, expense_type, recurrence_pattern, start_date, end_date, next_generation_date, is_active, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
-		string(attrs.ID), attrs.HouseholdID, attrs.PaidByMemberID, attrs.AmountCents,
+		`INSERT INTO recurring_expenses (id, household_id, paid_by_member_id, is_agnostic, amount_cents, description, category_id, expense_type, recurrence_pattern, start_date, end_date, next_generation_date, is_active, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+		string(attrs.ID), attrs.HouseholdID, paidByMemberID, attrs.IsAgnostic, attrs.AmountCents,
 		attrs.Description, attrs.CategoryID, string(attrs.ExpenseType), string(attrs.RecurrencePattern),
-		attrs.StartDate, attrs.EndDate, attrs.NextGenerationDate, attrs.IsActive,
-		attrs.CreatedAt, attrs.UpdatedAt,
+		attrs.StartDate, attrs.EndDate, attrs.NextGenerationDate, attrs.IsActive, attrs.CreatedAt, attrs.UpdatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("recurring expense repository save: %w", err)
@@ -48,7 +51,7 @@ func (r RecurringExpenseRepository) Save(ctx context.Context, re recurringexpens
 // Note: soft-deleted rows are still returned so callers can inspect DeletedAt.
 func (r RecurringExpenseRepository) FindByID(ctx context.Context, id string) (recurringexpense.RecurringExpense, error) {
 	row := r.db.QueryRow(ctx,
-		`SELECT id, household_id, paid_by_member_id, amount_cents, description, category_id, expense_type, recurrence_pattern, start_date, end_date, next_generation_date, is_active, created_at, updated_at, deleted_at
+		`SELECT id, household_id, paid_by_member_id, is_agnostic, amount_cents, description, category_id, expense_type, recurrence_pattern, start_date, end_date, next_generation_date, is_active, created_at, updated_at, deleted_at
 			FROM recurring_expenses
 			WHERE id = $1`,
 		id,
@@ -68,7 +71,7 @@ func (r RecurringExpenseRepository) FindByID(ctx context.Context, id string) (re
 // List returns non-deleted recurring expenses for a household ordered by created_at DESC.
 func (r RecurringExpenseRepository) List(ctx context.Context, householdID string, limit, offset int) ([]recurringexpense.RecurringExpense, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, household_id, paid_by_member_id, amount_cents, description, category_id, expense_type, recurrence_pattern, start_date, end_date, next_generation_date, is_active, created_at, updated_at, deleted_at
+		`SELECT id, household_id, paid_by_member_id, is_agnostic, amount_cents, description, category_id, expense_type, recurrence_pattern, start_date, end_date, next_generation_date, is_active, created_at, updated_at, deleted_at
 			FROM recurring_expenses
 			WHERE household_id = $1 AND deleted_at IS NULL
 			ORDER BY created_at DESC
@@ -99,10 +102,11 @@ func (r RecurringExpenseRepository) List(ctx context.Context, householdID string
 // ListDueForGeneration returns active, non-deleted recurring expenses where next_generation_date <= asOfDate.
 func (r RecurringExpenseRepository) ListDueForGeneration(ctx context.Context, asOfDate time.Time) ([]recurringexpense.RecurringExpense, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, household_id, paid_by_member_id, amount_cents, description, category_id, expense_type, recurrence_pattern, start_date, end_date, next_generation_date, is_active, created_at, updated_at, deleted_at
+		`SELECT id, household_id, paid_by_member_id, is_agnostic, amount_cents, description, category_id, expense_type, recurrence_pattern, start_date, end_date, next_generation_date, is_active, created_at, updated_at, deleted_at
 			FROM recurring_expenses
 			WHERE deleted_at IS NULL
 				AND is_active = true
+				AND is_agnostic = false
 				AND next_generation_date <= $1
 				AND (end_date IS NULL OR end_date >= $1)
 			ORDER BY next_generation_date ASC`,
@@ -132,22 +136,27 @@ func (r RecurringExpenseRepository) ListDueForGeneration(ctx context.Context, as
 // Update persists changes to an existing recurring expense.
 func (r RecurringExpenseRepository) Update(ctx context.Context, re recurringexpense.RecurringExpense) error {
 	attrs := re.Attributes()
+	paidByMemberID := any(attrs.PaidByMemberID)
+	if attrs.IsAgnostic || attrs.PaidByMemberID == "" {
+		paidByMemberID = nil
+	}
 	tag, err := r.db.Exec(ctx,
 		`UPDATE recurring_expenses
 			SET paid_by_member_id     = $1,
-				amount_cents          = $2,
-				description           = $3,
-				category_id           = $4,
-				expense_type          = $5,
-				recurrence_pattern    = $6,
-				start_date            = $7,
-				end_date              = $8,
-				next_generation_date  = $9,
-				is_active             = $10,
-				updated_at            = $11,
-				deleted_at            = $12
-			WHERE id = $13`,
-		attrs.PaidByMemberID, attrs.AmountCents, attrs.Description,
+				is_agnostic           = $2,
+				amount_cents          = $3,
+				description           = $4,
+				category_id           = $5,
+				expense_type          = $6,
+				recurrence_pattern    = $7,
+				start_date            = $8,
+				end_date              = $9,
+				next_generation_date  = $10,
+				is_active             = $11,
+				updated_at            = $12,
+				deleted_at            = $13
+			WHERE id = $14`,
+		paidByMemberID, attrs.IsAgnostic, attrs.AmountCents, attrs.Description,
 		attrs.CategoryID, string(attrs.ExpenseType), string(attrs.RecurrencePattern),
 		attrs.StartDate, attrs.EndDate, attrs.NextGenerationDate, attrs.IsActive,
 		attrs.UpdatedAt, attrs.DeletedAt, string(attrs.ID),
@@ -174,7 +183,8 @@ func scanRecurringExpense(r recurringExpenseRow) (recurringexpense.RecurringExpe
 	var (
 		id                 string
 		householdID        string
-		paidByMemberID     string
+		paidByMemberID     *string
+		isAgnostic         bool
 		amountCents        int64
 		description        string
 		categoryID         string
@@ -189,14 +199,15 @@ func scanRecurringExpense(r recurringExpenseRow) (recurringexpense.RecurringExpe
 		deletedAt          *time.Time
 	)
 
-	if err := r.Scan(&id, &householdID, &paidByMemberID, &amountCents, &description, &categoryID, &expenseType, &recurrencePattern, &startDate, &endDate, &nextGenerationDate, &isActive, &createdAt, &updatedAt, &deletedAt); err != nil {
+	if err := r.Scan(&id, &householdID, &paidByMemberID, &isAgnostic, &amountCents, &description, &categoryID, &expenseType, &recurrencePattern, &startDate, &endDate, &nextGenerationDate, &isActive, &createdAt, &updatedAt, &deletedAt); err != nil {
 		return recurringexpense.RecurringExpense{}, err
 	}
 
 	return recurringexpense.NewFromAttributes(recurringexpense.RecurringExpenseAttributes{
 		ID:                 recurringexpense.ID(id),
 		HouseholdID:        householdID,
-		PaidByMemberID:     paidByMemberID,
+		PaidByMemberID:     valueOrEmpty(paidByMemberID),
+		IsAgnostic:         isAgnostic,
 		AmountCents:        amountCents,
 		Description:        description,
 		CategoryID:         categoryID,
@@ -210,4 +221,11 @@ func scanRecurringExpense(r recurringExpenseRow) (recurringexpense.RecurringExpe
 		UpdatedAt:          updatedAt,
 		DeletedAt:          deletedAt,
 	})
+}
+
+func valueOrEmpty(v *string) string {
+	if v == nil {
+		return ""
+	}
+	return *v
 }

@@ -20,18 +20,51 @@ function formatMonthKeyLabel(monthKey) {
   })
 }
 
-export function buildDashboardDerivedData({ expenses = [], members = [], settlement = null }) {
+export function buildDashboardDerivedData({ expenses = [], members = [], settlement = null, recurringItems = [] }) {
   const safeExpenses = Array.isArray(expenses) ? expenses : []
   const safeMembers = Array.isArray(members) ? members : []
+  const safeRecurring = Array.isArray(recurringItems) ? recurringItems : []
 
-  const totalSpentCents = safeExpenses.reduce((sum, item) => sum + (item?.amount_cents ?? 0), 0)
+  const fixedTotalCents = safeRecurring
+    .filter((item) => item?.is_active && item?.expense_type === 'fixed')
+    .reduce((sum, item) => sum + (item?.amount_cents ?? 0), 0)
+
+  const totalSpentCents = settlement?.total_shared_cents ?? (
+    safeExpenses.reduce((sum, item) => {
+      let amountToAdd = item?.amount_cents ?? 0
+      if (item?.expense_type === 'msi' && Number(item?.total_installments) > 0) {
+        amountToAdd = Math.round(amountToAdd / Number(item.total_installments))
+      }
+      return sum + amountToAdd
+    }, 0) + fixedTotalCents
+  )
 
   const categoryMap = new Map()
+  
+  // Add fixed items to category map first
+  for (const item of safeRecurring) {
+    if (!item?.is_active || item?.expense_type !== 'fixed') continue
+    const key = item?.category_slug || 'fixed'
+    const label = item?.category_name || 'Fixed'
+    const current = categoryMap.get(key)
+    categoryMap.set(key, {
+      key,
+      label,
+      totalCents: (current?.totalCents ?? 0) + (item?.amount_cents ?? 0),
+    })
+  }
+
   for (const item of safeExpenses) {
     const key = item?.category || item?.category_slug || item?.category_name || 'other'
     const label = item?.category_name || key
     const current = categoryMap.get(key)
-    const nextTotal = (current?.totalCents ?? 0) + (item?.amount_cents ?? 0)
+    
+    let amountToAdd = item?.amount_cents ?? 0
+    if (item?.expense_type === 'msi' && Number(item?.total_installments) > 0) {
+      amountToAdd = Math.round(amountToAdd / Number(item.total_installments))
+    }
+    
+    const nextTotal = (current?.totalCents ?? 0) + amountToAdd
 
     categoryMap.set(key, {
       key,
@@ -64,9 +97,9 @@ export function buildDashboardDerivedData({ expenses = [], members = [], settlem
 
   const memberActualVsExpected = safeMembers.map((member) => {
     const memberId = member.id
-    const actualCents = actualByMember.get(memberId) ?? 0
     const settlementMember = settlementMemberMap.get(memberId)
 
+    const actualCents = settlementMember?.paid_cents ?? (actualByMember.get(memberId) ?? 0)
     let expectedCents = settlementMember?.expected_share ?? null
 
     if (expectedCents == null) {
@@ -77,7 +110,7 @@ export function buildDashboardDerivedData({ expenses = [], members = [], settlem
       expectedCents = weightedExpected
     }
 
-    const deltaCents = actualCents - expectedCents
+    const deltaCents = settlementMember?.net_balance_cents ?? (actualCents - expectedCents)
 
     return {
       memberId,
@@ -126,6 +159,8 @@ export function buildDashboardDerivedData({ expenses = [], members = [], settlem
     }))
 
   return {
+    totalSpentCents,
+    fixedTotalCents,
     categoryTotals,
     memberActualVsExpected,
     msiProgress,
@@ -137,9 +172,9 @@ export function buildDashboardDerivedData({ expenses = [], members = [], settlem
  * Hook for deriving dashboard charts and summary data from raw expenses and members.
  * This acts as the UI composition layer described in the technical design.
  */
-export function useDashboardDerivedData({ expenses, members, settlement }) {
+export function useDashboardDerivedData({ expenses, members, settlement, recurringItems }) {
   return useMemo(
-    () => buildDashboardDerivedData({ expenses, members, settlement }),
-    [expenses, members, settlement],
+    () => buildDashboardDerivedData({ expenses, members, settlement, recurringItems }),
+    [expenses, members, settlement, recurringItems],
   )
 }

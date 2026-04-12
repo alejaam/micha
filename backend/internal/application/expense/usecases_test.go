@@ -48,6 +48,46 @@ func TestRegisterExpense_Success(t *testing.T) {
 	}
 }
 
+func TestRegisterExpense_FixedWithoutPaidByMember_Success(t *testing.T) {
+	t.Parallel()
+	repo := newMockRepo()
+	hhRepo := newMockHouseholdRepo("hh-1")
+	mRepo := newMockMemberRepo()
+	now := time.Now()
+	mRepo.seedMemberWithUser("m-owner", "hh-1", "u-owner", now)
+	cardRepo := newMockCardRepo()
+	catRepo := newMockCategoryRepo()
+	catRepo.seedCategory("cat-other", "hh-1", "other")
+	instRepo := newMockInstallmentRepo()
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-fixed-1"))
+
+	out, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
+		HouseholdID:    "hh-1",
+		PaidByMemberID: "",
+		CurrentUserID:  "u-owner",
+		AmountCents:    2000,
+		Description:    "Rent",
+		IsShared:       true,
+		Currency:       "MXN",
+		PaymentMethod:  "transfer",
+		ExpenseType:    "fixed",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if out.ExpenseID != "exp-fixed-1" {
+		t.Errorf("ExpenseID = %q; want %q", out.ExpenseID, "exp-fixed-1")
+	}
+
+	saved, findErr := repo.FindByID(context.Background(), "exp-fixed-1")
+	if findErr != nil {
+		t.Fatalf("find saved expense: %v", findErr)
+	}
+	if saved.PaidByMemberID() != "" {
+		t.Fatalf("PaidByMemberID = %q; want empty", saved.PaidByMemberID())
+	}
+}
+
 func TestRegisterExpense_InvalidMoney(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
@@ -235,7 +275,7 @@ func TestRegisterExpense_WithCardID_UsesRegisteredCardName(t *testing.T) {
 	}
 }
 
-func TestRegisterExpense_OwnerOnlyFixed(t *testing.T) {
+func TestRegisterExpense_OwnerCanCreateMSI(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
 	hhRepo := newMockHouseholdRepo("hh-1")
@@ -249,22 +289,23 @@ func TestRegisterExpense_OwnerOnlyFixed(t *testing.T) {
 	uc := expenseapp.NewRegisterExpenseUseCaseWithPolicy(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"), true)
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
-		HouseholdID:    "hh-1",
-		PaidByMemberID: "m-owner",
-		CurrentUserID:  "u-owner",
-		AmountCents:    1200,
-		Description:    "test",
-		IsShared:       true,
-		Currency:       "MXN",
-		PaymentMethod:  "cash",
-		ExpenseType:    "msi",
+		HouseholdID:       "hh-1",
+		PaidByMemberID:    "m-owner",
+		CurrentUserID:     "u-owner",
+		AmountCents:       1200,
+		Description:       "test",
+		IsShared:          true,
+		Currency:          "MXN",
+		PaymentMethod:     "cash",
+		ExpenseType:       "msi",
+		TotalInstallments: 3,
 	})
-	if !errors.Is(err, expenseapp.ErrExpenseTypeNotAllowedByRole) {
-		t.Fatalf("expected ErrExpenseTypeNotAllowedByRole, got %v", err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
-func TestRegisterExpense_MemberCannotCreateFixed(t *testing.T) {
+func TestRegisterExpense_MemberCanCreateFixed(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
 	hhRepo := newMockHouseholdRepo("hh-1")
@@ -289,8 +330,8 @@ func TestRegisterExpense_MemberCannotCreateFixed(t *testing.T) {
 		PaymentMethod:  "cash",
 		ExpenseType:    "fixed",
 	})
-	if !errors.Is(err, expenseapp.ErrExpenseTypeNotAllowedByRole) {
-		t.Fatalf("expected ErrExpenseTypeNotAllowedByRole, got %v", err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
@@ -317,10 +358,10 @@ func TestRegisterExpense_OwnerOnBehalfControlledByFlag(t *testing.T) {
 		IsShared:       true,
 		Currency:       "MXN",
 		PaymentMethod:  "cash",
-		ExpenseType:    "fixed",
+		ExpenseType:    "variable",
 	})
-	if !errors.Is(err, shared.ErrForbidden) {
-		t.Fatalf("expected shared.ErrForbidden, got %v", err)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
