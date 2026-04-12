@@ -9,8 +9,10 @@ import (
 
 // CreateRecurringExpenseInput contains required data to create a recurring expense.
 type CreateRecurringExpenseInput struct {
+	CurrentUserID     string
 	HouseholdID       string
 	PaidByMemberID    string
+	IsAgnostic        bool
 	AmountCents       int64
 	Description       string
 	CategoryID        string

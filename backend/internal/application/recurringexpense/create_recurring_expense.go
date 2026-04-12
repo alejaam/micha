@@ -48,13 +48,23 @@ func (u CreateRecurringExpenseUseCase) Execute(ctx context.Context, input inboun
 		return inbound.CreateRecurringExpenseOutput{}, fmt.Errorf("create recurring expense: %w", err)
 	}
 
-	// Validate that the paying member exists and belongs to the household.
-	m, err := u.memberRepo.FindByID(ctx, input.PaidByMemberID)
-	if err != nil {
+	// Validate that the actor is a member of this household.
+	if _, err := u.memberRepo.FindByUserID(ctx, input.HouseholdID, input.CurrentUserID); err != nil {
 		return inbound.CreateRecurringExpenseOutput{}, fmt.Errorf("create recurring expense: %w", err)
 	}
-	if m.HouseholdID() != input.HouseholdID {
-		return inbound.CreateRecurringExpenseOutput{}, fmt.Errorf("create recurring expense: member does not belong to household")
+
+	paidByMemberID := strings.TrimSpace(input.PaidByMemberID)
+	if !input.IsAgnostic {
+		// Validate that the paying member exists and belongs to the household.
+		m, err := u.memberRepo.FindByID(ctx, paidByMemberID)
+		if err != nil {
+			return inbound.CreateRecurringExpenseOutput{}, fmt.Errorf("create recurring expense: %w", err)
+		}
+		if m.HouseholdID() != input.HouseholdID {
+			return inbound.CreateRecurringExpenseOutput{}, fmt.Errorf("create recurring expense: member does not belong to household")
+		}
+	} else {
+		paidByMemberID = ""
 	}
 
 	categoryID, err := u.resolveCategoryID(ctx, input.HouseholdID, input.CategoryID)
@@ -63,18 +73,22 @@ func (u CreateRecurringExpenseUseCase) Execute(ctx context.Context, input inboun
 	}
 
 	now := u.now()
-	re, err := recurringexpense.New(
-		recurringexpense.ID(u.idGenerator.NewID()),
-		input.HouseholdID,
-		input.PaidByMemberID,
-		input.AmountCents,
-		input.Description,
-		categoryID,
-		expense.ExpenseType(input.ExpenseType),
-		recurringexpense.RecurrencePattern(input.RecurrencePattern),
-		input.StartDate,
-		now,
-	)
+	re, err := recurringexpense.NewFromAttributes(recurringexpense.RecurringExpenseAttributes{
+		ID:                 recurringexpense.ID(u.idGenerator.NewID()),
+		HouseholdID:        input.HouseholdID,
+		PaidByMemberID:     paidByMemberID,
+		IsAgnostic:         input.IsAgnostic,
+		AmountCents:        input.AmountCents,
+		Description:        input.Description,
+		CategoryID:         categoryID,
+		ExpenseType:        expense.ExpenseType(input.ExpenseType),
+		RecurrencePattern:  recurringexpense.RecurrencePattern(input.RecurrencePattern),
+		StartDate:          input.StartDate,
+		NextGenerationDate: input.StartDate,
+		IsActive:           true,
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	})
 	if err != nil {
 		return inbound.CreateRecurringExpenseOutput{}, fmt.Errorf("create recurring expense: %w", err)
 	}

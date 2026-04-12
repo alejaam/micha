@@ -106,6 +106,42 @@ func Calculate(mode household.SettlementMode, members []member.Member, expenses 
 	return result, nil
 }
 
+// ApplyAdditionalShared rebalances a settlement result when extra shared amount
+// (e.g. household-level agnostic fixed expenses) must be included without
+// assigning it to a specific payer.
+func ApplyAdditionalShared(result Result, mode household.SettlementMode, members []member.Member, extraSharedCents int64, extraCount int) Result {
+	if extraSharedCents <= 0 || len(members) == 0 {
+		return result
+	}
+
+	result.TotalSharedCents += extraSharedCents
+	result.IncludedExpenseCount += extraCount
+	result.SettlementMode = mode
+
+	expectedShares, weights, effectiveMode, fallbackReason := computeExpectedShares(mode, members, result.TotalSharedCents)
+	result.EffectiveSettlementMode = effectiveMode
+	result.FallbackReason = fallbackReason
+
+	byID := make(map[string]int, len(result.Members))
+	for i, m := range result.Members {
+		byID[m.MemberID] = i
+	}
+
+	for i, memberEntity := range members {
+		memberID := string(memberEntity.ID())
+		idx, ok := byID[memberID]
+		if !ok {
+			continue
+		}
+		result.Members[idx].ExpectedShare = expectedShares[i]
+		result.Members[idx].SalaryWeightBps = weights[i]
+		result.Members[idx].NetBalanceCents = result.Members[idx].PaidCents - expectedShares[i]
+	}
+
+	result.Transfers = suggestTransfers(result.Members)
+	return result
+}
+
 func computeExpectedShares(mode household.SettlementMode, members []member.Member, total int64) ([]int64, []int64, household.SettlementMode, string) {
 	shares := make([]int64, len(members))
 	weightsBps := make([]int64, len(members))

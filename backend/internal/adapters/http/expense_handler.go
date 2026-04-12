@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 
-	expenseapp "micha/backend/internal/application/expense"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
@@ -242,8 +241,6 @@ func writeErrorFromDomain(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, "ALREADY_DELETED", "expense has already been deleted")
 	case errors.Is(err, shared.ErrForbidden):
 		writeError(w, http.StatusForbidden, "FORBIDDEN", "you are not allowed to register expenses with this member")
-	case errors.Is(err, expenseapp.ErrExpenseTypeNotAllowedByRole):
-		writeError(w, http.StatusForbidden, "FORBIDDEN_EXPENSE_TYPE", "this role cannot register this expense_type")
 	default:
 		slog.Error("expense handler: internal error", "error", err)
 		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "an internal error occurred")

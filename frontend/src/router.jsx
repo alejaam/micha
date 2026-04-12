@@ -10,6 +10,7 @@ import { AuthLayout } from './layouts/AuthLayout'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
 import { OnboardingCardsPage } from './pages/OnboardingCardsPage'
+import { OnboardingFixedExpensesPage } from './pages/OnboardingFixedExpensesPage'
 import { OnboardingHouseholdPage } from './pages/OnboardingHouseholdPage'
 import { OnboardingMemberPage } from './pages/OnboardingMemberPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -28,6 +29,7 @@ const router = createBrowserRouter([
             { path: 'onboarding/household', element: <OnboardingHouseholdPage /> },
             { path: 'onboarding/member', element: <OnboardingMemberPage /> },
             { path: 'onboarding/cards', element: <OnboardingCardsPage /> },
+            { path: 'onboarding/fixed-expenses', element: <OnboardingFixedExpensesPage /> },
             { path: 'members/new', element: <OnboardingMemberPage /> },
         ],
     },

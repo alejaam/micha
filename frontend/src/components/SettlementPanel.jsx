@@ -30,6 +30,7 @@ export function SettlementPanel({
   memberIndex,
   currency = 'MXN',
   selectedHousehold,
+  fixedTotalCents = 0,
 }) {
   const now = new Date()
   const currentYear = now.getUTCFullYear()
@@ -165,6 +166,14 @@ export function SettlementPanel({
                 {formatCurrency(settlement.total_shared_cents, currency)}
               </span>
             </span>
+            {fixedTotalCents > 0 && (
+              <span className="settlementStat">
+                <span className="settlementStatLabel">Fixed:</span>
+                <span className="settlementStatValue">
+                  {formatCurrency(fixedTotalCents, currency)}
+                </span>
+              </span>
+            )}
             <span className="settlementStat">
               <span className="settlementStatLabel">Mode:</span>
               <span className="settlementStatValue">{settlement.effective_settlement_mode}</span>

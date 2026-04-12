@@ -170,6 +170,55 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestNewFromAttributes_AllowsAgnosticWithoutPaidByMember(t *testing.T) {
+	now := time.Now()
+	startDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	re, err := recurringexpense.NewFromAttributes(recurringexpense.RecurringExpenseAttributes{
+		ID:                 "rec-agnostic-ok",
+		HouseholdID:        "hh-1",
+		PaidByMemberID:     "",
+		IsAgnostic:         true,
+		AmountCents:        25000,
+		Description:        "Internet",
+		CategoryID:         "cat-other",
+		ExpenseType:        expense.ExpenseTypeFixed,
+		RecurrencePattern:  recurringexpense.RecurrencePatternMonthly,
+		StartDate:          startDate,
+		NextGenerationDate: startDate,
+		IsActive:           true,
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	})
+	require.NoError(t, err)
+	assert.True(t, re.IsAgnostic())
+	assert.Equal(t, "", re.PaidByMemberID())
+}
+
+func TestNewFromAttributes_AgnosticMustBeFixed(t *testing.T) {
+	now := time.Now()
+	startDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	_, err := recurringexpense.NewFromAttributes(recurringexpense.RecurringExpenseAttributes{
+		ID:                 "rec-agnostic-invalid",
+		HouseholdID:        "hh-1",
+		PaidByMemberID:     "",
+		IsAgnostic:         true,
+		AmountCents:        25000,
+		Description:        "Invalid",
+		CategoryID:         "cat-other",
+		ExpenseType:        expense.ExpenseTypeVariable,
+		RecurrencePattern:  recurringexpense.RecurrencePatternMonthly,
+		StartDate:          startDate,
+		NextGenerationDate: startDate,
+		IsActive:           true,
+		CreatedAt:          now,
+		UpdatedAt:          now,
+	})
+	require.Error(t, err)
+	assert.ErrorIs(t, err, recurringexpense.ErrAgnosticRequiresFixedType)
+}
+
 func TestNewFromAttributes(t *testing.T) {
 	now := time.Now()
 	startDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)

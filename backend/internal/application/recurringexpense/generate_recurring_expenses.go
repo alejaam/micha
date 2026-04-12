@@ -58,6 +58,10 @@ func (u GenerateRecurringExpensesUseCase) Execute(ctx context.Context, cmd inbou
 
 	var generatedIDs []string
 	for _, re := range recurringExpenses {
+		if re.IsAgnostic() {
+			continue
+		}
+
 		// Double-check that this recurring expense should generate an expense
 		if !re.ShouldGenerateExpense(asOfDate) {
 			continue

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import {
     createExpense,
     deleteExpense,
+    listRecurringExpenses,
     patchExpense,
 } from '../api'
 import { BottomSheet } from '../components/BottomSheet'
@@ -52,6 +53,7 @@ export function DashboardPage() {
     const [deletingId, setDeletingId] = useState('')
     const [modalOpen, setModalOpen] = useState(false)
     const [quickAddOpen, setQuickAddOpen] = useState(false)
+    const [recurringItems, setRecurringItems] = useState([])
 
     const onErrorClear = useCallback(() => setError(''), [])
     const onUnexpectedError = useCallback((err) => setError(err.message), [])
@@ -124,6 +126,8 @@ export function DashboardPage() {
     }, [isMutationLocked, modalOpen, quickAddOpen])
 
     const {
+        totalSpentCents,
+        fixedTotalCents,
         categoryTotals,
         memberActualVsExpected,
         msiProgress,
@@ -132,7 +136,31 @@ export function DashboardPage() {
         expenses: items,
         members,
         settlement,
+        recurringItems,
     })
+
+    useEffect(() => {
+        let cancelled = false
+        async function loadRecurring() {
+            if (!isAuthenticated || !householdId.trim()) {
+                setRecurringItems([])
+                return
+            }
+
+            try {
+                const data = await listRecurringExpenses({ householdId: householdId.trim(), limit: 200, offset: 0 })
+                if (!cancelled) {
+                    setRecurringItems(Array.isArray(data) ? data : [])
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    handleProtectedError(err)
+                }
+            }
+        }
+        loadRecurring()
+        return () => { cancelled = true }
+    }, [isAuthenticated, householdId, handleProtectedError])
 
     const {
         closedPeriods,
@@ -262,7 +290,8 @@ export function DashboardPage() {
         }
     }
 
-    const hasExpenses = items.length > 0
+    const hasRecurringFixed = recurringItems.some((item) => item.expense_type === 'fixed')
+    const hasExpenses = items.length > 0 || hasRecurringFixed
 
     return (
         <>
@@ -323,6 +352,7 @@ export function DashboardPage() {
                             memberIndex={memberIndex}
                             currency={activeCurrency}
                             selectedHousehold={selectedHousehold}
+                            fixedTotalCents={fixedTotalCents}
                         />
 
                         {/* Summary strip */}
@@ -354,14 +384,24 @@ export function DashboardPage() {
                             <p className="text-sm text-dim mb-3">
                                 Add a new card or change your preferred card for new expenses.
                             </p>
-                            <button
-                                type="button"
-                                className="btn"
-                                onClick={() => navigate('/onboarding/cards')}
-                                disabled={isMutationLocked}
-                            >
-                                Manage cards
-                            </button>
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    className="btn"
+                                    onClick={() => navigate('/onboarding/cards')}
+                                    disabled={isMutationLocked}
+                                >
+                                    Manage cards
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn"
+                                    onClick={() => navigate('/onboarding/fixed-expenses')}
+                                    disabled={isMutationLocked}
+                                >
+                                    Manage fixed expenses
+                                </button>
+                            </div>
                         </section>
                     </motion.div>
 
@@ -384,6 +424,7 @@ export function DashboardPage() {
                         {/* Fixed expenses breakdown */}
                         <FixedExpensesPanel
                             items={items}
+                            recurringItems={recurringItems}
                             members={members}
                             currency={activeCurrency}
                         />
