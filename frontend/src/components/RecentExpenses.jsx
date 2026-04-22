@@ -26,9 +26,9 @@ export function RecentExpenses({ items, isLoading, currency = 'MXN', limit = 8, 
     if (visible.length === 0) {
         return (
             <EmptyState
-                title="No recent expenses"
-                description="Add your first expense to unlock trends and history."
-                ctaLabel="Quick add"
+                title="Sin gastos recientes"
+                description="Agrega tu primer gasto para ver tendencias e historial."
+                ctaLabel="Añadir gasto"
                 onCta={onQuickAdd}
                 icon="[+]"
                 compact

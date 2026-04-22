@@ -11,7 +11,7 @@ export function ExpenseSummary({ settlement, currency = 'MXN' }) {
     if (!settlement) {
         return (
             <div className="summaryStrip summaryStripEmpty">
-                <p className="emptyHint">No data for this period.</p>
+                <p className="emptyHint">Sin datos para este periodo.</p>
             </div>
         )
     }
@@ -26,12 +26,12 @@ export function ExpenseSummary({ settlement, currency = 'MXN' }) {
         <div className="summaryStrip">
             <div className="summaryMetric">
                 <span className="summaryMetricValue">{formatCurrency(total, currency)}</span>
-                <span className="summaryMetricLabel">total this month</span>
+                <span className="summaryMetricLabel">total este mes</span>
             </div>
             <div className="summaryDivider" aria-hidden />
             <div className="summaryMetric">
                 <span className="summaryMetricValue">{count}</span>
-                <span className="summaryMetricLabel">expense{count !== 1 ? 's' : ''}</span>
+                <span className="summaryMetricLabel">{count === 1 ? 'gasto' : 'gastos'}</span>
             </div>
             {memberSummaries.length > 0 && (
                 <>

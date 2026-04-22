@@ -1,8 +1,9 @@
-import { Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { useAppShell } from '../context/AppShellContext'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
 import { BottomNav } from '../components/BottomNav'
+import { PrimaryNav } from '../components/PrimaryNav'
+import { useAppShell } from '../context/AppShellContext'
+import { useAuth } from '../context/AuthContext'
 
 /**
  * AppLayout — wraps protected routes.
@@ -11,6 +12,7 @@ import { BottomNav } from '../components/BottomNav'
  */
 export function AppLayout() {
     const { isAuthenticated, logout } = useAuth()
+    const location = useLocation()
     const {
         health,
         householdId,
@@ -26,6 +28,9 @@ export function AppLayout() {
         return <Navigate to="/login" replace />
     }
 
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 880
+    const hidePrimaryNav = location.pathname.startsWith('/onboarding') || location.pathname.startsWith('/members/new') || !isMobile
+
     return (
         <div className="page">
             <AppHeader
@@ -39,6 +44,7 @@ export function AppLayout() {
                 periodStatus={periodStatus}
                 isMutationLocked={isMutationLocked}
             />
+            {(!hidePrimaryNav && isMobile) && <PrimaryNav />}
             <Outlet />
             <BottomNav />
         </div>

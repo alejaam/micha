@@ -2,13 +2,13 @@ import { useMemo, useCallback } from 'react'
 import { formatCurrency } from '../utils'
 
 const FALLBACK_LABELS = {
-    rent: 'Rent',
+    rent: 'Renta',
     auto: 'Auto',
-    streaming: 'Streaming / Services',
-    food: 'Food',
+    streaming: 'Streaming / Servicios',
+    food: 'Comida',
     personal: 'Personal',
-    savings: 'Savings',
-    other: 'Other',
+    savings: 'Ahorros',
+    other: 'Otro',
 }
 
 /**
@@ -47,7 +47,7 @@ export function FixedExpensesPanel({ items = [], recurringItems = [], members = 
         const description = String(item.description ?? '').trim()
         if (description) return description
         const key = item.category || item.category_id || 'other'
-        return categoryLabels[key] ?? FALLBACK_LABELS[key] ?? 'Other'
+        return categoryLabels[key] ?? FALLBACK_LABELS[key] ?? 'Otro'
     }, [categoryLabels])
 
 // Group by concept, accumulating totals per member.
@@ -98,31 +98,31 @@ const grouped = useMemo(() => {
 
     if (fixedItems.length === 0) {
         return (
-            <section className="card" aria-label="Fixed expenses">
+            <section className="card" aria-label="Gastos fijos">
                 <h2 className="sectionTitle">
                     <span className="sectionTitleIcon" aria-hidden>#</span>
-                    Fixed expenses
+                    Gastos fijos
                 </h2>
                 <div className="emptyState">
-                    <p className="emptyTitle">No fixed expenses yet</p>
-                    <p className="emptyHint">Mark expenses as &quot;Fixed&quot; when adding them.</p>
+                    <p className="emptyTitle">Sin gastos fijos aún</p>
+                    <p className="emptyHint">Marca gastos como &quot;Fijos&quot; al añadirlos.</p>
                 </div>
             </section>
         )
     }
 
     return (
-        <section className="card" aria-label="Fixed expenses">
+        <section className="card" aria-label="Gastos fijos">
             <h2 className="sectionTitle">
                 <span className="sectionTitleIcon" aria-hidden>#</span>
-                Fixed expenses
-                {fixedItems.length > 0 && <span className="sectionBadge">{fixedItems.length} expenses • {formatCurrency(grandTotal, currency)}</span>}
+                Gastos fijos
+                {fixedItems.length > 0 && <span className="sectionBadge">{fixedItems.length} {fixedItems.length === 1 ? 'gasto' : 'gastos'} • {formatCurrency(grandTotal, currency)}</span>}
             </h2>
 
             <div className="fixedExpensesTable">
                 {/* Header row */}
                 <div className="fixedTableHeader">
-                    <span className="fixedColConcept">Concept</span>
+                    <span className="fixedColConcept">Concepto</span>
                     <span className="fixedColTotal">Total</span>
                     {members.map((m) => (
                         <span key={m.id} className="fixedColMember">{m.name}</span>
@@ -148,7 +148,7 @@ const grouped = useMemo(() => {
 
                 {/* Total row */}
                 <div className="fixedTableRow fixedTotalRow">
-                    <span className="fixedColConcept">Grand total</span>
+                    <span className="fixedColConcept">Gran total</span>
                     <span className="fixedColTotal">
                         {formatCurrency(grandTotal, currency)}
                     </span>

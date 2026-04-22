@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { PeriodStatusRibbon } from './PeriodStatusRibbon'
 
 /**
@@ -25,9 +25,27 @@ export function AppHeader({
         <div className="brandIcon" aria-hidden>💸</div>
         <div>
           <div className="brandName">micha</div>
-          <div className="brandTagline">Household expense tracker</div>
+          <div className="brandTagline">Shared finance clarity for couples</div>
         </div>
       </div>
+
+      <nav className="headerNav" aria-label="Primary sections">
+        <NavLink to="/" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+          Resumen
+        </NavLink>
+        <NavLink to="/expenses" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+          Movimientos
+        </NavLink>
+        <NavLink to="/balances" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+          Balances
+        </NavLink>
+        <NavLink to="/installments" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+          Plazos
+        </NavLink>
+        <NavLink to="/rules" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+          Reglas
+        </NavLink>
+      </nav>
 
       {/* Controls */}
       <div className="headerControls">

@@ -3,17 +3,21 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { getHealth } from './api'
 import { AppShellContext } from './context/AppShellContext'
 import { useAuth } from './context/AuthContext'
-import { useHouseholds } from './hooks/useHouseholds'
 import { useDashboardUxState } from './hooks/useDashboardUxState'
+import { useHouseholds } from './hooks/useHouseholds'
 import { AppLayout } from './layouts/AppLayout'
 import { AuthLayout } from './layouts/AuthLayout'
+import { BalancesPage } from './pages/BalancesPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { ExpensesPage } from './pages/ExpensesPage'
+import { InstallmentsPage } from './pages/InstallmentsPage'
 import { LoginPage } from './pages/LoginPage'
 import { OnboardingCardsPage } from './pages/OnboardingCardsPage'
 import { OnboardingFixedExpensesPage } from './pages/OnboardingFixedExpensesPage'
 import { OnboardingHouseholdPage } from './pages/OnboardingHouseholdPage'
 import { OnboardingMemberPage } from './pages/OnboardingMemberPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { RulesPage } from './pages/RulesPage'
 
 /**
  * Static router — created once at module level so React never tears down and
@@ -26,6 +30,13 @@ const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
             { index: true, element: <DashboardPage /> },
+            { path: 'expenses', element: <ExpensesPage /> },
+            { path: 'balances', element: <BalancesPage /> },
+            { path: 'installments', element: <InstallmentsPage /> },
+            { path: 'rules', element: <RulesPage /> },
+            { path: 'dashboard', element: <Navigate to="/" replace /> },
+            { path: 'movements', element: <Navigate to="/expenses" replace /> },
+            { path: 'settings', element: <Navigate to="/rules" replace /> },
             { path: 'onboarding/household', element: <OnboardingHouseholdPage /> },
             { path: 'onboarding/member', element: <OnboardingMemberPage /> },
             { path: 'onboarding/cards', element: <OnboardingCardsPage /> },
