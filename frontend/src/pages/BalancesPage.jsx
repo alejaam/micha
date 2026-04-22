@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ExpenseModal } from '../components/ExpenseModal'
 import { FAB } from '../components/FAB'
 import { IncomesPanel } from '../components/IncomesPanel'
@@ -36,6 +36,10 @@ export function BalancesPage() {
     } = useHouseholdData()
 
     const [modalOpen, setModalOpen] = useState(false)
+
+    useEffect(() => {
+        loadSettlement()
+    }, [loadSettlement])
 
     return (
         <motion.div

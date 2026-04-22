@@ -31,10 +31,12 @@ export function OnboardingMemberPage() {
                 email: email.trim(),
                 monthlySalaryCents: salaryCents,
             })
-            // Refresh households just in case this member triggers something, 
-            // though usually it only affects member list
             await loadHouseholds()
-            navigate('/', { replace: true })
+            if (typeof window !== 'undefined') {
+                window.location.assign('/')
+            } else {
+                navigate('/', { replace: true })
+            }
         } catch (err) {
             if (!handleProtectedError(err)) setError(err.message)
         } finally {

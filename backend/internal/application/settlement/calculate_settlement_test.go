@@ -81,7 +81,7 @@ func TestCalculateSettlementUseCase_Execute_InvalidMonth(t *testing.T) {
 	}
 }
 
-func TestCalculateSettlementUseCase_Execute_IncludesAgnosticFixedRecurring(t *testing.T) {
+func TestCalculateSettlementUseCase_Execute_IgnoresAgnosticFixedRecurringWithoutPayment(t *testing.T) {
 	t.Parallel()
 	hh := newHouseholdMock(t)
 	mm := newMemberMock(t)
@@ -121,9 +121,9 @@ func TestCalculateSettlementUseCase_Execute_IncludesAgnosticFixedRecurring(t *te
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// 15,000 regular shared + 10,000 agnostic fixed.
-	if out.TotalSharedCents != 25000 {
-		t.Fatalf("total shared = %d, want 25000", out.TotalSharedCents)
+	// Settlement only includes paid expenses/installments.
+	if out.TotalSharedCents != 15000 {
+		t.Fatalf("total shared = %d, want 15000", out.TotalSharedCents)
 	}
 }
 

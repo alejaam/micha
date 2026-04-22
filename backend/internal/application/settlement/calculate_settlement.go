@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"micha/backend/internal/domain/expense"
-	"micha/backend/internal/domain/recurringexpense"
 	"micha/backend/internal/domain/settlement"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
@@ -80,13 +78,6 @@ func (u CalculateSettlementUseCase) Execute(ctx context.Context, input inbound.C
 		return inbound.CalculateSettlementOutput{}, fmt.Errorf("calculate settlement: %w", err)
 	}
 
-	recurring, err := u.recurringRepo.List(ctx, input.HouseholdID, 500, 0)
-	if err != nil {
-		return inbound.CalculateSettlementOutput{}, fmt.Errorf("calculate settlement: list recurring expenses: %w", err)
-	}
-	extraSharedCents, extraCount := agnosticFixedContributionForPeriod(recurring, from, to)
-	calc = settlement.ApplyAdditionalShared(calc, householdEntity.SettlementMode(), members, extraSharedCents, extraCount)
-
 	memberOut := make([]inbound.MemberSettlement, 0, len(calc.Members))
 	for _, m := range calc.Members {
 		memberOut = append(memberOut, inbound.MemberSettlement{
@@ -121,28 +112,4 @@ func (u CalculateSettlementUseCase) Execute(ctx context.Context, input inbound.C
 		Members:                 memberOut,
 		Transfers:               transferOut,
 	}, nil
-}
-
-func agnosticFixedContributionForPeriod(items []recurringexpense.RecurringExpense, from, to time.Time) (int64, int) {
-	var total int64
-	var count int
-
-	for _, item := range items {
-		attrs := item.Attributes()
-		if !attrs.IsActive || attrs.ExpenseType != expense.ExpenseTypeFixed {
-			continue
-		}
-		if !attrs.StartDate.Before(to) {
-			continue
-		}
-		if attrs.EndDate != nil && attrs.EndDate.Before(from) {
-			continue
-		}
-
-		// Household-level fixed templates are counted once per monthly settlement period.
-		total += attrs.AmountCents
-		count++
-	}
-
-	return total, count
 }
