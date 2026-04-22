@@ -1,8 +1,6 @@
 import { motion } from 'framer-motion'
-import { useCallback, useState } from 'react'
-import { BottomSheet } from '../components/BottomSheet'
+import { useState } from 'react'
 import { CardExpensesPanel } from '../components/CardExpensesPanel'
-import { ExpenseForm } from '../components/ExpenseForm'
 import { ExpenseModal } from '../components/ExpenseModal'
 import { FAB } from '../components/FAB'
 import { FixedExpensesPanel } from '../components/FixedExpensesPanel'
@@ -28,15 +26,6 @@ export function InstallmentsPage() {
     } = useHouseholdData()
 
     const [modalOpen, setModalOpen] = useState(false)
-    const [quickAddOpen, setQuickAddOpen] = useState(false)
-
-    const handleOpenQuickAdd = useCallback(() => {
-        if (isMutationLocked) {
-            setError('El periodo está bajo revisión o cerrado. Las acciones están deshabilitadas.')
-            return
-        }
-        setQuickAddOpen(true)
-    }, [isMutationLocked, setError])
 
     return (
         <motion.div
@@ -87,23 +76,6 @@ export function InstallmentsPage() {
                     householdId={householdId}
                 />
             )}
-
-            <BottomSheet
-                open={quickAddOpen}
-                title="Añadir rápido"
-                onClose={() => setQuickAddOpen(false)}
-            >
-                <ExpenseForm
-                    onSubmit={async (payload) => {
-                        const success = await handleCreate(payload)
-                        if (success) setQuickAddOpen(false)
-                    }}
-                    isSubmitting={submittingCreate}
-                    isLoadingMembers={loadingMembers}
-                    members={members}
-                    defaultPaidByMemberId={currentMember?.id ?? ''}
-                />
-            </BottomSheet>
         </motion.div>
     )
 }

@@ -57,9 +57,9 @@ describe('DynamicChartsPanel', () => {
       />,
     )
 
-    expect(screen.getByRole('region', { name: /dynamic charts/i })).toBeInTheDocument()
-    const summaries = screen.getByLabelText(/charts textual summaries/i)
+    expect(screen.getByRole('region', { name: /gráficos dinámicos/i })).toBeInTheDocument()
+    const summaries = screen.getByLabelText(/resumen textual de gráficos/i)
     expect(summaries).toHaveAttribute('tabindex', '0')
-    expect(screen.getByText(/top category:/i)).toBeInTheDocument()
+    expect(screen.getByText(/categoría principal:/i)).toBeInTheDocument()
   })
 })

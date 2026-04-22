@@ -4,6 +4,7 @@ import { BottomNav } from '../components/BottomNav'
 import { PrimaryNav } from '../components/PrimaryNav'
 import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
+import { HouseholdDataProvider } from '../hooks/useHouseholdData'
 
 /**
  * AppLayout — wraps protected routes.
@@ -32,21 +33,23 @@ export function AppLayout() {
     const hidePrimaryNav = location.pathname.startsWith('/onboarding') || location.pathname.startsWith('/members/new') || !isMobile
 
     return (
-        <div className="page">
-            <AppHeader
-                health={health}
-                householdId={householdId}
-                households={households}
-                onHouseholdChange={setHouseholdId}
-                onReload={handleReload}
-                onLogout={logout}
-                isLoading={loadingHouseholds}
-                periodStatus={periodStatus}
-                isMutationLocked={isMutationLocked}
-            />
-            {(!hidePrimaryNav && isMobile) && <PrimaryNav />}
-            <Outlet />
-            <BottomNav />
-        </div>
+        <HouseholdDataProvider>
+            <div className="page">
+                <AppHeader
+                    health={health}
+                    householdId={householdId}
+                    households={households}
+                    onHouseholdChange={setHouseholdId}
+                    onReload={handleReload}
+                    onLogout={logout}
+                    isLoading={loadingHouseholds}
+                    periodStatus={periodStatus}
+                    isMutationLocked={isMutationLocked}
+                />
+                {(!hidePrimaryNav && isMobile) && <PrimaryNav />}
+                <Outlet />
+                <BottomNav />
+            </div>
+        </HouseholdDataProvider>
     )
 }

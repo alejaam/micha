@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import {
     createExpense,
     deleteExpense,
@@ -14,11 +14,26 @@ import { useHistoricalPeriods } from './useHistoricalPeriods'
 import { useMembers } from './useMembers'
 import { useSettlement } from './useSettlement'
 
+const HouseholdDataContext = createContext(null)
+
+export function HouseholdDataProvider({ children }) {
+    const data = useHouseholdDataInternal()
+    return <HouseholdDataContext.Provider value={data}>{children}</HouseholdDataContext.Provider>
+}
+
+export function useHouseholdData() {
+    const context = useContext(HouseholdDataContext)
+    if (!context) {
+        throw new Error('useHouseholdData must be used within a HouseholdDataProvider')
+    }
+    return context
+}
+
 function isExpectedSettlementOnboardingError(err) {
     return err?.code === 'NO_MEMBERS' || String(err?.message || '').toLowerCase().includes('at least one member')
 }
 
-export function useHouseholdData() {
+function useHouseholdDataInternal() {
     const { isAuthenticated, handleProtectedError } = useAuth()
     const {
         householdId,

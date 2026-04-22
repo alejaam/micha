@@ -1,8 +1,6 @@
 import { motion } from 'framer-motion'
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BottomSheet } from '../components/BottomSheet'
-import { ExpenseForm } from '../components/ExpenseForm'
 import { ExpenseModal } from '../components/ExpenseModal'
 import { FAB } from '../components/FAB'
 import { useHouseholdData } from '../hooks/useHouseholdData'
@@ -25,15 +23,6 @@ export function RulesPage() {
     } = useHouseholdData()
 
     const [modalOpen, setModalOpen] = useState(false)
-    const [quickAddOpen, setQuickAddOpen] = useState(false)
-
-    const handleOpenQuickAdd = useCallback(() => {
-        if (isMutationLocked) {
-            setError('Period is under review or closed. Mutating actions are disabled.')
-            return
-        }
-        setQuickAddOpen(true)
-    }, [isMutationLocked, setError])
 
     return (
         <motion.div
@@ -140,23 +129,6 @@ export function RulesPage() {
                     householdId={householdId}
                 />
             )}
-
-            <BottomSheet
-                open={quickAddOpen}
-                title="Quick add"
-                onClose={() => setQuickAddOpen(false)}
-            >
-                <ExpenseForm
-                    onSubmit={async (payload) => {
-                        const success = await handleCreate(payload)
-                        if (success) setQuickAddOpen(false)
-                    }}
-                    isSubmitting={submittingCreate}
-                    isLoadingMembers={loadingMembers}
-                    members={members}
-                    defaultPaidByMemberId={currentMember?.id ?? ''}
-                />
-            </BottomSheet>
         </motion.div>
     )
 }

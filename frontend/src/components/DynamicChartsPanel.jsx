@@ -16,12 +16,9 @@ import {
 import { formatCurrency } from '../utils'
 
 // Brand Blue Palette (matching CSS tokens)
-const COLOR_BRAND_500 = '#3b82f6'
 const COLOR_BRAND_600 = '#2563eb'
-const COLOR_BRAND_700 = '#1d4ed8'
 const COLOR_BRAND_400 = '#60a5fa'
 const COLOR_BRAND_200 = '#bfdbfe'
-const COLOR_BRAND_100 = '#dbeafe'
 
 const DONUT_COLORS = [
     COLOR_BRAND_600,
