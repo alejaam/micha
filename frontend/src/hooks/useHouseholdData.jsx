@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import {
     createExpense,
@@ -163,7 +164,7 @@ function useHouseholdDataInternal() {
 
     async function handleCreate(payload) {
         if (isMutationLocked) {
-            setError('Period is under review or closed. Mutating actions are disabled.')
+            setError('El periodo está en revisión o cerrado. Finaliza la conciliación para registrar cambios.')
             return
         }
 
@@ -176,7 +177,7 @@ function useHouseholdDataInternal() {
                 householdId: householdId.trim(),
                 currency: activeCurrency,
             })
-            setMessage('Expense added.')
+            setMessage('Gasto agregado.')
             await loadExpenses()
             await loadSettlement()
             return true
@@ -190,7 +191,7 @@ function useHouseholdDataInternal() {
 
     async function handleSave({ id, amountCents, description }) {
         if (isMutationLocked) {
-            setError('Period is under review or closed. Mutating actions are disabled.')
+            setError('El periodo está en revisión o cerrado. Finaliza la conciliación para editar gastos.')
             return
         }
 
@@ -199,7 +200,7 @@ function useHouseholdDataInternal() {
         setSavingId(id)
         try {
             await patchExpense({ id, amountCents, description })
-            setMessage('Expense updated.')
+            setMessage('Gasto actualizado.')
             await loadExpenses()
             await loadSettlement()
         } catch (err) {
@@ -211,7 +212,7 @@ function useHouseholdDataInternal() {
 
     async function handleDelete(id) {
         if (isMutationLocked) {
-            setError('Period is under review or closed. Mutating actions are disabled.')
+            setError('El periodo está en revisión o cerrado. Finaliza la conciliación para eliminar gastos.')
             return
         }
 
@@ -220,7 +221,7 @@ function useHouseholdDataInternal() {
         setDeletingId(id)
         try {
             await deleteExpense(id)
-            setMessage('Expense deleted.')
+            setMessage('Gasto eliminado.')
             await loadExpenses()
             await loadSettlement()
         } catch (err) {

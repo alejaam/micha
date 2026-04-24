@@ -13,6 +13,7 @@ export function InstallmentsPage() {
         loadingMembers,
         items,
         recurringItems,
+        settlement,
         currentMember,
         activeCurrency,
         householdId,
@@ -35,12 +36,13 @@ export function InstallmentsPage() {
             transition={{ duration: 0.2 }}
         >
             {error && <Banner type="error" onDismiss={() => setError('')}>{error}</Banner>}
-            {message && <Banner type="ok" onDismiss={() => setMessage('')}>{message}</Banner>}
+            {message && <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner>}
 
             <FixedExpensesPanel
                 items={items}
                 recurringItems={recurringItems}
                 members={members}
+                settlement={settlement}
                 currency={activeCurrency}
             />
 

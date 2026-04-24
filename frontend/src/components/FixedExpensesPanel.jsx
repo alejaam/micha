@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { formatCurrency } from '../utils'
 
 const FALLBACK_LABELS = {
@@ -20,8 +20,9 @@ const FALLBACK_LABELS = {
  * @param {Array} members - member list from API
  * @param {string} currency
  * @param {Array} categories - dynamic categories from backend (optional)
+ * @param {object|null} settlement - current settlement payload (optional)
  */
-export function FixedExpensesPanel({ items = [], recurringItems = [], members = [], currency = 'MXN', categories = [] }) {
+export function FixedExpensesPanel({ items = [], recurringItems = [], members = [], currency = 'MXN', categories = [], settlement = null }) {
     // Build label map: prefer dynamic categories, fallback to hardcoded
     const categoryLabels = useMemo(() => {
         const labels = { ...FALLBACK_LABELS }
@@ -50,49 +51,94 @@ export function FixedExpensesPanel({ items = [], recurringItems = [], members = 
         return categoryLabels[key] ?? FALLBACK_LABELS[key] ?? 'Otro'
     }, [categoryLabels])
 
-// Group by concept, accumulating totals per member.
-const grouped = useMemo(() => {
-    const map = {}
+    const settlementMode = settlement?.effective_settlement_mode || settlement?.settlement_mode || ''
+    const settlementWeights = useMemo(() => {
+        const weights = new Map()
+        const settlementMembers = Array.isArray(settlement?.members) ? settlement.members : []
 
-    const addAgnosticSplit = (target, amountCents) => {
-        if (members.length === 0) return
+        for (const member of settlementMembers) {
+            const weightBps = Number(member?.salary_weight_bps)
+            if (!member?.member_id || Number.isNaN(weightBps) || weightBps <= 0) continue
+            weights.set(member.member_id, weightBps)
+        }
+
+        return weights
+    }, [settlement])
+
+    const distributeAmount = useCallback((amountCents) => {
+        const shares = {}
+
+        if (members.length === 0) return shares
+
+        const canUseProportional = settlementMode === 'proportional' && settlementWeights.size > 0
+
+        if (canUseProportional) {
+            const weights = members.map((member) => Number(settlementWeights.get(member.id) ?? 0))
+            const totalWeight = weights.reduce((sum, weight) => sum + weight, 0)
+
+            if (totalWeight > 0) {
+                let allocated = 0
+                const remainders = []
+
+                weights.forEach((weight, index) => {
+                    const numerator = amountCents * weight
+                    const baseShare = Math.floor(numerator / totalWeight)
+                    shares[members[index].id] = baseShare
+                    allocated += baseShare
+                    remainders.push({ index, remainder: numerator % totalWeight })
+                })
+
+                remainders
+                    .sort((a, b) => b.remainder - a.remainder)
+                    .forEach(({ index }) => {
+                        if (allocated < amountCents) {
+                            shares[members[index].id] = (shares[members[index].id] ?? 0) + 1
+                            allocated += 1
+                        }
+                    })
+
+                return shares
+            }
+        }
+
         const base = Math.floor(amountCents / members.length)
         const remainder = amountCents % members.length
         members.forEach((member, index) => {
             const extra = index < remainder ? 1 : 0
-            target[member.id] = (target[member.id] ?? 0) + base + extra
+            shares[member.id] = base + extra
         })
-    }
 
-    for (const e of fixedItems) {
-        const concept = resolveConcept(e)
-        if (!map[concept]) map[concept] = { concept, items: [], byMember: {}, totalCents: 0 }
-        map[concept].items.push(e)
-        map[concept].totalCents += e.amount_cents
-        // Fixed expenses are always treated as household-shared in this panel:
-        // no single member is considered the payer for display distribution.
-        addAgnosticSplit(map[concept].byMember, e.amount_cents)
-    }
-    return Object.values(map)
-}, [fixedItems, members, resolveConcept])
+        return shares
+    }, [members, settlementMode, settlementWeights])
+
+// Group by concept, accumulating totals per member.
+    const grouped = useMemo(() => {
+        const map = {}
+
+        for (const e of fixedItems) {
+            const concept = resolveConcept(e)
+            if (!map[concept]) map[concept] = { concept, items: [], byMember: {}, totalCents: 0 }
+            map[concept].items.push(e)
+            map[concept].totalCents += e.amount_cents
+            const shares = distributeAmount(e.amount_cents)
+            for (const [memberId, amount] of Object.entries(shares)) {
+                map[concept].byMember[memberId] = (map[concept].byMember[memberId] ?? 0) + amount
+            }
+        }
+        return Object.values(map)
+    }, [distributeAmount, fixedItems, resolveConcept])
 
     // Total per member across all fixed
     const totalByMember = useMemo(() => {
         const totals = {}
-        const addAgnosticSplit = (amountCents) => {
-            if (members.length === 0) return
-            const base = Math.floor(amountCents / members.length)
-            const remainder = amountCents % members.length
-            members.forEach((member, index) => {
-                const extra = index < remainder ? 1 : 0
-                totals[member.id] = (totals[member.id] ?? 0) + base + extra
-            })
-        }
         for (const e of fixedItems) {
-            addAgnosticSplit(e.amount_cents)
+            const shares = distributeAmount(e.amount_cents)
+            for (const [memberId, amount] of Object.entries(shares)) {
+                totals[memberId] = (totals[memberId] ?? 0) + amount
+            }
         }
         return totals
-    }, [fixedItems, members])
+    }, [distributeAmount, fixedItems])
 
     const grandTotal = fixedItems.reduce((s, e) => s + e.amount_cents, 0)
 

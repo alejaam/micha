@@ -4,9 +4,14 @@
  * @param {'ok'|'error'} type - Visual variant
  * @param {React.ReactNode} children - Message text
  * @param {()=>void} [onDismiss] - Optional dismiss callback
+ * @param {boolean} [floating] - Render as fixed toast overlay instead of inline banner
  */
-export function Banner({ type, children, onDismiss }) {
-  const cls = type === 'ok' ? 'banner bannerOk' : 'banner bannerError'
+export function Banner({ type, children, onDismiss, floating = false }) {
+  const cls = [
+    'banner',
+    type === 'ok' ? 'bannerOk' : 'bannerError',
+    floating ? 'bannerFloating' : '',
+  ].filter(Boolean).join(' ')
   const icon = type === 'ok' ? '✓' : '⚠'
 
   return (

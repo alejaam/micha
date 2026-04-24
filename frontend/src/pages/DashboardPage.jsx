@@ -82,7 +82,7 @@ export function DashboardPage() {
     return (
         <>
             {error && <Banner type="error" onDismiss={() => setError('')}>{error}</Banner>}
-            {message && <Banner type="ok" onDismiss={() => setMessage('')}>{message}</Banner>}
+            {message && <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner>}
 
             {!hasExpenses && !loadingList ? (
                 <section className="card dashboardEmptyState" aria-label="Sin gastos aún">
@@ -100,6 +100,7 @@ export function DashboardPage() {
                         <header className="dashboardPriorityHead">
                             <p className="dashboardPriorityEyebrow">Resumen</p>
                             <h2 className="dashboardPriorityTitle">Balances y conciliación primero</h2>
+                            <p className="authMeta">Sigue el flujo del hogar: registra, concilia y cierra el periodo.</p>
                         </header>
                         <div className="dashboardPriorityMetrics" role="list" aria-label="Métricas prioritarias">
                             <article className="dashboardPriorityMetric" role="listitem">

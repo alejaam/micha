@@ -59,7 +59,7 @@ describe('buildRibbonState', () => {
     expect(buildRibbonState('review')).toEqual({
       status: 'review',
       stateLabel: '[REVIEW]',
-      description: 'Period under review — mutating actions are temporarily locked.',
+      description: 'Periodo en revisión — las acciones de edición están bloqueadas temporalmente.',
     })
   })
 

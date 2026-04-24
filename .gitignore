@@ -18,6 +18,7 @@ frontend/coverage/
 
 # Tools
 .golangci-lint/
+.atl/
 
 # Project specifics
 .github/copilot-instructions.md

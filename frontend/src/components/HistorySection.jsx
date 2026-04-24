@@ -29,12 +29,12 @@ export function HistorySection({
     return (
       <section className="card" aria-label="History section">
         <div className="listHeader">
-          <h2 className="listTitle">History</h2>
+          <h2 className="listTitle">Historial</h2>
         </div>
         <EmptyState
-          title="No closed periods yet"
-          description="History becomes available after you move beyond the current period."
-          ctaLabel="Add expense"
+          title="Aún no hay periodos cerrados"
+          description="El historial aparece cuando cierras periodos anteriores."
+          ctaLabel="Agregar gasto"
           onCta={onQuickAdd}
           icon="[H]"
           compact
@@ -46,15 +46,20 @@ export function HistorySection({
   return (
     <section className="card historySection" aria-label="History section">
       <div className="listHeader">
-        <h2 className="listTitle">History</h2>
+        <h2 className="listTitle">Historial</h2>
         {isProvisional ? <span className="historyProvisionalTag">PROVISIONAL</span> : null}
       </div>
 
       {provisionalReason ? <p className="historyProvisionalNote">{provisionalReason}</p> : null}
+      {isProvisional ? (
+        <div className="historyActions">
+          <button type="button" className="btn btnGhost btnSm">Reintentar historial</button>
+        </div>
+      ) : null}
 
       <div className="historyGrid">
         <article className="historyPanel" aria-label="Closed periods">
-          <p className="historyPanelLabel">PERIODS</p>
+          <p className="historyPanelLabel">PERIODOS</p>
           <ul className="historyPeriodList">
             {safeClosedPeriods.map((period) => (
               <li key={period.key}>
@@ -72,7 +77,7 @@ export function HistorySection({
         </article>
 
         <article className="historyPanel" aria-label="Historical totals comparison">
-          <p className="historyPanelLabel">TOTALS</p>
+          <p className="historyPanelLabel">TOTALES</p>
           <div className="historyChartCanvas">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={safeComparisonSeries}>
@@ -110,16 +115,16 @@ export function HistorySection({
             </ResponsiveContainer>
           </div>
           {selectedPeriodSnapshot?.memberBalances?.length ? (
-            <p className="historyPanelFootnote">
-              Selected period members: {selectedPeriodSnapshot.memberBalances.length}
-            </p>
-          ) : null}
+              <p className="historyPanelFootnote">
+              Miembros en el periodo seleccionado: {selectedPeriodSnapshot.memberBalances.length}
+              </p>
+            ) : null}
         </article>
 
         <article className="historyPanel" aria-label="Completed MSI history">
-          <p className="historyPanelLabel">COMPLETED MSI</p>
+          <p className="historyPanelLabel">MSI COMPLETADOS</p>
           {safeCompletedMsi.length === 0 ? (
-            <p className="historyPanelFootnote">No completed MSI expenses yet.</p>
+            <p className="historyPanelFootnote">Aún no hay gastos MSI completados.</p>
           ) : (
             <ul className="historyMsiList">
               {safeCompletedMsi.map((item) => (

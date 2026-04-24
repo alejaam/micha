@@ -12,7 +12,7 @@ describe('PeriodStatusRibbon', () => {
     expect(screen.getByText('[REVIEW]')).toBeInTheDocument()
     expect(
       screen.getByRole('status', {
-        name: /period status: period under review/i,
+        name: /estado del periodo: periodo en revisión/i,
       }),
     ).toBeInTheDocument()
   })
@@ -41,7 +41,7 @@ describe('AppHeader mutation lock wiring', () => {
       </MemoryRouter>,
     )
 
-    const inviteLink = screen.getByRole('link', { name: /invite a new member/i })
+    const inviteLink = screen.getByRole('link', { name: /invitar nuevo miembro/i })
     expect(inviteLink).toHaveAttribute('aria-disabled', 'true')
     expect(inviteLink).toHaveClass('btnDisabled')
   })

@@ -6,15 +6,15 @@ import { useState } from 'react';
 const PERIOD_STATUS_MAP = {
     open: {
         stateLabel: '[OPEN]',
-        description: 'Period open — mutating actions are enabled.',
+        description: 'Periodo abierto — puedes registrar y editar gastos.',
     },
     review: {
         stateLabel: '[REVIEW]',
-        description: 'Period under review — mutating actions are temporarily locked.',
+        description: 'Periodo en revisión — las acciones de edición están bloqueadas temporalmente.',
     },
     closed: {
         stateLabel: '[CLOSED]',
-        description: 'Period closed — mutating actions are disabled.',
+        description: 'Periodo cerrado — ya no se permiten cambios en gastos.',
     },
 }
 

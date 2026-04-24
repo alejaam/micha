@@ -49,7 +49,7 @@ export function BalancesPage() {
             transition={{ duration: 0.2 }}
         >
             {error && <Banner type="error" onDismiss={() => setError('')}>{error}</Banner>}
-            {message && <Banner type="ok" onDismiss={() => setMessage('')}>{message}</Banner>}
+            {message && <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner>}
 
             <div className="dashboardCol">
                 <SettlementPanel
@@ -84,7 +84,7 @@ export function BalancesPage() {
             <FAB
                 onClick={() => {
                     if (isMutationLocked) {
-                        setError('Period is under review or closed. Mutating actions are disabled.')
+                        setError('El periodo está en revisión o cerrado. Finaliza la conciliación para registrar cambios.')
                         return
                     }
                     setModalOpen(true)

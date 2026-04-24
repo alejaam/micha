@@ -44,7 +44,7 @@ export function ConsensusProgressRing({ approved = 0, total = 0, label = 'Consen
       </div>
 
       <p className="consensusRingMeta">
-        {safeApproved}/{safeTotal} approvals
+        {safeApproved}/{safeTotal} cuotas
         {source === 'mock' ? ' · provisional' : ''}
       </p>
     </section>
