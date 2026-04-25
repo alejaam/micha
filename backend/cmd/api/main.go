@@ -22,6 +22,7 @@ import (
 	expenseapp "micha/backend/internal/application/expense"
 	householdapp "micha/backend/internal/application/household"
 	memberapp "micha/backend/internal/application/member"
+	periodapp "micha/backend/internal/application/period"
 	recurringexpenseapp "micha/backend/internal/application/recurringexpense"
 	settlementapp "micha/backend/internal/application/settlement"
 	infraauth "micha/backend/internal/infrastructure/auth"
@@ -76,6 +77,8 @@ func main() {
 	cardRepo := postgres.NewCardRepository(pool)
 	categoryRepo := postgres.NewCategoryRepository(pool)
 	userRepo := postgres.NewUserRepository(pool)
+	periodRepo := postgres.NewPeriodRepository(pool)
+	periodApprovalRepo := postgres.NewPeriodApprovalRepository(pool)
 	idGen := uuidGenerator{}
 
 	hasher := infraauth.NewBcryptHasher()
@@ -152,6 +155,14 @@ func main() {
 		Delete:   cardapp.NewDeleteCardUseCase(cardRepo),
 	}
 
+	// Period use cases and handler dependencies.
+	periodDeps := httpadapter.PeriodHandlerDeps{
+		TransitionToReview: periodapp.NewTransitionToReviewUseCase(periodRepo, memberRepo),
+		ApprovePeriod:      periodapp.NewApprovePeriodUseCase(periodApprovalRepo, periodRepo, memberRepo, idGen),
+		ClosePeriod:        periodapp.NewClosePeriodUseCase(periodRepo, periodApprovalRepo, householdRepo, memberRepo, expenseRepo, installmentRepo, idGen),
+		PeriodRepo:         periodRepo,
+	}
+
 	// Server dependencies grouped by resource.
 	serverDeps := httpadapter.ServerDependencies{
 		Auth:             authDeps,
@@ -168,6 +179,7 @@ func main() {
 		},
 		Category:       categoryDeps,
 		SplitConfig:    splitConfigDeps,
+		Period:         periodDeps,
 		JWTValidator:   validator,
 		MemberRepo:     memberRepo,
 		AllowedOrigins: cfg.AllowedOrigins,

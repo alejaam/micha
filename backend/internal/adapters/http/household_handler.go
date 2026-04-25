@@ -40,10 +40,13 @@ func (h householdHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID, _ := UserIDFromContext(r.Context())
+
 	out, err := h.deps.Register.Execute(r.Context(), inbound.RegisterHouseholdInput{
 		Name:           body.Name,
 		SettlementMode: household.SettlementMode(body.SettlementMode),
 		Currency:       body.Currency,
+		CurrentUserID:  userID,
 	})
 	if err != nil {
 		writeErrorFromHouseholdDomain(w, err)

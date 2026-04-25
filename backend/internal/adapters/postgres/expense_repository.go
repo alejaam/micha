@@ -20,10 +20,85 @@ type ExpenseRepository struct {
 	db *pgxpool.Pool
 }
 
+// NewExpenseRepository constructs an ExpenseRepository backed by the given pool.
+func NewExpenseRepository(db *pgxpool.Pool) ExpenseRepository {
+	return ExpenseRepository{db: db}
+}
+
+// Save persists a new expense record.
+func (r ExpenseRepository) Save(ctx context.Context, e expense.Expense) error {
+	attrs := e.Attributes()
+	_, err := r.db.Exec(ctx,
+		`INSERT INTO expenses (id, household_id, paid_by_member_id, period_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+		string(attrs.ID), attrs.HouseholdID, nullIfEmpty(attrs.PaidByMemberID), nullIfEmpty(attrs.PeriodID), attrs.AmountCents,
+		attrs.Description, attrs.IsShared, attrs.Currency, string(attrs.PaymentMethod),
+		string(attrs.ExpenseType), nullIfEmpty(attrs.CardID), attrs.CardName, attrs.CategoryID,
+		attrs.TotalInstallments, attrs.CreatedAt, attrs.UpdatedAt,
+	)
+	if err != nil {
+		return fmt.Errorf("expense repository save: %w", err)
+	}
+
+	return nil
+}
+
+// FindByID retrieves an expense by ID. Returns shared.ErrNotFound when not found.
+// Note: soft-deleted rows are still returned so callers can inspect DeletedAt.
+func (r ExpenseRepository) FindByID(ctx context.Context, id string) (expense.Expense, error) {
+	row := r.db.QueryRow(ctx,
+		`SELECT id, household_id, paid_by_member_id, period_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at, deleted_at
+			FROM expenses
+			WHERE id = $1`,
+		id,
+	)
+
+	e, err := scanExpense(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return expense.Expense{}, shared.ErrNotFound
+	}
+	if err != nil {
+		return expense.Expense{}, fmt.Errorf("expense repository findByID: %w", err)
+	}
+
+	return e, nil
+}
+
+// List returns non-deleted expenses for a household ordered by created_at DESC.
+func (r ExpenseRepository) List(ctx context.Context, householdID string, limit, offset int) ([]expense.Expense, error) {
+	rows, err := r.db.Query(ctx,
+		`SELECT id, household_id, paid_by_member_id, period_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at, deleted_at
+			FROM expenses
+			WHERE household_id = $1 AND deleted_at IS NULL
+			ORDER BY created_at DESC
+			LIMIT $2 OFFSET $3`,
+		householdID, limit, offset,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("expense repository list: %w", err)
+	}
+
+	defer rows.Close()
+
+	var expenses []expense.Expense
+	for rows.Next() {
+		e, err := scanExpense(rows)
+		if err != nil {
+			return nil, fmt.Errorf("expense repository list: scan: %w", err)
+		}
+		expenses = append(expenses, e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("expense repository list: rows: %w", err)
+	}
+
+	return expenses, nil
+}
+
 // ListByHouseholdAndPeriod returns non-deleted household expenses between [from, to).
 func (r ExpenseRepository) ListByHouseholdAndPeriod(ctx context.Context, householdID string, from, to time.Time) ([]expense.Expense, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at, deleted_at
+		`SELECT id, household_id, paid_by_member_id, period_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at, deleted_at
 			FROM expenses
 			WHERE household_id = $1
 				AND created_at >= $2
@@ -52,76 +127,30 @@ func (r ExpenseRepository) ListByHouseholdAndPeriod(ctx context.Context, househo
 	return expenses, nil
 }
 
-// NewExpenseRepository constructs an ExpenseRepository backed by the given pool.
-func NewExpenseRepository(db *pgxpool.Pool) ExpenseRepository {
-	return ExpenseRepository{db: db}
-}
-
-// Save persists a new expense record.
-func (r ExpenseRepository) Save(ctx context.Context, e expense.Expense) error {
-	attrs := e.Attributes()
-	_, err := r.db.Exec(ctx,
-		`INSERT INTO expenses (id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
-		string(attrs.ID), attrs.HouseholdID, nullIfEmpty(attrs.PaidByMemberID), attrs.AmountCents,
-		attrs.Description, attrs.IsShared, attrs.Currency, string(attrs.PaymentMethod),
-		string(attrs.ExpenseType), nullIfEmpty(attrs.CardID), attrs.CardName, attrs.CategoryID,
-		attrs.TotalInstallments, attrs.CreatedAt, attrs.UpdatedAt,
-	)
-	if err != nil {
-		return fmt.Errorf("expense repository save: %w", err)
-	}
-
-	return nil
-}
-
-// FindByID retrieves an expense by ID. Returns shared.ErrNotFound when not found.
-// Note: soft-deleted rows are still returned so callers can inspect DeletedAt.
-func (r ExpenseRepository) FindByID(ctx context.Context, id string) (expense.Expense, error) {
-	row := r.db.QueryRow(ctx,
-		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at, deleted_at
-			FROM expenses
-			WHERE id = $1`,
-		id,
-	)
-
-	e, err := scanExpense(row)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return expense.Expense{}, shared.ErrNotFound
-	}
-	if err != nil {
-		return expense.Expense{}, fmt.Errorf("expense repository findByID: %w", err)
-	}
-
-	return e, nil
-}
-
-// List returns non-deleted expenses for a household ordered by created_at DESC.
-func (r ExpenseRepository) List(ctx context.Context, householdID string, limit, offset int) ([]expense.Expense, error) {
+// ListByPeriod returns all non-deleted expenses for a specific period.
+func (r ExpenseRepository) ListByPeriod(ctx context.Context, periodID string) ([]expense.Expense, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, household_id, paid_by_member_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at, deleted_at
+		`SELECT id, household_id, paid_by_member_id, period_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at, deleted_at
 			FROM expenses
-			WHERE household_id = $1 AND deleted_at IS NULL
-			ORDER BY created_at DESC
-			LIMIT $2 OFFSET $3`,
-		householdID, limit, offset,
+			WHERE period_id = $1 AND deleted_at IS NULL
+			ORDER BY created_at ASC`,
+		periodID,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("expense repository list: %w", err)
+		return nil, fmt.Errorf("expense repository listByPeriod: %w", err)
 	}
-
 	defer rows.Close()
 
-	var expenses []expense.Expense
+	expenses := make([]expense.Expense, 0)
 	for rows.Next() {
-		e, err := scanExpense(rows)
-		if err != nil {
-			return nil, fmt.Errorf("expense repository list: scan: %w", err)
+		e, scanErr := scanExpense(rows)
+		if scanErr != nil {
+			return nil, fmt.Errorf("expense repository listByPeriod: scan: %w", scanErr)
 		}
 		expenses = append(expenses, e)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("expense repository list: rows: %w", err)
+		return nil, fmt.Errorf("expense repository listByPeriod: rows: %w", err)
 	}
 
 	return expenses, nil
@@ -133,20 +162,21 @@ func (r ExpenseRepository) Update(ctx context.Context, e expense.Expense) error 
 	tag, err := r.db.Exec(ctx,
 		`UPDATE expenses
 		SET paid_by_member_id = $1,
-			amount_cents      = $2,
-			description       = $3,
-			is_shared         = $4,
-			currency          = $5,
-			payment_method    = $6,
-			expense_type      = $7,
-			card_id           = $8,
-			card_name         = $9,
-			category_id       = $10,
-			total_installments = $11,
-			updated_at        = $12,
-			deleted_at        = $13
-		WHERE id = $14`,
-		nullIfEmpty(attrs.PaidByMemberID), attrs.AmountCents, attrs.Description,
+			period_id         = $2,
+			amount_cents      = $3,
+			description       = $4,
+			is_shared         = $5,
+			currency          = $6,
+			payment_method    = $7,
+			expense_type      = $8,
+			card_id           = $9,
+			card_name         = $10,
+			category_id       = $11,
+			total_installments = $12,
+			updated_at        = $13,
+			deleted_at        = $14
+		WHERE id = $15`,
+		nullIfEmpty(attrs.PaidByMemberID), nullIfEmpty(attrs.PeriodID), attrs.AmountCents, attrs.Description,
 		attrs.IsShared, attrs.Currency, string(attrs.PaymentMethod),
 		string(attrs.ExpenseType), nullIfEmpty(attrs.CardID), attrs.CardName, attrs.CategoryID,
 		attrs.TotalInstallments, attrs.UpdatedAt, attrs.DeletedAt, string(attrs.ID),
@@ -223,6 +253,7 @@ func scanExpense(r row) (expense.Expense, error) {
 		id                string
 		householdID       string
 		paidByMemberID    *string
+		periodID          *string
 		amountCents       int64
 		description       string
 		isShared          bool
@@ -238,7 +269,7 @@ func scanExpense(r row) (expense.Expense, error) {
 		deletedAt         *time.Time
 	)
 
-	if err := r.Scan(&id, &householdID, &paidByMemberID, &amountCents, &description, &isShared, &currency, &paymentMethod, &expenseType, &cardID, &cardName, &categoryID, &totalInstallments, &createdAt, &updatedAt, &deletedAt); err != nil {
+	if err := r.Scan(&id, &householdID, &paidByMemberID, &periodID, &amountCents, &description, &isShared, &currency, &paymentMethod, &expenseType, &cardID, &cardName, &categoryID, &totalInstallments, &createdAt, &updatedAt, &deletedAt); err != nil {
 		return expense.Expense{}, err
 	}
 
@@ -251,6 +282,7 @@ func scanExpense(r row) (expense.Expense, error) {
 		ID:                expense.ID(id),
 		HouseholdID:       householdID,
 		PaidByMemberID:    valueOrEmptyString(paidByMemberID),
+		PeriodID:          valueOrEmptyString(periodID),
 		AmountCents:       amountCents,
 		Description:       description,
 		IsShared:          isShared,

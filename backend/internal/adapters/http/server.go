@@ -18,6 +18,7 @@ type ServerDependencies struct {
 	Settlement       SettlementHandlerDeps
 	Category         CategoryHandlerDeps
 	SplitConfig      SplitConfigHandlerDeps
+	Period           PeriodHandlerDeps
 	JWTValidator     outbound.TokenValidator
 	MemberRepo       outbound.MemberRepository
 	AllowedOrigins   []string
@@ -102,6 +103,12 @@ func NewServer(port string, deps ServerDependencies) Server {
 
 	sch := newSplitConfigHandler(deps.SplitConfig)
 	mux.Handle("PUT /v1/households/{household_id}/split-config", protectHousehold(http.HandlerFunc(sch.handleUpdate)))
+
+	ph := newPeriodHandler(deps.Period)
+	mux.Handle("GET /v1/households/{household_id}/periods/current", protectHousehold(http.HandlerFunc(ph.handleGetCurrent)))
+	mux.Handle("POST /v1/households/{household_id}/periods/{period_id}/review", protectHousehold(http.HandlerFunc(ph.handleTransitionToReview)))
+	mux.Handle("POST /v1/households/{household_id}/periods/{period_id}/approve", protectHousehold(http.HandlerFunc(ph.handleApprove)))
+	mux.Handle("POST /v1/households/{household_id}/periods/{period_id}/close", protectHousehold(http.HandlerFunc(ph.handleClose)))
 
 	// Apply middleware chain: RequestID -> CORS -> routes
 	cors := CORSMiddleware(CORSConfig{AllowedOrigins: deps.AllowedOrigins})
