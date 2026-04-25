@@ -30,7 +30,6 @@ export function AppLayout() {
     }
 
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 880
-    const hidePrimaryNav = location.pathname.startsWith('/onboarding') || location.pathname.startsWith('/members/new') || !isMobile
 
     return (
         <HouseholdDataProvider>
@@ -46,7 +45,6 @@ export function AppLayout() {
                     periodStatus={periodStatus}
                     isMutationLocked={isMutationLocked}
                 />
-                {(!hidePrimaryNav && isMobile) && <PrimaryNav />}
                 <Outlet />
                 <BottomNav />
             </div>
