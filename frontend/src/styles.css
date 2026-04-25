@@ -2936,3 +2936,134 @@ html {
     color: var(--color-text-3);
     font-style: italic;
 }
+
+/* ─── Period Action Card ────────────────────────────────────────────────────── */
+.periodActionCard {
+    background: var(--color-brand-50);
+    border: 1px solid var(--color-brand-200);
+    margin-bottom: 24px;
+}
+
+.periodActionContent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.periodReviewGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    align-items: center;
+}
+
+@media (min-width: 640px) {
+    .periodReviewGrid {
+        grid-template-columns: 1fr auto;
+    }
+}
+
+.periodVoteActions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.ownerActionZone {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--color-brand-200);
+}
+
+.periodConsensusBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.consensusLabel {
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    color: var(--color-text-3);
+}
+
+/* ─── Salary Card ───────────────────────────────────────────────────────────── */
+.salaryCard {
+    background: linear-gradient(135deg, #FFFFFF, var(--color-brand-50));
+    border: 1px solid var(--color-brand-100);
+}
+
+.salaryHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.salaryTitle {
+    font-size: 0.95rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-1);
+    margin: 0;
+}
+
+.salaryPeriod {
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    color: var(--color-brand-600);
+    background: var(--color-brand-100);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+}
+
+.salaryMain {
+    text-align: center;
+    padding: 12px 0 24px;
+}
+
+.salaryRemaining {
+    display: block;
+    font-size: 2.2rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-brand-600);
+    letter-spacing: -0.03em;
+}
+
+.salaryNegative .salaryRemaining {
+    color: var(--color-red-600);
+}
+
+.salaryHint {
+    font-size: 0.82rem;
+    color: var(--color-text-3);
+    margin-top: 4px;
+}
+
+.salaryBreakdown {
+    border-top: 1px solid var(--color-border-soft);
+    padding-top: 16px;
+    display: grid;
+    gap: 8px;
+}
+
+.salaryRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    color: var(--color-text-2);
+}
+
+.salaryVal {
+    font-family: var(--font-mono);
+    font-weight: var(--fw-medium);
+}
+
+.salaryVal.negative {
+    color: var(--color-red-500);
+}

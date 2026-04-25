@@ -79,10 +79,12 @@ function AppShell() {
     } = useHouseholds({ isAuthenticated, handleProtectedError })
 
     const {
+        currentPeriod,
         periodStatus,
         setPeriodStatus,
         isMutationLocked,
-    } = useDashboardUxState('open')
+        loadPeriod: reloadPeriod,
+    } = useDashboardUxState(householdId)
 
     const selectedHousehold = useMemo(
         () => households.find((h) => h.id === householdId) ?? null,
@@ -90,8 +92,11 @@ function AppShell() {
     )
 
     const handleReload = useCallback(async () => {
-        await loadHouseholds()
-    }, [loadHouseholds])
+        await Promise.all([
+            loadHouseholds(),
+            reloadPeriod(),
+        ])
+    }, [loadHouseholds, reloadPeriod])
 
     const shellValue = useMemo(() => ({
         health,
@@ -105,6 +110,8 @@ function AppShell() {
         periodStatus,
         setPeriodStatus,
         isMutationLocked,
+        currentPeriod,
+        reloadPeriod,
     }), [
         health,
         householdId,
@@ -117,6 +124,8 @@ function AppShell() {
         periodStatus,
         setPeriodStatus,
         isMutationLocked,
+        currentPeriod,
+        reloadPeriod,
     ])
 
     return (

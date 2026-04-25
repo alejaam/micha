@@ -299,6 +299,23 @@ func scanExpense(r row) (expense.Expense, error) {
 	})
 }
 
+func (r ExpenseRepository) AdoptOrphanExpenses(ctx context.Context, householdID, periodID string, from, to time.Time) error {
+	_, err := r.db.Exec(ctx,
+		`UPDATE expenses
+		SET period_id = $1
+		WHERE household_id = $2
+			AND period_id IS NULL
+			AND created_at >= $3
+			AND created_at < $4
+			AND deleted_at IS NULL`,
+		periodID, householdID, from, to,
+	)
+	if err != nil {
+		return fmt.Errorf("expense repository adoptOrphanExpenses: %w", err)
+	}
+	return nil
+}
+
 func valueOrEmptyString(v *string) string {
 	if v == nil {
 		return ""

@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion'
-import { useCallback, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BottomSheet } from '../components/BottomSheet'
 import { DynamicChartsPanel } from '../components/DynamicChartsPanel'
@@ -8,13 +8,23 @@ import { ExpenseModal } from '../components/ExpenseModal'
 import { ExpenseSummary } from '../components/ExpenseSummary'
 import { FAB } from '../components/FAB'
 import { MembersPanel } from '../components/MembersPanel'
+import { PeriodManagementPanel } from '../components/PeriodManagementPanel'
 import { RecentExpenses } from '../components/RecentExpenses'
+import { RemainingSalaryPanel } from '../components/RemainingSalaryPanel'
+import { useAppShell } from '../context/AppShellContext'
 import { useHouseholdData } from '../hooks/useHouseholdData'
 import { Banner } from '../ui/Banner'
 import { EmptyState } from '../ui/EmptyState'
 
 export function DashboardPage() {
     const navigate = useNavigate()
+    const {
+        currentPeriod,
+        reloadPeriod,
+        selectedHousehold,
+        handleReload: reloadShell,
+    } = useAppShell()
+
     const {
         members,
         loadingMembers,
@@ -37,6 +47,18 @@ export function DashboardPage() {
         setError,
         submittingCreate,
     } = useHouseholdData()
+
+    const currentUserId = useMemo(() => {
+        const token = localStorage.getItem('micha_token')
+        if (!token) return ''
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]))
+            return payload.user_id || payload.sub || ''
+        } catch { return '' }
+    }, [])
+
+    // Permissive owner check: if no owner is set in DB yet, anyone can bootstrap the period
+    const isOwner = !selectedHousehold?.owner_id || selectedHousehold?.owner_id === currentUserId
 
     const [modalOpen, setModalOpen] = useState(false)
     const [quickAddOpen, setQuickAddOpen] = useState(false)
@@ -83,6 +105,19 @@ export function DashboardPage() {
         <>
             {error && <Banner type="error" onDismiss={() => setError('')}>{error}</Banner>}
             {message && <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner>}
+
+            {/* ─── Period Management (Always visible) ─── */}
+            <PeriodManagementPanel
+                householdId={householdId}
+                period={currentPeriod}
+                onStatusChange={() => {
+                    reloadPeriod()
+                    reloadShell()
+                }}
+                isOwner={isOwner}
+                members={members}
+                currentUserMemberId={currentMember?.id}
+            />
 
             {!hasExpenses && !loadingList ? (
                 <section className="card dashboardEmptyState" aria-label="Sin gastos aún">
@@ -132,6 +167,14 @@ export function DashboardPage() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
                         >
+                            {currentMember && (
+                                <RemainingSalaryPanel
+                                    householdId={householdId}
+                                    memberId={currentMember.id}
+                                    period={currentPeriod}
+                                    currency={activeCurrency}
+                                />
+                            )}
                             <section className="card dashboardSummaryCard" aria-label="Resumen del mes">
                                 <h2 className="sectionTitle">
                                     <span className="sectionTitleIcon" aria-hidden>📊</span>
@@ -208,21 +251,23 @@ export function DashboardPage() {
                 disabled={isMutationLocked}
             />
 
-            {modalOpen && (
-                <ExpenseModal
-                    onClose={() => setModalOpen(false)}
-                    onSubmit={async (payload) => {
-                        const success = await handleCreate(payload)
-                        if (success) setModalOpen(false)
-                    }}
-                    isSubmitting={submittingCreate}
-                    isMutationLocked={isMutationLocked}
-                    members={members}
-                    isLoadingMembers={loadingMembers}
-                    defaultPaidByMemberId={currentMember?.id ?? ''}
-                    householdId={householdId}
-                />
-            )}
+            <AnimatePresence>
+                {modalOpen && (
+                    <ExpenseModal
+                        onClose={() => setModalOpen(false)}
+                        onSubmit={async (payload) => {
+                            const success = await handleCreate(payload)
+                            if (success) setModalOpen(false)
+                        }}
+                        isSubmitting={submittingCreate}
+                        isMutationLocked={isMutationLocked}
+                        members={members}
+                        isLoadingMembers={loadingMembers}
+                        defaultPaidByMemberId={currentMember?.id ?? ''}
+                        householdId={householdId}
+                    />
+                )}
+            </AnimatePresence>
 
             <BottomSheet
                 open={quickAddOpen}

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getCurrentPeriod } from '../api';
 
 /**
  * Hook for managing the dashboard UI contextual state (ribbon status, active views).
@@ -39,10 +40,38 @@ export function buildConsensusState({ approved = 0, total = 0, source = 'derived
     }
 }
 
-export function useDashboardUxState(initialStatus = 'open') {
-    // periodStatus can be: 'open', 'review', 'closed'
-    const [periodStatus, setPeriodStatus] = useState(buildRibbonState(initialStatus).status);
+export function useDashboardUxState(householdId) {
+    const [currentPeriod, setCurrentPeriod] = useState(null);
+    const [periodStatus, setPeriodStatus] = useState('open');
     const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+    const [isLoadingPeriod, setIsLoadingPeriod] = useState(false);
+
+    const loadPeriod = async () => {
+        if (!householdId) return;
+        try {
+            setIsLoadingPeriod(true);
+            const period = await getCurrentPeriod({ householdId });
+            
+            if (period) {
+                setCurrentPeriod(period);
+                setPeriodStatus(period.status || period.Status || 'open');
+            } else {
+                // If API returns null data, it means no open period exists.
+                setCurrentPeriod(null);
+                setPeriodStatus('open');
+            }
+        } catch (err) {
+            console.error('Failed to load period:', err);
+            setCurrentPeriod(null);
+            setPeriodStatus('open');
+        } finally {
+            setIsLoadingPeriod(false);
+        }
+    }
+
+    useEffect(() => {
+        loadPeriod();
+    }, [householdId]);
 
     const openBottomSheet = () => setIsBottomSheetOpen(true);
     const closeBottomSheet = () => setIsBottomSheetOpen(false);
@@ -53,6 +82,7 @@ export function useDashboardUxState(initialStatus = 'open') {
     const consensus = buildConsensusState({ approved: 0, total: 0, source: 'mock' })
 
     return {
+        currentPeriod,
         periodStatus,
         setPeriodStatus,
         isBottomSheetOpen,
@@ -60,5 +90,7 @@ export function useDashboardUxState(initialStatus = 'open') {
         closeBottomSheet,
         isMutationLocked,
         consensus,
+        loadPeriod,
+        isLoadingPeriod,
     };
 }

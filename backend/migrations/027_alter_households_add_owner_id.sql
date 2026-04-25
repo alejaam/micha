@@ -1,1 +1,1 @@
-ALTER TABLE households ADD COLUMN owner_id TEXT REFERENCES users(id);
+ALTER TABLE households ADD COLUMN owner_id TEXT;

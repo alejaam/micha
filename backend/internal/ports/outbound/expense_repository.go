@@ -18,4 +18,6 @@ type ExpenseRepository interface {
 	// counting non-MSI expenses by creation date and MSI by installment month.
 	SumPersonalByMemberAndPeriod(ctx context.Context, householdID, memberID string, from, to time.Time) (int64, error)
 	Update(ctx context.Context, e expense.Expense) error
+	// AdoptOrphanExpenses links expenses without a period_id to the specified period.
+	AdoptOrphanExpenses(ctx context.Context, householdID, periodID string, from, to time.Time) error
 }

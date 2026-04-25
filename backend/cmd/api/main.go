@@ -160,6 +160,7 @@ func main() {
 		TransitionToReview: periodapp.NewTransitionToReviewUseCase(periodRepo, memberRepo),
 		ApprovePeriod:      periodapp.NewApprovePeriodUseCase(periodApprovalRepo, periodRepo, memberRepo, idGen),
 		ClosePeriod:        periodapp.NewClosePeriodUseCase(periodRepo, periodApprovalRepo, householdRepo, memberRepo, expenseRepo, installmentRepo, idGen),
+		InitializePeriod:   periodapp.NewInitializePeriodUseCase(periodRepo, householdRepo, memberRepo, expenseRepo, idGen),
 		PeriodRepo:         periodRepo,
 	}
 

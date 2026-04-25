@@ -106,6 +106,7 @@ func NewServer(port string, deps ServerDependencies) Server {
 
 	ph := newPeriodHandler(deps.Period)
 	mux.Handle("GET /v1/households/{household_id}/periods/current", protectHousehold(http.HandlerFunc(ph.handleGetCurrent)))
+	mux.Handle("POST /v1/households/{household_id}/periods/initialize", protectHousehold(http.HandlerFunc(ph.handleInitialize)))
 	mux.Handle("POST /v1/households/{household_id}/periods/{period_id}/review", protectHousehold(http.HandlerFunc(ph.handleTransitionToReview)))
 	mux.Handle("POST /v1/households/{household_id}/periods/{period_id}/approve", protectHousehold(http.HandlerFunc(ph.handleApprove)))
 	mux.Handle("POST /v1/households/{household_id}/periods/{period_id}/close", protectHousehold(http.HandlerFunc(ph.handleClose)))

@@ -101,10 +101,33 @@ func (r HouseholdRepository) FindByID(ctx context.Context, id string) (household
 	)
 
 	h, err := scanHousehold(row)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return household.Household{}, shared.ErrNotFound
-	}
 	if err != nil {
+		// FALLBACK: If owner_id column is missing, try legacy query
+		legacyRow := r.db.QueryRow(ctx,
+			`SELECT id, name, settlement_mode, currency, created_at, updated_at
+				FROM households
+				WHERE id = $1`,
+			id,
+		)
+		var (
+			lid, name, sm, curr string
+			ca, ua              time.Time
+		)
+		if lerr := legacyRow.Scan(&lid, &name, &sm, &curr, &ca, &ua); lerr == nil {
+			return household.NewFromAttributes(household.Attributes{
+				ID:             household.ID(lid),
+				Name:           name,
+				OwnerID:        "",
+				SettlementMode: household.SettlementMode(sm),
+				Currency:       curr,
+				CreatedAt:      ca,
+				UpdatedAt:      ua,
+			})
+		}
+
+		if errors.Is(err, pgx.ErrNoRows) {
+			return household.Household{}, shared.ErrNotFound
+		}
 		return household.Household{}, fmt.Errorf("household repository findByID: %w", err)
 	}
 

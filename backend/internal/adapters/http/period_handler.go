@@ -9,25 +9,44 @@ import (
 
 type PeriodHandlerDeps struct {
 	TransitionToReview inbound.TransitionToReviewUseCase
-	ApprovePeriod       inbound.ApprovePeriodUseCase
-	ClosePeriod         inbound.ClosePeriodUseCase
-	PeriodRepo          outbound.PeriodRepository
+	ApprovePeriod      inbound.ApprovePeriodUseCase
+	ClosePeriod        inbound.ClosePeriodUseCase
+	InitializePeriod   inbound.InitializePeriodUseCase
+	PeriodRepo         outbound.PeriodRepository
 }
 
 type PeriodHandler struct {
 	transitionToReview inbound.TransitionToReviewUseCase
-	approvePeriod       inbound.ApprovePeriodUseCase
-	closePeriod         inbound.ClosePeriodUseCase
-	periodRepo          outbound.PeriodRepository
+	approvePeriod      inbound.ApprovePeriodUseCase
+	closePeriod        inbound.ClosePeriodUseCase
+	initializePeriod   inbound.InitializePeriodUseCase
+	periodRepo         outbound.PeriodRepository
 }
 
 func newPeriodHandler(deps PeriodHandlerDeps) *PeriodHandler {
 	return &PeriodHandler{
 		transitionToReview: deps.TransitionToReview,
-		approvePeriod:       deps.ApprovePeriod,
-		closePeriod:         deps.ClosePeriod,
-		periodRepo:          deps.PeriodRepo,
+		approvePeriod:      deps.ApprovePeriod,
+		closePeriod:        deps.ClosePeriod,
+		initializePeriod:   deps.InitializePeriod,
+		periodRepo:         deps.PeriodRepo,
 	}
+}
+
+func (h *PeriodHandler) handleInitialize(w http.ResponseWriter, r *http.Request) {
+	householdID := r.PathValue("household_id")
+	userID, _ := UserIDFromContext(r.Context())
+
+	output, err := h.initializePeriod.Execute(r.Context(), inbound.InitializePeriodInput{
+		HouseholdID:   householdID,
+		CurrentUserID: userID,
+	})
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, output)
 }
 
 func (h *PeriodHandler) handleTransitionToReview(w http.ResponseWriter, r *http.Request) {
@@ -106,11 +125,28 @@ func (h *PeriodHandler) handleClose(w http.ResponseWriter, r *http.Request) {
 func (h *PeriodHandler) handleGetCurrent(w http.ResponseWriter, r *http.Request) {
 	householdID := r.PathValue("household_id")
 
-	p, err := h.periodRepo.GetCurrentOpen(r.Context(), householdID)
+	p, err := h.periodRepo.GetLatestByHousehold(r.Context(), householdID)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "NOT_FOUND", "no open period found")
+		// If it's a 'not found' error, return 200 with null data
+		if err.Error() == "not found" || err.Error() == "no rows in result set" {
+			writeJSON(w, http.StatusOK, map[string]any{"data": nil})
+			return
+		}
+		// If it's a real DB error (e.g. missing table), return 500 so we can diagnose
+		writeError(w, http.StatusInternalServerError, "DB_ERROR", err.Error())
 		return
 	}
 
-	writeJSON(w, http.StatusOK, p.Attributes())
+	attrs := p.Attributes()
+	writeJSON(w, http.StatusOK, map[string]any{
+		"data": map[string]any{
+			"id":           string(attrs.ID),
+			"household_id": attrs.HouseholdID,
+			"start_date":   attrs.StartDate,
+			"end_date":     attrs.EndDate,
+			"status":       string(attrs.Status),
+			"created_at":   attrs.CreatedAt,
+			"updated_at":   attrs.UpdatedAt,
+		},
+	})
 }

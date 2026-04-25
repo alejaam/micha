@@ -52,3 +52,17 @@ type ClosePeriodOutput struct {
 type ClosePeriodUseCase interface {
 	Execute(ctx context.Context, input ClosePeriodInput) (ClosePeriodOutput, error)
 }
+
+// InitializePeriodInput defines data to create the very first period.
+type InitializePeriodInput struct {
+	HouseholdID   string
+	CurrentUserID string
+}
+
+type InitializePeriodOutput struct {
+	PeriodID string
+}
+
+type InitializePeriodUseCase interface {
+	Execute(ctx context.Context, input InitializePeriodInput) (InitializePeriodOutput, error)
+}

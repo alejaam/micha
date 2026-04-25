@@ -242,6 +242,17 @@ export async function createCard({ householdId, bankName, cardName, cutoffDay })
     return parseResponse(response)
 }
 
+export async function getRemainingSalary({ householdId, memberId, from, to }) {
+    const params = new URLSearchParams()
+    if (from) params.append('from', from)
+    if (to) params.append('to', to)
+
+    const response = await fetch(`/v1/households/${householdId}/members/${memberId}/remaining-salary?${params.toString()}`, {
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
 export async function patchExpense({ id, amountCents, description }) {
     const body = {}
 
@@ -274,6 +285,49 @@ export async function deleteExpense(id) {
 export async function getMe() {
     const response = await fetch('/v1/auth/me', {
         headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
+// ─── Period Management ────────────────────────────────────────────────────────
+
+export async function getCurrentPeriod({ householdId }) {
+    const response = await fetch(`/v1/households/${householdId}/periods/current`, {
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
+export async function initializePeriod({ householdId }) {
+    const response = await fetch(`/v1/households/${householdId}/periods/initialize`, {
+        method: 'POST',
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
+export async function transitionPeriodToReview({ householdId, periodId }) {
+    const response = await fetch(`/v1/households/${householdId}/periods/${periodId}/review`, {
+        method: 'POST',
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
+export async function approvePeriod({ householdId, periodId, status, comment = '' }) {
+    const response = await fetch(`/v1/households/${householdId}/periods/${periodId}/approve`, {
+        method: 'POST',
+        headers: buildProtectedHeaders(),
+        body: JSON.stringify({ status, comment }),
+    })
+    return parseResponse(response)
+}
+
+export async function closePeriod({ householdId, periodId, force = false }) {
+    const response = await fetch(`/v1/households/${householdId}/periods/${periodId}/close`, {
+        method: 'POST',
+        headers: buildProtectedHeaders(),
+        body: JSON.stringify({ force }),
     })
     return parseResponse(response)
 }
