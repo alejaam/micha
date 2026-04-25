@@ -282,3 +282,6 @@ func (m *expenseMock) ListByHouseholdAndPeriod(_ context.Context, householdID st
 	}
 	return out, nil
 }
+func (m *expenseMock) SumPersonalByMemberAndPeriod(_ context.Context, _, _ string, _, _ time.Time) (int64, error) {
+	return 0, nil
+}

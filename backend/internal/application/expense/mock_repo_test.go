@@ -160,6 +160,32 @@ func (m *mockRepo) ListByHouseholdAndPeriod(_ context.Context, householdID strin
 	return result, nil
 }
 
+func (m *mockRepo) SumPersonalByMemberAndPeriod(_ context.Context, householdID, memberID string, from, to time.Time) (int64, error) {
+	if m.listErr != nil {
+		return 0, m.listErr
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	var total int64
+	for _, e := range m.expenses {
+		if e.HouseholdID() != householdID || e.DeletedAt() != nil {
+			continue
+		}
+		if e.PaidByMemberID() != memberID {
+			continue
+		}
+		if e.CreatedAt().Before(from) || !e.CreatedAt().Before(to) {
+			continue
+		}
+		if e.CategoryID() == "cat-personal" && !e.IsShared() {
+			total += e.AmountCents()
+		}
+	}
+
+	return total, nil
+}
+
 // mockHouseholdRepo is a minimal in-memory mock for outbound.HouseholdRepository.
 type mockHouseholdRepo struct {
 	households map[string]household.Household
@@ -293,14 +319,19 @@ func newMockCardRepo() *mockCardRepo {
 }
 
 func (r *mockCardRepo) seedCard(id, householdID, cardName string) {
+	r.seedOwnedCard(id, householdID, "", cardName)
+}
+
+func (r *mockCardRepo) seedOwnedCard(id, householdID, ownerMemberID, cardName string) {
 	c, _ := card.NewFromAttributes(card.Attributes{
-		ID:          card.ID(id),
-		HouseholdID: householdID,
-		BankName:    "BANAMEX",
-		CardName:    cardName,
-		CutoffDay:   10,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:            card.ID(id),
+		HouseholdID:   householdID,
+		OwnerMemberID: ownerMemberID,
+		BankName:      "BANAMEX",
+		CardName:      cardName,
+		CutoffDay:     10,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	})
 	r.cards[id] = c
 }

@@ -32,6 +32,7 @@ func (u RegisterCardUseCase) Execute(ctx context.Context, input inbound.Register
 	c, err := card.New(
 		card.ID(u.idGenerator.NewID()),
 		input.HouseholdID,
+		input.OwnerMemberID,
 		input.BankName,
 		input.CardName,
 		input.CutoffDay,

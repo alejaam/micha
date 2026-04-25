@@ -19,40 +19,43 @@ type ID string
 
 // Attributes is the flat DTO used for construction and rehydration.
 type Attributes struct {
-	ID          ID
-	HouseholdID string
-	BankName    string // e.g., "BANAMEX", "BBVA", "Nu", "HSBC", "Rappi"
-	CardName    string // User-friendly label, e.g., "Banamex Oro", "BBVA Azul"
-	CutoffDay   int    // Day of month (1-31) when the statement closes
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   *time.Time
+	ID            ID
+	HouseholdID   string
+	OwnerMemberID string
+	BankName      string // e.g., "BANAMEX", "BBVA", "Nu", "HSBC", "Rappi"
+	CardName      string // User-friendly label, e.g., "Banamex Oro", "BBVA Azul"
+	CutoffDay     int    // Day of month (1-31) when the statement closes
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     *time.Time
 }
 
 // Card represents a credit card used for shared expenses.
 // Each card belongs to a household and tracks the billing cutoff day.
 type Card struct {
-	id          ID
-	householdID string
-	bankName    string
-	cardName    string
-	cutoffDay   int
-	createdAt   time.Time
-	updatedAt   time.Time
-	deletedAt   *time.Time
+	id            ID
+	householdID   string
+	ownerMemberID string
+	bankName      string
+	cardName      string
+	cutoffDay     int
+	createdAt     time.Time
+	updatedAt     time.Time
+	deletedAt     *time.Time
 }
 
 // New constructs a Card from individual fields.
-func New(id ID, householdID string, bankName string, cardName string, cutoffDay int, createdAt time.Time) (Card, error) {
+func New(id ID, householdID string, ownerMemberID string, bankName string, cardName string, cutoffDay int, createdAt time.Time) (Card, error) {
 	return NewFromAttributes(Attributes{
-		ID:          id,
-		HouseholdID: householdID,
-		BankName:    bankName,
-		CardName:    cardName,
-		CutoffDay:   cutoffDay,
-		CreatedAt:   createdAt,
-		UpdatedAt:   createdAt,
-		DeletedAt:   nil,
+		ID:            id,
+		HouseholdID:   householdID,
+		OwnerMemberID: ownerMemberID,
+		BankName:      bankName,
+		CardName:      cardName,
+		CutoffDay:     cutoffDay,
+		CreatedAt:     createdAt,
+		UpdatedAt:     createdAt,
+		DeletedAt:     nil,
 	})
 }
 
@@ -86,40 +89,51 @@ func NewFromAttributes(attrs Attributes) (Card, error) {
 	}
 
 	return Card{
-		id:          attrs.ID,
-		householdID: attrs.HouseholdID,
-		bankName:    bankName,
-		cardName:    cardName,
-		cutoffDay:   attrs.CutoffDay,
-		createdAt:   attrs.CreatedAt,
-		updatedAt:   updatedAt,
-		deletedAt:   attrs.DeletedAt,
+		id:            attrs.ID,
+		householdID:   attrs.HouseholdID,
+		ownerMemberID: strings.TrimSpace(attrs.OwnerMemberID),
+		bankName:      bankName,
+		cardName:      cardName,
+		cutoffDay:     attrs.CutoffDay,
+		createdAt:     attrs.CreatedAt,
+		updatedAt:     updatedAt,
+		deletedAt:     attrs.DeletedAt,
 	}, nil
 }
 
 // Attributes returns a copy of all fields as a flat DTO.
 func (c Card) Attributes() Attributes {
 	return Attributes{
-		ID:          c.id,
-		HouseholdID: c.householdID,
-		BankName:    c.bankName,
-		CardName:    c.cardName,
-		CutoffDay:   c.cutoffDay,
-		CreatedAt:   c.createdAt,
-		UpdatedAt:   c.updatedAt,
-		DeletedAt:   c.deletedAt,
+		ID:            c.id,
+		HouseholdID:   c.householdID,
+		OwnerMemberID: c.ownerMemberID,
+		BankName:      c.bankName,
+		CardName:      c.cardName,
+		CutoffDay:     c.cutoffDay,
+		CreatedAt:     c.createdAt,
+		UpdatedAt:     c.updatedAt,
+		DeletedAt:     c.deletedAt,
 	}
 }
 
 // Getters
 func (c Card) ID() ID                { return c.id }
 func (c Card) HouseholdID() string   { return c.householdID }
+func (c Card) OwnerMemberID() string { return c.ownerMemberID }
 func (c Card) BankName() string      { return c.bankName }
 func (c Card) CardName() string      { return c.cardName }
 func (c Card) CutoffDay() int        { return c.cutoffDay }
 func (c Card) CreatedAt() time.Time  { return c.createdAt }
 func (c Card) UpdatedAt() time.Time  { return c.updatedAt }
 func (c Card) DeletedAt() *time.Time { return c.deletedAt }
+
+// IsOwnedBy returns true when the card has an owner and matches memberID.
+func (c Card) IsOwnedBy(memberID string) bool {
+	if c.ownerMemberID == "" {
+		return false
+	}
+	return strings.TrimSpace(memberID) == c.ownerMemberID
+}
 
 // IsDeleted returns true if the card has been soft-deleted.
 func (c Card) IsDeleted() bool {

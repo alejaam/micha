@@ -161,6 +161,48 @@ func (r ExpenseRepository) Update(ctx context.Context, e expense.Expense) error 
 	return nil
 }
 
+// SumPersonalByMemberAndPeriod returns personal outflow for one member in [from, to).
+func (r ExpenseRepository) SumPersonalByMemberAndPeriod(ctx context.Context, householdID, memberID string, from, to time.Time) (int64, error) {
+	var total int64
+	err := r.db.QueryRow(ctx,
+		`SELECT
+			COALESCE((
+				SELECT SUM(e.amount_cents)
+				FROM expenses e
+				JOIN categories c ON c.id = e.category_id
+				WHERE e.household_id = $1
+					AND e.paid_by_member_id = $2
+					AND e.deleted_at IS NULL
+					AND e.is_shared = FALSE
+					AND c.slug = 'personal'
+					AND e.expense_type <> 'msi'
+					AND e.created_at >= $3
+					AND e.created_at < $4
+			), 0)
+			+
+			COALESCE((
+				SELECT SUM(i.installment_amount_cents)
+				FROM installments i
+				JOIN expenses e ON e.id = i.expense_id
+				JOIN categories c ON c.id = e.category_id
+				WHERE e.household_id = $1
+					AND i.paid_by_member_id = $2
+					AND e.deleted_at IS NULL
+					AND e.is_shared = FALSE
+					AND e.expense_type = 'msi'
+					AND c.slug = 'personal'
+					AND i.start_date >= $3
+					AND i.start_date < $4
+			), 0)`,
+		householdID, memberID, from, to,
+	).Scan(&total)
+	if err != nil {
+		return 0, fmt.Errorf("expense repository sumPersonalByMemberAndPeriod: %w", err)
+	}
+
+	return total, nil
+}
+
 // ensure interface compliance at compile time.
 var _ outbound.ExpenseRepository = ExpenseRepository{}
 

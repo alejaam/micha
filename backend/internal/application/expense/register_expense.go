@@ -112,9 +112,21 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: resolve category: %w", err)
 	}
 
-	cardID, cardName, err := u.resolveCardDetails(ctx, input)
+	actorMemberID := ""
+	if strings.TrimSpace(input.CurrentUserID) != "" {
+		if actor, findErr := u.memberRepo.FindByUserID(ctx, input.HouseholdID, input.CurrentUserID); findErr == nil {
+			actorMemberID = string(actor.ID())
+		}
+	}
+
+	cardID, cardName, err := u.resolveCardDetails(ctx, input, actorMemberID)
 	if err != nil {
 		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: resolve card: %w", err)
+	}
+
+	isShared := input.IsShared
+	if u.isPersonalCategory(ctx, input.HouseholdID, input.CategoryID, categoryID) {
+		isShared = false
 	}
 
 	now := u.now()
@@ -124,7 +136,7 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		PaidByMemberID:    paidByMemberID,
 		AmountCents:       input.AmountCents,
 		Description:       input.Description,
-		IsShared:          input.IsShared,
+		IsShared:          isShared,
 		Currency:          input.Currency,
 		PaymentMethod:     expense.PaymentMethod(input.PaymentMethod),
 		ExpenseType:       expense.ExpenseType(normalizedExpenseType),
@@ -165,8 +177,8 @@ func (u RegisterExpenseUseCase) ensureActorCanRegisterFixed(ctx context.Context,
 
 	// Original logic:
 	/*
-	members, err := u.memberRepo.ListAllByHousehold(ctx, householdID)
-	...
+		members, err := u.memberRepo.ListAllByHousehold(ctx, householdID)
+		...
 	*/
 }
 
@@ -232,7 +244,7 @@ func (u RegisterExpenseUseCase) resolveCategoryID(ctx context.Context, household
 	return string(c.ID()), nil
 }
 
-func (u RegisterExpenseUseCase) resolveCardDetails(ctx context.Context, input inbound.RegisterExpenseInput) (string, string, error) {
+func (u RegisterExpenseUseCase) resolveCardDetails(ctx context.Context, input inbound.RegisterExpenseInput, actorMemberID string) (string, string, error) {
 	if expense.PaymentMethod(input.PaymentMethod) != expense.PaymentMethodCard {
 		return "", "", nil
 	}
@@ -249,8 +261,30 @@ func (u RegisterExpenseUseCase) resolveCardDetails(ctx context.Context, input in
 	if c.HouseholdID() != input.HouseholdID {
 		return "", "", shared.ErrNotFound
 	}
+	if c.OwnerMemberID() != "" && c.OwnerMemberID() != strings.TrimSpace(actorMemberID) {
+		return "", "", shared.ErrForbidden
+	}
 
 	return string(c.ID()), c.CardName(), nil
+}
+
+func (u RegisterExpenseUseCase) isPersonalCategory(ctx context.Context, householdID, rawCategory, resolvedCategoryID string) bool {
+	if strings.EqualFold(strings.TrimSpace(rawCategory), string(expense.CategoryPersonal)) {
+		return true
+	}
+
+	categories, err := u.categoryRepo.ListByHousehold(ctx, householdID)
+	if err != nil {
+		return false
+	}
+
+	for _, c := range categories {
+		if string(c.ID()) == strings.TrimSpace(resolvedCategoryID) && strings.EqualFold(c.Slug(), string(expense.CategoryPersonal)) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func normalizeExpenseType(expenseType string) string {

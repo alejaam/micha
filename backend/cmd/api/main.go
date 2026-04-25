@@ -159,7 +159,10 @@ func main() {
 		RecurringExpense: recurringExpenseDeps,
 		Household:        householdDeps,
 		Member:           memberDeps,
-		Card:             cardDeps,
+		MemberFinance: httpadapter.MemberFinanceHandlerDeps{
+			CalculateRemainingSalary: memberapp.NewCalculateRemainingSalaryUseCase(householdRepo, memberRepo, expenseRepo, installmentRepo),
+		},
+		Card: cardDeps,
 		Settlement: httpadapter.SettlementHandlerDeps{
 			Calculate: settlementapp.NewCalculateSettlementUseCase(householdRepo, memberRepo, expenseRepo, installmentRepo, recurringExpenseRepo),
 		},
