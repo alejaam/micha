@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BottomSheet } from '../components/BottomSheet'
@@ -208,21 +208,23 @@ export function DashboardPage() {
                 disabled={isMutationLocked}
             />
 
-            {modalOpen && (
-                <ExpenseModal
-                    onClose={() => setModalOpen(false)}
-                    onSubmit={async (payload) => {
-                        const success = await handleCreate(payload)
-                        if (success) setModalOpen(false)
-                    }}
-                    isSubmitting={submittingCreate}
-                    isMutationLocked={isMutationLocked}
-                    members={members}
-                    isLoadingMembers={loadingMembers}
-                    defaultPaidByMemberId={currentMember?.id ?? ''}
-                    householdId={householdId}
-                />
-            )}
+            <AnimatePresence>
+                {modalOpen && (
+                    <ExpenseModal
+                        onClose={() => setModalOpen(false)}
+                        onSubmit={async (payload) => {
+                            const success = await handleCreate(payload)
+                            if (success) setModalOpen(false)
+                        }}
+                        isSubmitting={submittingCreate}
+                        isMutationLocked={isMutationLocked}
+                        members={members}
+                        isLoadingMembers={loadingMembers}
+                        defaultPaidByMemberId={currentMember?.id ?? ''}
+                        householdId={householdId}
+                    />
+                )}
+            </AnimatePresence>
 
             <BottomSheet
                 open={quickAddOpen}

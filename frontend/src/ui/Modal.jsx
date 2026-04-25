@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
+import { motion } from 'framer-motion'
 
 /**
- * Modal — reusable accessible modal overlay.
+ * Modal — reusable accessible modal overlay with animations.
  *
  * @param {string} title
  * @param {()=>void} onClose
@@ -17,16 +18,40 @@ export function Modal({ title, onClose, children }) {
         return () => document.removeEventListener('keydown', handleKey)
     }, [onClose])
 
-    // Prevent body scroll
+    // Prevent background scroll
     useEffect(() => {
-        const prev = document.body.style.overflow
+        const originalHtmlOverflow = document.documentElement.style.overflow
+        const originalBodyOverflow = document.body.style.overflow
+
+        document.documentElement.style.overflow = 'hidden'
         document.body.style.overflow = 'hidden'
-        return () => { document.body.style.overflow = prev }
+
+        return () => {
+            document.documentElement.style.overflow = originalHtmlOverflow
+            document.body.style.overflow = originalBodyOverflow
+        }
     }, [])
 
     return (
-        <div className="modalOverlay" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
-            <div className="modalPanel card" onClick={(e) => e.stopPropagation()}>
+        <motion.div
+            className="modalOverlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+            onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+        >
+            <motion.div
+                className="modalPanel card"
+                onClick={(e) => e.stopPropagation()}
+                initial={{ y: 20, opacity: 0, scale: 0.95 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 20, opacity: 0, scale: 0.95 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            >
                 <div className="modalHeader">
                     <h2 className="modalTitle">{title}</h2>
                     <button
@@ -39,7 +64,7 @@ export function Modal({ title, onClose, children }) {
                     </button>
                 </div>
                 {children}
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     )
 }
