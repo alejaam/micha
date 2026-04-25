@@ -53,4 +53,36 @@ describe('FixedExpensesPanel', () => {
 
         expect(screen.getAllByText('MX$500.00').length).toBeGreaterThanOrEqual(2)
     })
+
+    it('splits fixed amount proportionally when settlement mode is proportional', () => {
+        render(
+            <FixedExpensesPanel
+                items={[
+                    {
+                        id: 'fx-2',
+                        expense_type: 'fixed',
+                        is_shared: true,
+                        amount_cents: 100000,
+                        description: 'Rent',
+                    },
+                ]}
+                recurringItems={[]}
+                members={[
+                    { id: 'm1', name: 'Ana' },
+                    { id: 'm2', name: 'Luis' },
+                ]}
+                settlement={{
+                    effective_settlement_mode: 'proportional',
+                    members: [
+                        { member_id: 'm1', salary_weight_bps: 7500 },
+                        { member_id: 'm2', salary_weight_bps: 2500 },
+                    ],
+                }}
+                currency="MXN"
+            />,
+        )
+
+        expect(screen.getAllByText('MX$750.00').length).toBeGreaterThanOrEqual(2)
+        expect(screen.getAllByText('MX$250.00').length).toBeGreaterThanOrEqual(2)
+    })
 })

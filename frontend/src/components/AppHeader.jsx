@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { PeriodStatusRibbon } from './PeriodStatusRibbon'
 
 /**
@@ -21,29 +21,47 @@ export function AppHeader({
   return (
     <header className="appHeader">
       {/* Brand */}
-      <div className="brand">
-        <div className="brandIcon" aria-hidden>💸</div>
-        <div>
-          <div className="brandName">micha</div>
-          <div className="brandTagline">Household expense tracker</div>
+        <div className="brand">
+          <div className="brandIcon" aria-hidden>💸</div>
+          <div>
+            <div className="brandName">micha</div>
+            <div className="brandTagline">Claridad financiera para pareja y roomies</div>
+          </div>
         </div>
-      </div>
+
+      <nav className="headerNav" aria-label="Primary sections">
+        <NavLink to="/" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+          Resumen
+        </NavLink>
+        <NavLink to="/expenses" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+          Movimientos
+        </NavLink>
+        <NavLink to="/balances" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+          Balances
+        </NavLink>
+        <NavLink to="/installments" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+          Plazos
+        </NavLink>
+        <NavLink to="/rules" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+          Reglas
+        </NavLink>
+      </nav>
 
       {/* Controls */}
       <div className="headerControls">
         {/* Household selector */}
         <div className="householdRow">
           <label htmlFor="householdInput" className="householdLabel">
-            Household
+            Hogar
           </label>
           <select
             id="householdInput"
             className="householdInput"
             value={householdId}
             onChange={(e) => onHouseholdChange(e.target.value)}
-            aria-label="Household ID"
+            aria-label="Hogar"
           >
-            <option value="">Select household</option>
+            <option value="">Seleccionar hogar</option>
             {households.map((household) => (
               <option key={household.id} value={household.id}>
                 {household.name}
@@ -57,7 +75,7 @@ export function AppHeader({
           <Link
             to="/members/new"
             className={`btn btnGhost btnSm${isMutationLocked ? ' btnDisabled' : ''}`}
-            aria-label="Invite a new member"
+            aria-label="Invitar nuevo miembro"
             aria-disabled={isMutationLocked}
             tabIndex={isMutationLocked ? -1 : 0}
             onClick={(event) => {
@@ -66,7 +84,7 @@ export function AppHeader({
               }
             }}
           >
-            + Member
+            + Miembro
           </Link>
         )}
 
@@ -76,10 +94,10 @@ export function AppHeader({
           className="btn btnGhost btnSm"
           onClick={onReload}
           disabled={isLoading}
-          aria-label="Reload expenses"
+          aria-label="Actualizar gastos"
         >
           <span className={isLoading ? 'spinIcon' : ''} aria-hidden>⟳</span>
-          {isLoading ? 'Loading…' : 'Reload'}
+          {isLoading ? 'Cargando…' : 'Actualizar'}
         </button>
 
         <button
@@ -87,9 +105,9 @@ export function AppHeader({
           className="btn btnGhostDanger btnSm"
           onClick={() => onLogout()}
           disabled={isLoading}
-          aria-label="Sign out"
+          aria-label="Cerrar sesión"
         >
-          Sign out
+          Cerrar sesión
         </button>
 
         {/* Health */}

@@ -6,12 +6,12 @@ import { Tooltip } from '../ui/Tooltip'
 import { SemanticSettlementCard } from './SemanticSettlementCard'
 
 const ALL_MONTHS = [
-  { value: 1, label: '01 - Jan' }, { value: 2, label: '02 - Feb' },
-  { value: 3, label: '03 - Mar' }, { value: 4, label: '04 - Apr' },
+  { value: 1, label: '01 - Ene' }, { value: 2, label: '02 - Feb' },
+  { value: 3, label: '03 - Mar' }, { value: 4, label: '04 - Abr' },
   { value: 5, label: '05 - May' }, { value: 6, label: '06 - Jun' },
-  { value: 7, label: '07 - Jul' }, { value: 8, label: '08 - Aug' },
+  { value: 7, label: '07 - Jul' }, { value: 8, label: '08 - Ago' },
   { value: 9, label: '09 - Sep' }, { value: 10, label: '10 - Oct' },
-  { value: 11, label: '11 - Nov' }, { value: 12, label: '12 - Dec' },
+  { value: 11, label: '11 - Nov' }, { value: 12, label: '12 - Dic' },
 ]
 
 /**
@@ -85,28 +85,28 @@ export function SettlementPanel({
   })
 
   return (
-    <section className="card" aria-label="Monthly settlement">
+    <section className="card" aria-label="Liquidación mensual">
       <h2 className="sectionTitle">
         <span className="sectionTitleIcon" aria-hidden>🧮</span>
-        Monthly settlement
-        <Tooltip text="Shows who owes whom for shared expenses this month. Based on income proportion or equal split." position="right" />
-        {isCurrentMonth && <span className="currentPeriodBadge">current</span>}
+        Liquidación mensual
+        <Tooltip text="Muestra quién debe a quién por los gastos compartidos este mes. Basado en proporción de ingresos o división igualitaria." position="right" />
+        {isCurrentMonth && <span className="currentPeriodBadge">actual</span>}
         {settlement && <span className="sectionBadge" style={{ marginLeft: isCurrentMonth ? '8px' : 'auto' }}>
-            {settlement.effective_settlement_mode === 'exact' ? 'Exact split' : 'Income proportional'}
+            {settlement.effective_settlement_mode === 'exact' ? 'División exacta' : 'Proporcional a ingresos'}
         </span>}
       </h2>
 
       {/* Period controls */}
       <div className="settlementControls">
         <div className="householdRow">
-          <label htmlFor="settlementYear" className="householdLabel">Year</label>
+          <label htmlFor="settlementYear" className="householdLabel">Año</label>
           <select
             id="settlementYear"
             className="input inputSm"
             style={{ width: 90 }}
             value={settlementYear}
             onChange={(e) => onSettlementYearChange(Number(e.target.value))}
-            aria-label="Settlement year"
+            aria-label="Año de liquidación"
           >
             {availableYears.map((y) => (
               <option key={y} value={y}>{y}</option>
@@ -114,14 +114,14 @@ export function SettlementPanel({
           </select>
         </div>
         <div className="householdRow">
-          <label htmlFor="settlementMonth" className="householdLabel">Month</label>
+          <label htmlFor="settlementMonth" className="householdLabel">Mes</label>
           <select
             id="settlementMonth"
             className="input inputSm"
             style={{ width: 120 }}
             value={settlementMonth}
             onChange={(e) => onSettlementMonthChange(Number(e.target.value))}
-            aria-label="Settlement month"
+            aria-label="Mes de liquidación"
           >
             {availableMonths.map(({ value, label }) => (
               <option key={value} value={value}>{label}</option>
@@ -135,17 +135,17 @@ export function SettlementPanel({
           disabled={loadingSettlement}
         >
           {loadingSettlement
-            ? <><span className="spinIcon" aria-hidden>&#x27F3;</span> Loading...</>
-            : 'Refresh'}
+            ? <><span className="spinIcon" aria-hidden>&#x27F3;</span> Cargando...</>
+            : 'Actualizar'}
         </button>
         {!isCurrentMonth && (
           <button
             type="button"
             className="btn btnGhost btnSm"
             onClick={onResetToCurrentMonth}
-            aria-label="Reset to current month"
+            aria-label="Volver al mes actual"
           >
-            📅 This month
+            📅 Mes actual
           </button>
         )}
       </div>
@@ -154,36 +154,38 @@ export function SettlementPanel({
         <div className="formStack">
           {settlement.fallback_reason && (
             <p className="settlementFallback" role="alert">
-              Warning: {settlement.fallback_reason}
+              Aviso: {settlement.fallback_reason}
             </p>
           )}
 
           {/* Stats strip */}
           <div className="settlementStats">
             <span className="settlementStat">
-              <span className="settlementStatLabel">Total shared:</span>
+              <span className="settlementStatLabel">Total compartido:</span>
               <span className="settlementStatValue">
                 {formatCurrency(settlement.total_shared_cents, currency)}
               </span>
             </span>
             {fixedTotalCents > 0 && (
               <span className="settlementStat">
-                <span className="settlementStatLabel">Fixed:</span>
+                <span className="settlementStatLabel">Fijos:</span>
                 <span className="settlementStatValue">
                   {formatCurrency(fixedTotalCents, currency)}
                 </span>
               </span>
             )}
             <span className="settlementStat">
-              <span className="settlementStatLabel">Mode:</span>
-              <span className="settlementStatValue">{settlement.effective_settlement_mode}</span>
+              <span className="settlementStatLabel">Modo:</span>
+              <span className="settlementStatValue">
+                {settlement.effective_settlement_mode === 'exact' ? 'Exacto' : 'Proporcional'}
+              </span>
             </span>
             <span className="settlementStat">
-              <span className="settlementStatLabel">Expenses:</span>
+              <span className="settlementStatLabel">Gastos:</span>
               <span className="settlementStatValue">{settlement.included_expense_count}</span>
             </span>
             <span className="settlementStat">
-              <span className="settlementStatLabel">Excluded:</span>
+              <span className="settlementStatLabel">Excluidos:</span>
               <span className="settlementStatValue">{settlement.excluded_voucher_count}</span>
             </span>
           </div>
@@ -194,35 +196,36 @@ export function SettlementPanel({
               {settlement.transfers.map((t, idx) => {
                 const from = memberIndex[t.from_member_id] ?? t.from_member_id.slice(0, 8)
                 const to = memberIndex[t.to_member_id] ?? t.to_member_id.slice(0, 8)
+                const amount = formatCurrency(t.amount_cents, currency)
                 return (
                   <motion.div
                     key={`${t.from_member_id}-${t.to_member_id}-${idx}`}
                     className="adjustmentCallout"
                     role="status"
-                    aria-label={`${from} owes ${to} ${formatCurrency(t.amount_cents, currency)}`}
+                    aria-label={`${from} debe a ${to} ${amount}`}
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.15, ease: "easeOut", delay: idx * 0.05 }}
                   >
                     <div className="adjustmentRow">
                       <span className="adjustmentDebtor">{from}</span>
-                      <span className="adjustmentVerb">owes</span>
+                      <span className="adjustmentVerb">debe a</span>
                       <span className="adjustmentCreditor">{to}</span>
                     </div>
                     <span className="adjustmentAmount">
-                      {formatCurrency(t.amount_cents, currency)}
+                      {amount}
                     </span>
                   </motion.div>
                 )
               })}
             </div>
           ) : (
-            <p className="emptyHint">No transfers needed — everyone is settled!</p>
+            <p className="emptyHint">¡No se necesitan transferencias — todo saldado!</p>
           )}
 
           {/* Per-member balance summary */}
           {Array.isArray(settlement.members) && settlement.members.length > 0 && (
-            <div className="settlementBalances" aria-label="Member balance cards">
+            <div className="settlementBalances" aria-label="Tarjetas de balance por miembro">
               {settlement.members.map((sm, idx) => {
                 const name = memberIndex[sm.member_id] ?? sm.member_id.slice(0, 8)
                 const pct = sm.salary_weight_bps != null
@@ -238,7 +241,7 @@ export function SettlementPanel({
                   >
                     <div className="settlementBalanceRowHeader">
                       {pct !== null && (
-                        <span className="settlementBalancePct" aria-label={`Weight ${pct}%`}>
+                        <span className="settlementBalancePct" aria-label={`Peso ${pct}%`}>
                           {pct}%
                         </span>
                       )}
@@ -248,12 +251,12 @@ export function SettlementPanel({
                       netBalanceCents={sm.net_balance_cents ?? 0}
                       currency={currency}
                     />
-                    <div className="settlementBalanceMeta" aria-label={`Paid and share details for ${name}`}>
+                    <div className="settlementBalanceMeta" aria-label={`Detalles de pago y cuota para ${name}`}>
                       <span className="settlementBalancePaid">
-                        PAID {formatCurrency(sm.paid_cents ?? 0, currency)}
+                        PAGÓ {formatCurrency(sm.paid_cents ?? 0, currency)}
                       </span>
                       <span className="settlementBalanceDue">
-                        SHARE {formatCurrency(sm.expected_share ?? 0, currency)}
+                        CUOTA {formatCurrency(sm.expected_share ?? 0, currency)}
                       </span>
                     </div>
                   </motion.div>
@@ -264,8 +267,8 @@ export function SettlementPanel({
         </div>
       ) : (
         <EmptyState
-          title="No settlement data"
-          description="No expenses recorded for this period."
+          title="Sin datos de liquidación"
+          description="No hay gastos registrados para este periodo."
           icon="[~]"
           compact
         />

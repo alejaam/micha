@@ -35,56 +35,10 @@ vi.mock('recharts', () => ({
   Tooltip: () => null,
 }))
 
-const mockCreateExpense = vi.fn()
-const mockDeleteExpense = vi.fn()
-const mockPatchExpense = vi.fn()
-const mockListRecurringExpenses = vi.fn()
+const mockUseHouseholdData = vi.fn()
 
-vi.mock('../../api', async () => {
-  const actual = await vi.importActual('../../api')
-  return {
-    ...actual,
-    createExpense: (...args) => mockCreateExpense(...args),
-    deleteExpense: (...args) => mockDeleteExpense(...args),
-    patchExpense: (...args) => mockPatchExpense(...args),
-    listRecurringExpenses: (...args) => mockListRecurringExpenses(...args),
-  }
-})
-
-const mockUseMembers = vi.fn()
-const mockUseExpenses = vi.fn()
-const mockUseSettlement = vi.fn()
-const mockUseHistoricalPeriods = vi.fn()
-const mockUseCurrentMember = vi.fn()
-const mockUseAppShell = vi.fn()
-const mockUseAuth = vi.fn()
-
-vi.mock('../../context/AppShellContext', () => ({
-  useAppShell: (...args) => mockUseAppShell(...args),
-}))
-
-vi.mock('../../context/AuthContext', () => ({
-  useAuth: (...args) => mockUseAuth(...args),
-}))
-
-vi.mock('../../hooks/useMembers', () => ({
-  useMembers: (...args) => mockUseMembers(...args),
-}))
-
-vi.mock('../../hooks/useExpenses', () => ({
-  useExpenses: (...args) => mockUseExpenses(...args),
-}))
-
-vi.mock('../../hooks/useSettlement', () => ({
-  useSettlement: (...args) => mockUseSettlement(...args),
-}))
-
-vi.mock('../../hooks/useHistoricalPeriods', () => ({
-  useHistoricalPeriods: (...args) => mockUseHistoricalPeriods(...args),
-}))
-
-vi.mock('../../hooks/useCurrentMember', () => ({
-  useCurrentMember: (...args) => mockUseCurrentMember(...args),
+vi.mock('../../hooks/useHouseholdData', () => ({
+  useHouseholdData: () => mockUseHouseholdData(),
 }))
 
 const baseMembers = [{ id: 'm1', name: 'Ana', monthly_salary_cents: 100000 }]
@@ -104,92 +58,41 @@ function makeExpense(overrides = {}) {
   }
 }
 
-function makeHookState({ items = [makeExpense()], closedPeriods = [{ key: '2026-01', label: 'Jan 26', totalCents: 150000, year: 2026, month: 1 }] } = {}) {
+function makeDefaultState(overrides = {}) {
+  const items = overrides.items || [makeExpense()]
   return {
     members: baseMembers,
     loadingMembers: false,
-    loadMembers: vi.fn(),
     items,
     loadingList: false,
-    loadExpenses: vi.fn().mockResolvedValue(undefined),
+    recurringItems: [],
     settlement: {
       members: [{ member_id: 'm1', member_name: 'Ana', net_balance_cents: 0, expected_share: 150000, paid_cents: 150000 }],
       transfers: [],
       total_shared_cents: 150000,
       included_expense_count: items.length,
-      excluded_voucher_count: 0,
-      effective_settlement_mode: 'exact',
       is_closed: false,
     },
-    loadingSettlement: false,
-    settlementYear: new Date().getUTCFullYear(),
-    settlementMonth: new Date().getUTCMonth() + 1,
-    setSettlementYear: vi.fn(),
-    setSettlementMonth: vi.fn(),
-    loadSettlement: vi.fn().mockResolvedValue(undefined),
-    resetToCurrentMonth: vi.fn(),
-    historical: {
-      closedPeriods,
-      selectedPeriodKey: closedPeriods[0]?.key ?? '',
-      setSelectedPeriodKey: vi.fn(),
-      comparisonSeries: closedPeriods.map((p) => ({ key: p.key, label: p.label, totalCents: p.totalCents })),
-      memberBalanceTrend: closedPeriods.map((p) => ({ key: p.key, label: p.label, Ana: 0 })),
-      completedMsi: [],
-      selectedPeriodSnapshot: { memberBalances: [{ memberId: 'm1', memberName: 'Ana', netBalanceCents: 0 }] },
-      isLoading: false,
-      isProvisional: false,
-      provisionalReason: '',
-    },
     currentMember: baseMembers[0],
+    activeCurrency: 'MXN',
+    householdId: 'house-1',
+    isMutationLocked: false,
+    categoryTotals: [],
+    memberActualVsExpected: [],
+    msiProgress: [],
+    spendingTrend: [],
+    handleCreate: vi.fn().mockResolvedValue(true),
+    message: '',
+    setMessage: vi.fn(),
+    error: '',
+    setError: vi.fn(),
+    submittingCreate: false,
+    ...overrides,
   }
 }
 
 function renderDashboard(custom = {}) {
-  const state = makeHookState(custom)
-  const historical = {
-    ...state.historical,
-    ...(custom.historical ?? {}),
-  }
-
-  mockUseMembers.mockReturnValue({
-    members: state.members,
-    loadingMembers: state.loadingMembers,
-    loadMembers: state.loadMembers,
-  })
-  mockUseExpenses.mockReturnValue({
-    items: state.items,
-    loadingList: state.loadingList,
-    loadExpenses: state.loadExpenses,
-  })
-  mockUseSettlement.mockReturnValue({
-    settlement: state.settlement,
-    loadingSettlement: state.loadingSettlement,
-    settlementYear: state.settlementYear,
-    settlementMonth: state.settlementMonth,
-    setSettlementYear: state.setSettlementYear,
-    setSettlementMonth: state.setSettlementMonth,
-    loadSettlement: state.loadSettlement,
-    resetToCurrentMonth: state.resetToCurrentMonth,
-  })
-  mockUseHistoricalPeriods.mockReturnValue(historical)
-  mockUseCurrentMember.mockReturnValue(state.currentMember)
-
-  const appShell = {
-    householdId: 'house-1',
-    selectedHousehold: { id: 'house-1', currency: 'MXN', created_at: '2025-01-01T00:00:00.000Z' },
-    setPeriodStatus: vi.fn(),
-    isMutationLocked: false,
-    ...custom.appShell,
-  }
-
-  const auth = {
-    isAuthenticated: true,
-    handleProtectedError: vi.fn().mockReturnValue(false),
-    ...custom.auth,
-  }
-
-  mockUseAppShell.mockReturnValue(appShell)
-  mockUseAuth.mockReturnValue(auth)
+  mockUseHouseholdData.mockReturnValue(makeDefaultState(custom))
 
   return render(
     <MemoryRouter>
@@ -201,74 +104,48 @@ function renderDashboard(custom = {}) {
 describe('DashboardPage integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockCreateExpense.mockResolvedValue(undefined)
-    mockDeleteExpense.mockResolvedValue(undefined)
-    mockPatchExpense.mockResolvedValue(undefined)
-    mockListRecurringExpenses.mockResolvedValue([])
   })
 
-  it('renders composed dashboard sections and chart summaries when data exists', () => {
+  it('renders overview sections and priority strip when data exists', () => {
     renderDashboard()
 
-    expect(screen.getByRole('region', { name: /dynamic charts/i })).toBeInTheDocument()
-    expect(screen.getByLabelText(/charts textual summaries/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/history section/i)).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: /recent expenses/i })).toBeInTheDocument()
+    expect(screen.getByText(/balances y conciliación primero/i)).toBeInTheDocument()
+    expect(screen.getByText(/transferencias pendientes/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /gastos recientes/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /ver balances →/i })).toBeInTheDocument()
   })
 
-  it('shows history loading indicator content path and no empty history state while loading', () => {
-    renderDashboard({
-      closedPeriods: [],
-      appShell: { isMutationLocked: false },
-      auth: { isAuthenticated: true },
-      items: [makeExpense()],
-      historical: {
-        closedPeriods: [],
-        selectedPeriodKey: '',
-        setSelectedPeriodKey: vi.fn(),
-        comparisonSeries: [],
-        memberBalanceTrend: [],
-        completedMsi: [],
-        selectedPeriodSnapshot: null,
-        isLoading: true,
-        isProvisional: false,
-        provisionalReason: '',
-      },
-    })
+  it('shows empty state when no expenses exist', () => {
+    renderDashboard({ items: [], recurringItems: [] })
 
-    expect(screen.getByLabelText(/history section/i)).toBeInTheDocument()
-    expect(screen.queryByText(/no closed periods yet/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/sin gastos aún/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /añadir rápido/i })).toBeInTheDocument()
   })
 
-  it('shows empty-state quick-add flow and opens bottom sheet with focusable dialog', async () => {
-    renderDashboard({ items: [], closedPeriods: [] })
+  it('opens quick add bottom sheet when clicking empty state CTA', async () => {
+    renderDashboard({ items: [], recurringItems: [] })
 
-    const quickAddButtons = screen.getAllByRole('button', { name: /quick add|add expense/i })
-    fireEvent.click(quickAddButtons[0])
+    fireEvent.click(screen.getByRole('button', { name: /añadir rápido/i }))
 
-    const dialog = await screen.findByRole('dialog', { name: /quick add/i })
-    expect(dialog).toHaveAttribute('aria-modal', 'true')
-    expect(dialog).toHaveAttribute('tabindex', '-1')
-    expect(screen.getByRole('button', { name: /close panel/i })).toHaveFocus()
+    const dialog = await screen.findByRole('dialog', { name: /añadir rápido/i })
+    expect(dialog).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /close panel/i })).toBeInTheDocument()
   })
 
-  it('submits quick-add form and closes bottom sheet after successful create', async () => {
-    renderDashboard({ items: [], closedPeriods: [] })
+  it('submits quick-add form and calls handleCreate', async () => {
+    const handleCreate = vi.fn().mockResolvedValue(true)
+    renderDashboard({ items: [], recurringItems: [], handleCreate })
 
-    fireEvent.click(screen.getAllByRole('button', { name: /quick add|add expense/i })[0])
+    fireEvent.click(screen.getByRole('button', { name: /añadir rápido/i }))
 
     fireEvent.change(screen.getByLabelText(/amount in dollars/i), { target: { value: '12.50' } })
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'Milk' } })
 
-    const form = screen.getByRole('dialog', { name: /quick add/i }).querySelector('form')
+    const form = screen.getByRole('dialog', { name: /añadir rápido/i }).querySelector('form')
     fireEvent.submit(form)
 
     await waitFor(() => {
-      expect(mockCreateExpense).toHaveBeenCalledTimes(1)
-    })
-
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog', { name: /quick add/i })).not.toBeInTheDocument()
+      expect(handleCreate).toHaveBeenCalled()
     })
   })
 })

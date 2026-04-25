@@ -129,7 +129,7 @@ func TestNewFromAttributes(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	now := time.Now()
-	c, _ := card.New("1", "h1", "Nu", "Nu", 15, now)
+	c, _ := card.New("1", "h1", "", "Nu", "Nu", 15, now)
 
 	if c.IsDeleted() {
 		t.Errorf("expected new card to not be deleted")

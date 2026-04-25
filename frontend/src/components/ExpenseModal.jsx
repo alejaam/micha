@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { listCards, listCategories } from '../api'
 import { MEXICAN_BANKS } from '../constants/mexicanBanks'
 import { FormField } from '../ui/FormField'
@@ -18,9 +19,8 @@ import { getCategoryIcon } from '../utils/categoryIcons'
  */
 
 const EXPENSE_TYPE_HINTS = {
-    variable: 'One-time expense for this period only.',
-    fixed: 'Recurs every period. Will be auto-copied when the current period closes.',
-    msi: 'Installment purchase — will generate installments for the following months.',
+    variable: 'Gasto único para este periodo.',
+    msi: 'Compra a meses sin intereses; se generan cuotas para los meses siguientes.',
 }
 
 function preferredCardStorageKey(householdId) {
@@ -37,6 +37,7 @@ export function ExpenseModal({
     defaultPaidByMemberId = '',
     householdId = '',
 }) {
+    const navigate = useNavigate()
     const [amount, setAmount] = useState('')
     const [description, setDescription] = useState('')
     const [paidByMemberId, setPaidByMemberId] = useState(defaultPaidByMemberId.trim() || '')
@@ -200,10 +201,10 @@ export function ExpenseModal({
     }
 
     return (
-        <Modal title="New expense" onClose={onClose}>
+        <Modal title="Nuevo gasto" onClose={onClose}>
             <form className="formStack" onSubmit={handleSubmit} noValidate>
                 {/* ── Essential fields ── */}
-                <FormField label="Amount" htmlFor="modalAmount">
+                <FormField label="Monto" htmlFor="modalAmount">
                     <div className="inputWrap">
                         <span className="inputPrefix" aria-hidden>$</span>
                         <input
@@ -220,11 +221,11 @@ export function ExpenseModal({
                     </div>
                 </FormField>
 
-                <FormField label="Description" htmlFor="modalDescription">
+                <FormField label="Descripción" htmlFor="modalDescription">
                     <input
                         id="modalDescription"
                         className="input"
-                        placeholder="e.g. Groceries at Trader Joe's"
+                        placeholder="Ej. Súper de la semana"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         autoComplete="off"
@@ -232,7 +233,7 @@ export function ExpenseModal({
                     />
                 </FormField>
 
-                <FormField label="Paid by" htmlFor="modalPaidBy">
+                <FormField label="Pagado por" htmlFor="modalPaidBy">
                     <select
                         id="modalPaidBy"
                         className="input"
@@ -241,29 +242,29 @@ export function ExpenseModal({
                         disabled={isSubmitting || isLoadingMembers || !hasMembers}
                     >
                         {isLoadingMembers ? (
-                            <option>Loading members…</option>
+                            <option>Cargando miembros…</option>
                         ) : !hasMembers ? (
-                            <option disabled>No eligible members available</option>
+                            <option disabled>No hay miembros elegibles</option>
                         ) : (
                             eligibleMembers.map((m) => (
                                 <option key={m.id} value={m.id}>
-                                    {m.name}{m.id === defaultPaidByMemberId ? ' (you)' : ''}
+                                    {m.name}{m.id === defaultPaidByMemberId ? ' (tú)' : ''}
                                 </option>
                             ))
                         )}
                     </select>
                     {isCurrentMemberSelected && (
-                        <p className="formHint">Defaults to you — your linked member.</p>
+                        <p className="formHint">Por defecto eres tú (miembro vinculado a tu sesión).</p>
                     )}
                     {isCurrentUserOwner && hasMembers && (
-                        <p className="formHint">As household owner, you can register expenses on behalf of other members.</p>
+                        <p className="formHint">Como owner, puedes registrar gastos para otros miembros.</p>
                     )}
                     {!isLoadingMembers && !hasMembers && (
-                        <p className="formHint formHintError">Link your account to a member first to register expenses.</p>
+                        <p className="formHint formHintError">Primero vincula tu cuenta a un miembro para registrar gastos.</p>
                     )}
                 </FormField>
 
-                <FormField label="Category" htmlFor="modalCategory">
+                <FormField label="Categoría" htmlFor="modalCategory">
                     <select
                         id="modalCategory"
                         className="input"
@@ -272,7 +273,7 @@ export function ExpenseModal({
                         disabled={isSubmitting || loadingCategories}
                     >
                         {loadingCategories ? (
-                            <option>Loading…</option>
+                            <option>Cargando…</option>
                         ) : (
                             categories.map((c) => (
                                 <option key={c.id || c.slug} value={c.id || c.slug}>
@@ -293,8 +294,8 @@ export function ExpenseModal({
                             onChange={(e) => setIsShared(e.target.checked)}
                             disabled={isSubmitting}
                         />
-                        <span className="sharedToggleText">Shared expense</span>
-                        <Tooltip text="Shared expenses are split among household members based on income proportion or equal split." />
+                        <span className="sharedToggleText">Gasto compartido</span>
+                        <Tooltip text="Los gastos compartidos se dividen entre miembros según modo del hogar (igual o proporcional)." />
                     </label>
                 </div>
 
@@ -304,12 +305,12 @@ export function ExpenseModal({
                     className="btn btnGhost btnSm advancedToggle"
                     onClick={() => setShowAdvanced((v) => !v)}
                 >
-                    {showAdvanced ? '▲ Hide options' : '▼ More options'}
+                    {showAdvanced ? '▲ Ocultar opciones' : '▼ Más opciones'}
                 </button>
 
                 {showAdvanced && (
                     <div className="formStack advancedSection">
-                        <FormField label="Payment method" htmlFor="modalPaymentMethod">
+                        <FormField label="Método de pago" htmlFor="modalPaymentMethod">
                             <select
                                 id="modalPaymentMethod"
                                 className="input"
@@ -317,20 +318,20 @@ export function ExpenseModal({
                                 onChange={(e) => setPaymentMethod(e.target.value)}
                                 disabled={isSubmitting}
                             >
-                                <option value="card">💳 Card</option>
-                                <option value="cash">💵 Cash</option>
-                                <option value="transfer">🏦 Transfer</option>
-                                <option value="voucher">🎟️ Voucher</option>
+                                <option value="card">💳 Tarjeta</option>
+                                <option value="cash">💵 Efectivo</option>
+                                <option value="transfer">🏦 Transferencia</option>
+                                <option value="voucher">🎟️ Vale</option>
                             </select>
                             {isVoucher && (
                                 <p className="formHint">
-                                    Voucher expenses are included in settlement calculations.
+                                    Los gastos con vale sí se consideran en la conciliación.
                                 </p>
                             )}
                         </FormField>
 
                         {isCardPayment && (
-                            <FormField label="Card name" htmlFor="modalCardName">
+                            <FormField label="Tarjeta" htmlFor="modalCardName">
                                 <select
                                     id="modalCardName"
                                     className="input"
@@ -347,7 +348,7 @@ export function ExpenseModal({
                                     }}
                                     disabled={isSubmitting || loadingCards}
                                 >
-                                    <option value="" disabled>Select card...</option>
+                                    <option value="" disabled>Selecciona tarjeta...</option>
                                     {hasRegisteredCards ? (
                                         cards.map((item) => (
                                             <option key={item.id} value={item.id}>
@@ -361,7 +362,7 @@ export function ExpenseModal({
                                     )}
                                 </select>
                                 {hasRegisteredCards && (
-                                    <p className="formHint">Using registered cards from this household.</p>
+                                    <p className="formHint">Usando tarjetas registradas en este hogar.</p>
                                 )}
                             </FormField>
                         )}
@@ -370,7 +371,7 @@ export function ExpenseModal({
                             label={(
                                 <>
                                     Expense type
-                                    <Tooltip text="Variable is one-time, Fixed is recurring, and MSI creates installments over future months." position="right" />
+                                    <Tooltip text="Variable es único del periodo. MSI genera cuotas para meses futuros." position="right" />
                                 </>
                             )}
                             htmlFor="modalExpenseType"
@@ -383,14 +384,24 @@ export function ExpenseModal({
                                 disabled={isSubmitting}
                             >
                                 <option value="variable">📝 Variable</option>
-                                <option value="fixed">📌 Fixed (recurrent)</option>
-                                <option value="msi">🔒 MSI (installments)</option>
+                                <option value="msi">🔒 MSI (meses sin intereses)</option>
                             </select>
                             <p className="formHint">{EXPENSE_TYPE_HINTS[expenseType]}</p>
+                            <p className="formHint formHintWarning">Gestiona gastos fijos desde configuración.</p>
+                            <button
+                                type="button"
+                                className="btn btnGhost btnSm"
+                                onClick={() => {
+                                    onClose()
+                                    navigate('/onboarding/fixed-expenses')
+                                }}
+                            >
+                                Ir a gastos fijos
+                            </button>
                         </FormField>
 
                         {isMSI && (
-                            <FormField label="Total installments" htmlFor="modalTotalInstallments">
+                            <FormField label="Total de cuotas" htmlFor="modalTotalInstallments">
                                 <input
                                     id="modalTotalInstallments"
                                     className="input"
@@ -413,11 +424,11 @@ export function ExpenseModal({
                         disabled={!isValid || isSubmitting || isLoadingMembers || !hasMembers || isMutationLocked}
                     >
                         {isSubmitting
-                            ? <><span className="spinIcon" aria-hidden>⟳</span> Saving…</>
-                            : 'Add expense'}
+                            ? <><span className="spinIcon" aria-hidden>⟳</span> Guardando…</>
+                            : 'Agregar gasto'}
                     </button>
                     <button type="button" className="btn btnGhost btnFull" onClick={onClose} disabled={isSubmitting}>
-                        Cancel
+                        Cancelar
                     </button>
                 </div>
             </form>

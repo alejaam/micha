@@ -26,8 +26,8 @@ describe('HistorySection', () => {
       />,
     )
 
-    expect(screen.getByText(/no closed periods yet/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /add expense/i })).toBeInTheDocument()
+    expect(screen.getByText(/aún no hay periodos cerrados/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /agregar gasto/i })).toBeInTheDocument()
   })
 
   it('renders closed period list and provisional label', () => {
@@ -51,6 +51,7 @@ describe('HistorySection', () => {
     fireEvent.click(janButton)
     expect(onSelectPeriod).toHaveBeenCalledWith('2026-01')
     expect(screen.getByText(/historical endpoint unavailable/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /reintentar historial/i })).toBeInTheDocument()
   })
 
   it('keeps section regions and list semantics for keyboard/a11y navigation', () => {

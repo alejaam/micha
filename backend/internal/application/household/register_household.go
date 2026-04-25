@@ -47,6 +47,7 @@ func (u RegisterHouseholdUseCase) Execute(ctx context.Context, input inbound.Reg
 	h, err := household.New(
 		household.ID(u.idGenerator.NewID()),
 		input.Name,
+		input.CurrentUserID,
 		input.SettlementMode,
 		input.Currency,
 		u.now(),

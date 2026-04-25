@@ -11,6 +11,7 @@ type RegisterHouseholdInput struct {
 	Name           string
 	SettlementMode household.SettlementMode
 	Currency       string
+	CurrentUserID  string
 }
 
 // RegisterHouseholdOutput contains created household identifiers.

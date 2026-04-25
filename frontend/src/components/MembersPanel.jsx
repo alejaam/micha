@@ -15,11 +15,11 @@ export function MembersPanel({ members = [], currency = 'MXN' }) {
     const totalSalaryCents = members.reduce((sum, m) => sum + (m.monthly_salary_cents || 0), 0)
 
     return (
-        <section className="card" aria-label="Household members">
+        <section className="card" aria-label="Miembros del hogar">
             <div className="listHeader">
                 <h2 className="sectionTitle">
                     <span className="sectionTitleIcon" aria-hidden>👥</span>
-                    Members
+                    Miembros
                 </h2>
                 <span className="listCount">{members.length}</span>
             </div>
@@ -42,16 +42,16 @@ export function MembersPanel({ members = [], currency = 'MXN' }) {
                                 {salaryCents > 0 ? (
                                     <>
                                         <span className="memberSalary">
-                                            {formatCurrency(salaryCents, currency)}/mo
+                                            {formatCurrency(salaryCents, currency)}/mes
                                         </span>
                                         {weightPct && (
                                             <span className="memberWeight">
-                                                {weightPct}% weight
+                                                {weightPct}% peso
                                             </span>
                                         )}
                                     </>
                                 ) : (
-                                    <span className="memberNoSalary">no salary set</span>
+                                    <span className="memberNoSalary">sin salario</span>
                                 )}
                             </div>
                         </div>

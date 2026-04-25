@@ -22,6 +22,7 @@ import (
 	expenseapp "micha/backend/internal/application/expense"
 	householdapp "micha/backend/internal/application/household"
 	memberapp "micha/backend/internal/application/member"
+	periodapp "micha/backend/internal/application/period"
 	recurringexpenseapp "micha/backend/internal/application/recurringexpense"
 	settlementapp "micha/backend/internal/application/settlement"
 	infraauth "micha/backend/internal/infrastructure/auth"
@@ -76,6 +77,8 @@ func main() {
 	cardRepo := postgres.NewCardRepository(pool)
 	categoryRepo := postgres.NewCategoryRepository(pool)
 	userRepo := postgres.NewUserRepository(pool)
+	periodRepo := postgres.NewPeriodRepository(pool)
+	periodApprovalRepo := postgres.NewPeriodApprovalRepository(pool)
 	idGen := uuidGenerator{}
 
 	hasher := infraauth.NewBcryptHasher()
@@ -152,6 +155,14 @@ func main() {
 		Delete:   cardapp.NewDeleteCardUseCase(cardRepo),
 	}
 
+	// Period use cases and handler dependencies.
+	periodDeps := httpadapter.PeriodHandlerDeps{
+		TransitionToReview: periodapp.NewTransitionToReviewUseCase(periodRepo, memberRepo),
+		ApprovePeriod:      periodapp.NewApprovePeriodUseCase(periodApprovalRepo, periodRepo, memberRepo, idGen),
+		ClosePeriod:        periodapp.NewClosePeriodUseCase(periodRepo, periodApprovalRepo, householdRepo, memberRepo, expenseRepo, installmentRepo, idGen),
+		PeriodRepo:         periodRepo,
+	}
+
 	// Server dependencies grouped by resource.
 	serverDeps := httpadapter.ServerDependencies{
 		Auth:             authDeps,
@@ -159,12 +170,16 @@ func main() {
 		RecurringExpense: recurringExpenseDeps,
 		Household:        householdDeps,
 		Member:           memberDeps,
-		Card:             cardDeps,
+		MemberFinance: httpadapter.MemberFinanceHandlerDeps{
+			CalculateRemainingSalary: memberapp.NewCalculateRemainingSalaryUseCase(householdRepo, memberRepo, expenseRepo, installmentRepo),
+		},
+		Card: cardDeps,
 		Settlement: httpadapter.SettlementHandlerDeps{
 			Calculate: settlementapp.NewCalculateSettlementUseCase(householdRepo, memberRepo, expenseRepo, installmentRepo, recurringExpenseRepo),
 		},
 		Category:       categoryDeps,
 		SplitConfig:    splitConfigDeps,
+		Period:         periodDeps,
 		JWTValidator:   validator,
 		MemberRepo:     memberRepo,
 		AllowedOrigins: cfg.AllowedOrigins,

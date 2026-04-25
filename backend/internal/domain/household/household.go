@@ -32,6 +32,7 @@ type ID string
 type Attributes struct {
 	ID             ID
 	Name           string
+	OwnerID        string
 	SettlementMode SettlementMode
 	Currency       string // ISO 4217 code (uppercase)
 	SplitConfig    SplitConfig
@@ -43,6 +44,7 @@ type Attributes struct {
 type Household struct {
 	id             ID
 	name           string
+	ownerID        string
 	settlementMode SettlementMode
 	currency       string
 	createdAt      time.Time
@@ -50,10 +52,11 @@ type Household struct {
 }
 
 // New constructs a Household from individual fields.
-func New(id ID, name string, settlementMode SettlementMode, currency string, createdAt time.Time) (Household, error) {
+func New(id ID, name string, ownerID string, settlementMode SettlementMode, currency string, createdAt time.Time) (Household, error) {
 	return NewFromAttributes(Attributes{
 		ID:             id,
 		Name:           name,
+		OwnerID:        ownerID,
 		SettlementMode: settlementMode,
 		Currency:       currency,
 		CreatedAt:      createdAt,
@@ -91,6 +94,7 @@ func NewFromAttributes(attrs Attributes) (Household, error) {
 	return Household{
 		id:             attrs.ID,
 		name:           name,
+		ownerID:        strings.TrimSpace(attrs.OwnerID),
 		settlementMode: attrs.SettlementMode,
 		currency:       currency,
 		createdAt:      attrs.CreatedAt,
@@ -103,6 +107,7 @@ func (h Household) Attributes() Attributes {
 	return Attributes{
 		ID:             h.id,
 		Name:           h.name,
+		OwnerID:        h.ownerID,
 		SettlementMode: h.settlementMode,
 		Currency:       h.currency,
 		SplitConfig:    SplitConfig{}, // Always empty for now; loaded separately by adapters
@@ -144,6 +149,7 @@ func (h *Household) UpdateSplitConfig(sc SplitConfig) {
 
 func (h Household) ID() ID                         { return h.id }
 func (h Household) Name() string                   { return h.name }
+func (h Household) OwnerID() string                { return h.ownerID }
 func (h Household) SettlementMode() SettlementMode { return h.settlementMode }
 func (h Household) Currency() string               { return h.currency }
 func (h Household) CreatedAt() time.Time           { return h.createdAt }

@@ -12,7 +12,7 @@ export function PeriodStatusRibbon({ status = 'open' }) {
             className={`periodStatusRibbon periodStatusRibbon-${normalizedStatus}`}
             role="status"
             aria-live="polite"
-            aria-label={`Period status: ${description}`}
+            aria-label={`Estado del periodo: ${description}`}
         >
             <span className="periodStatusRibbonLabel">PERIOD</span>
             <span className="periodStatusRibbonState">{stateLabel}</span>

@@ -31,15 +31,15 @@ export function ExpenseList({
   )
 
   return (
-    <section className="card expenseListCard" aria-label="Expense list">
+    <section className="card expenseListCard" aria-label="Lista de gastos">
       {/* ── List header ── */}
       <div className="listHeader">
-        <h2 className="listTitle">Expenses</h2>
+        <h2 className="listTitle">Gastos</h2>
 
         {!isLoading && items.length > 0 && (
           <div className="listMeta">
             <span className="listCount">
-              {items.length} item{items.length !== 1 ? 's' : ''}
+              {items.length} {items.length === 1 ? 'ítem' : 'ítems'}
             </span>
             <span className="totalBadge">{formatCurrency(totalCents, currency)}</span>
           </div>
@@ -48,7 +48,7 @@ export function ExpenseList({
 
       {/* ── Loading skeletons ── */}
       {isLoading && (
-        <ul className="expenseStack" aria-label="Loading…" aria-busy>
+        <ul className="expenseStack" aria-label="Cargando…" aria-busy>
           {[0, 1, 2].map((i) => (
             <li key={i} className="expenseItem skeleton" aria-hidden />
           ))}
@@ -58,9 +58,9 @@ export function ExpenseList({
       {/* ── Empty state ── */}
       {!isLoading && items.length === 0 && (
         <EmptyState
-          title="No expenses yet"
-          description="Add your first expense using quick add."
-          ctaLabel="Quick add"
+          title="Sin gastos aún"
+          description="Agrega tu primer gasto usando añadir rápido."
+          ctaLabel="Añadir rápido"
           onCta={onQuickAdd}
           icon="[+]"
           compact

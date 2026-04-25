@@ -28,9 +28,9 @@ func NewCardRepository(db *pgxpool.Pool) CardRepository {
 func (r CardRepository) Save(ctx context.Context, c card.Card) error {
 	attrs := c.Attributes()
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO cards (id, household_id, bank_name, card_name, cutoff_day, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		string(attrs.ID), attrs.HouseholdID, attrs.BankName, attrs.CardName, attrs.CutoffDay, attrs.CreatedAt, attrs.UpdatedAt,
+		`INSERT INTO cards (id, household_id, owner_member_id, bank_name, card_name, cutoff_day, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+		string(attrs.ID), attrs.HouseholdID, nullableString(attrs.OwnerMemberID), attrs.BankName, attrs.CardName, attrs.CutoffDay, attrs.CreatedAt, attrs.UpdatedAt,
 	)
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -46,7 +46,7 @@ func (r CardRepository) Save(ctx context.Context, c card.Card) error {
 // FindByID retrieves a card by ID.
 func (r CardRepository) FindByID(ctx context.Context, id string) (card.Card, error) {
 	row := r.db.QueryRow(ctx,
-		`SELECT id, household_id, bank_name, card_name, cutoff_day, created_at, updated_at, deleted_at
+		`SELECT id, household_id, owner_member_id, bank_name, card_name, cutoff_day, created_at, updated_at, deleted_at
 			FROM cards
 			WHERE id = $1 AND deleted_at IS NULL`,
 		id,
@@ -66,7 +66,7 @@ func (r CardRepository) FindByID(ctx context.Context, id string) (card.Card, err
 // ListByHousehold returns all active cards for a household ordered by created_at DESC.
 func (r CardRepository) ListByHousehold(ctx context.Context, householdID string) ([]card.Card, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, household_id, bank_name, card_name, cutoff_day, created_at, updated_at, deleted_at
+		`SELECT id, household_id, owner_member_id, bank_name, card_name, cutoff_day, created_at, updated_at, deleted_at
 			FROM cards
 			WHERE household_id = $1 AND deleted_at IS NULL
 			ORDER BY created_at DESC`,
@@ -119,28 +119,42 @@ type scanner interface {
 // scanCard reconstructs a card.Card from a row/rows scanner.
 func scanCard(r scanner) (card.Card, error) {
 	var (
-		id          string
-		householdID string
-		bankName    string
-		cardName    string
-		cutoffDay   int
-		createdAt   time.Time
-		updatedAt   time.Time
-		deletedAt   *time.Time
+		id            string
+		householdID   string
+		ownerMemberID *string
+		bankName      string
+		cardName      string
+		cutoffDay     int
+		createdAt     time.Time
+		updatedAt     time.Time
+		deletedAt     *time.Time
 	)
 
-	if err := r.Scan(&id, &householdID, &bankName, &cardName, &cutoffDay, &createdAt, &updatedAt, &deletedAt); err != nil {
+	if err := r.Scan(&id, &householdID, &ownerMemberID, &bankName, &cardName, &cutoffDay, &createdAt, &updatedAt, &deletedAt); err != nil {
 		return card.Card{}, err
 	}
 
+	resolvedOwnerMemberID := ""
+	if ownerMemberID != nil {
+		resolvedOwnerMemberID = *ownerMemberID
+	}
+
 	return card.NewFromAttributes(card.Attributes{
-		ID:          card.ID(id),
-		HouseholdID: householdID,
-		BankName:    bankName,
-		CardName:    cardName,
-		CutoffDay:   cutoffDay,
-		CreatedAt:   createdAt,
-		UpdatedAt:   updatedAt,
-		DeletedAt:   deletedAt,
+		ID:            card.ID(id),
+		HouseholdID:   householdID,
+		OwnerMemberID: resolvedOwnerMemberID,
+		BankName:      bankName,
+		CardName:      cardName,
+		CutoffDay:     cutoffDay,
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
+		DeletedAt:     deletedAt,
 	})
+}
+
+func nullableString(v string) *string {
+	if v == "" {
+		return nil
+	}
+	return &v
 }

@@ -7,6 +7,6 @@ describe('ConsensusProgressRing', () => {
     render(<ConsensusProgressRing approved={1} total={2} />)
 
     expect(screen.getByText('50%')).toBeInTheDocument()
-    expect(screen.getByText(/1\/2 approvals/i)).toBeInTheDocument()
+    expect(screen.getByText(/1\/2 cuotas/i)).toBeInTheDocument()
   })
 })

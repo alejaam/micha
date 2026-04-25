@@ -33,6 +33,12 @@ func (h cardHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	memberID, ok := MemberIDFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "UNAUTHORIZED", "missing authenticated member context")
+		return
+	}
+
 	var body struct {
 		BankName  string `json:"bank_name"`
 		CardName  string `json:"card_name"`
@@ -43,10 +49,11 @@ func (h cardHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	out, err := h.deps.Register.Execute(r.Context(), inbound.RegisterCardInput{
-		HouseholdID: householdID,
-		BankName:    body.BankName,
-		CardName:    body.CardName,
-		CutoffDay:   body.CutoffDay,
+		HouseholdID:   householdID,
+		OwnerMemberID: memberID,
+		BankName:      body.BankName,
+		CardName:      body.CardName,
+		CutoffDay:     body.CutoffDay,
 	})
 	if err != nil {
 		writeErrorFromCardDomain(w, err)
@@ -77,13 +84,14 @@ func (h cardHandler) handleList(w http.ResponseWriter, r *http.Request) {
 	for _, item := range cards {
 		attrs := item.Attributes()
 		items = append(items, map[string]any{
-			"id":           string(attrs.ID),
-			"household_id": attrs.HouseholdID,
-			"bank_name":    attrs.BankName,
-			"card_name":    attrs.CardName,
-			"cutoff_day":   attrs.CutoffDay,
-			"created_at":   attrs.CreatedAt,
-			"updated_at":   attrs.UpdatedAt,
+			"id":              string(attrs.ID),
+			"household_id":    attrs.HouseholdID,
+			"owner_member_id": attrs.OwnerMemberID,
+			"bank_name":       attrs.BankName,
+			"card_name":       attrs.CardName,
+			"cutoff_day":      attrs.CutoffDay,
+			"created_at":      attrs.CreatedAt,
+			"updated_at":      attrs.UpdatedAt,
 		})
 	}
 

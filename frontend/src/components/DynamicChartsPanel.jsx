@@ -15,9 +15,21 @@ import {
 } from 'recharts'
 import { formatCurrency } from '../utils'
 
-const DONUT_NEUTRALS = ['#0A0A0A', '#2A2A2A', '#4A4A4A', '#6A6A6A', '#8A8A8A', '#AAAAAA']
-const CHART_GRID = '#E8E8E8'
-const CHART_TEXT = '#666666'
+// Brand Blue Palette (matching CSS tokens)
+const COLOR_BRAND_600 = '#2563eb'
+const COLOR_BRAND_400 = '#60a5fa'
+const COLOR_BRAND_200 = '#bfdbfe'
+
+const DONUT_COLORS = [
+    COLOR_BRAND_600,
+    COLOR_BRAND_400,
+    '#6366f1', // Indigo accent
+    '#0ea5e9', // Sky accent
+    COLOR_BRAND_200,
+    '#94a3b8', // Slate muted
+]
+const CHART_GRID = '#e2e8f0' // Matching --color-border
+const CHART_TEXT = '#64748b' // Matching --color-text-3
 
 function moneyTick(value, currency) {
   return formatCurrency(value ?? 0, currency)
@@ -29,9 +41,9 @@ function chartTooltipValue(value, currency) {
 
 export function CategoryDonutChart({ data, currency }) {
   return (
-    <div className="chartPanelCard" aria-label="Expenses by category">
-      <p className="chartPanelLabel">CATEGORIES</p>
-      <h3 className="chartPanelTitle">Expenses by category</h3>
+    <div className="chartPanelCard" aria-label="Gastos por categoría">
+      <p className="chartPanelLabel">CATEGORÍAS</p>
+      <h3 className="chartPanelTitle">Distribución por categoría</h3>
 
       <div className="chartCanvas chartCanvasDonut">
         <ResponsiveContainer width="100%" height="100%">
@@ -47,14 +59,14 @@ export function CategoryDonutChart({ data, currency }) {
               stroke="none"
             >
               {data.map((entry, index) => (
-                <Cell key={`${entry.key}-${index}`} fill={DONUT_NEUTRALS[index % DONUT_NEUTRALS.length]} />
+                <Cell key={`${entry.key}-${index}`} fill={DONUT_COLORS[index % DONUT_COLORS.length]} />
               ))}
             </Pie>
           </PieChart>
         </ResponsiveContainer>
       </div>
 
-      <ul className="chartLegend" aria-label="Category totals summary">
+      <ul className="chartLegend" aria-label="Resumen de totales por categoría">
         {data.slice(0, 4).map((entry) => (
           <li key={entry.key} className="chartLegendRow">
             <span className="chartLegendName">{entry.label}</span>
@@ -68,9 +80,9 @@ export function CategoryDonutChart({ data, currency }) {
 
 export function MemberComparisonChart({ data, currency }) {
   return (
-    <div className="chartPanelCard" aria-label="Member actual versus expected spending">
-      <p className="chartPanelLabel">MEMBERS</p>
-      <h3 className="chartPanelTitle">Actual vs expected spend</h3>
+    <div className="chartPanelCard" aria-label="Gasto real vs esperado por miembro">
+      <p className="chartPanelLabel">MIEMBROS</p>
+      <h3 className="chartPanelTitle">Gasto real vs cuota esperada</h3>
 
       <div className="chartCanvas">
         <ResponsiveContainer width="100%" height="100%">
@@ -85,14 +97,14 @@ export function MemberComparisonChart({ data, currency }) {
               tickLine={false}
             />
             <Tooltip formatter={(value) => chartTooltipValue(value, currency)} />
-            <Bar dataKey="actualCents" fill="#0A0A0A" radius={[4, 4, 0, 0]} name="Actual" />
-            <Bar dataKey="expectedCents" fill="#8A8A8A" radius={[4, 4, 0, 0]} name="Expected" />
+            <Bar dataKey="actualCents" fill={COLOR_BRAND_600} radius={[4, 4, 0, 0]} name="Real" />
+            <Bar dataKey="expectedCents" fill={COLOR_BRAND_200} radius={[4, 4, 0, 0]} name="Esperado" />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
       <p className="chartSummary" role="note">
-        Dark bars represent actual paid amounts; gray bars represent expected share.
+        Barras azules: pagos reales; barras claras: cuota proporcional.
       </p>
     </div>
   )
@@ -100,9 +112,9 @@ export function MemberComparisonChart({ data, currency }) {
 
 export function SpendingTrendChart({ data, currency }) {
   return (
-    <div className="chartPanelCard" aria-label="Household spending trend over time">
-      <p className="chartPanelLabel">TREND</p>
-      <h3 className="chartPanelTitle">Household spending over time</h3>
+    <div className="chartPanelCard" aria-label="Tendencia de gasto del hogar">
+      <p className="chartPanelLabel">TENDENCIA</p>
+      <h3 className="chartPanelTitle">Historial de gastos mensuales</h3>
 
       <div className="chartCanvas">
         <ResponsiveContainer width="100%" height="100%">
@@ -120,17 +132,17 @@ export function SpendingTrendChart({ data, currency }) {
             <Line
               type="monotone"
               dataKey="totalCents"
-              stroke="#0A0A0A"
+              stroke={COLOR_BRAND_600}
               strokeWidth={2}
-              dot={{ r: 2, fill: '#0A0A0A' }}
-              activeDot={{ r: 4 }}
+              dot={{ r: 3, fill: COLOR_BRAND_600, strokeWidth: 0 }}
+              activeDot={{ r: 5, strokeWidth: 0 }}
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
       <p className="chartSummary" role="note">
-        Line values show monthly total household spending in {currency}.
+        Total mensual de gastos compartidos en {currency}.
       </p>
     </div>
   )
@@ -138,9 +150,9 @@ export function SpendingTrendChart({ data, currency }) {
 
 export function MsiProgressList({ data }) {
   return (
-    <div className="chartPanelCard" aria-label="MSI progress">
-      <p className="chartPanelLabel">MSI</p>
-      <h3 className="chartPanelTitle">Installment progress</h3>
+    <div className="chartPanelCard" aria-label="Progreso de MSI">
+      <p className="chartPanelLabel">PLAZOS</p>
+      <h3 className="chartPanelTitle">Progreso de pagos a meses</h3>
 
       <ul className="msiProgressList">
         {data.slice(0, 5).map((item) => (
@@ -152,9 +164,9 @@ export function MsiProgressList({ data }) {
               </span>
             </div>
             <div className="msiProgressTrack" aria-hidden>
-              <span className="msiProgressFill" style={{ width: `${item.progressPercent}%` }} />
+              <span className="msiProgressFill" style={{ width: `${item.progressPercent}%`, background: COLOR_BRAND_600 }} />
             </div>
-            <p className="msiProgressMeta">{item.remainingInstallments} installments remaining</p>
+            <p className="msiProgressMeta">Quedan {item.remainingInstallments} mensualidades</p>
           </li>
         ))}
       </ul>
@@ -186,7 +198,7 @@ export function DynamicChartsPanel({
   return (
     <motion.section
       className="card dynamicChartsPanel"
-      aria-label="Dynamic charts"
+      aria-label="Gráficos dinámicos"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18, ease: 'easeOut' }}
@@ -194,9 +206,9 @@ export function DynamicChartsPanel({
       <div className="dynamicChartsHeader">
         <h2 className="sectionTitle">
           <span className="sectionTitleIcon" aria-hidden>◌</span>
-          Dynamic charts
+          Gráficos dinámicos
         </h2>
-        <p className="dynamicChartsSubtitle">Live visual summary for this period.</p>
+        <p className="dynamicChartsSubtitle">Resumen visual en vivo de este periodo.</p>
       </div>
 
       <div className="dynamicChartsGrid">
@@ -206,10 +218,10 @@ export function DynamicChartsPanel({
         {showMsi && <MsiProgressList data={msiProgress} />}
       </div>
 
-      <div className="dynamicChartsNarrative" aria-label="Charts textual summaries" tabIndex={0}>
+      <div className="dynamicChartsNarrative" aria-label="Resumen textual de gráficos" tabIndex={0}>
         {topCategory && (
           <p>
-            Top category: <strong>{topCategory.label}</strong> at{' '}
+            Categoría principal: <strong>{topCategory.label}</strong> con{' '}
             <strong>{formatCurrency(topCategory.totalCents, currency)}</strong>
             {' '}({topCategory.percentage.toFixed(1)}%).
           </p>
@@ -217,10 +229,10 @@ export function DynamicChartsPanel({
 
         {topVariance && (
           <p>
-            Largest variance: <strong>{topVariance.memberName}</strong>{' '}
+            Mayor varianza: <strong>{topVariance.memberName}</strong>{' '}
             <span className={topVariance.deltaCents > 0 ? 'valueSemanticWarning' : 'valueSemanticSuccess'}>
-              {topVariance.deltaCents > 0 ? 'over expected' : 'under expected'}{' '}
-              by {formatCurrency(Math.abs(topVariance.deltaCents), currency)}
+              {topVariance.deltaCents > 0 ? 'por encima de su cuota' : 'por debajo de su cuota'}{' '}
+              por {formatCurrency(Math.abs(topVariance.deltaCents), currency)}
             </span>
             .
           </p>
@@ -228,7 +240,7 @@ export function DynamicChartsPanel({
 
         {latestPoint && (
           <p>
-            Latest trend point ({latestPoint.label}):{' '}
+            Último punto de tendencia ({latestPoint.label}):{' '}
             <strong>{formatCurrency(latestPoint.totalCents, currency)}</strong>.
           </p>
         )}

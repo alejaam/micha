@@ -20,7 +20,7 @@ export function CardExpensesPanel({ items = [], members = [], currency = 'MXN' }
     const grouped = useMemo(() => {
         const map = {}
         for (const e of cardItems) {
-            const card = e.card_name || 'Unknown'
+            const card = e.card_name || 'Desconocida'
             if (!map[card]) map[card] = { cardName: card, byMember: {} }
             const mid = e.paid_by_member_id
             map[card].byMember[mid] = (map[card].byMember[mid] ?? 0) + e.amount_cents
@@ -42,31 +42,31 @@ export function CardExpensesPanel({ items = [], members = [], currency = 'MXN' }
 
     if (cardItems.length === 0) {
         return (
-            <section className="card" aria-label="Card expenses">
+            <section className="card" aria-label="Gastos de tarjeta">
                 <h2 className="sectionTitle">
                     <span className="sectionTitleIcon" aria-hidden>&#9646;</span>
-                    Card expenses
+                    Gastos de tarjeta
                 </h2>
                 <div className="emptyState">
-                    <p className="emptyTitle">No card expenses yet</p>
-                    <p className="emptyHint">Mark expenses as paid with &quot;Card&quot; when adding them.</p>
+                    <p className="emptyTitle">Sin gastos de tarjeta aún</p>
+                    <p className="emptyHint">Marca gastos como pagados con &quot;Tarjeta&quot; al añadirlos.</p>
                 </div>
             </section>
         )
     }
 
     return (
-        <section className="card" aria-label="Card expenses">
+        <section className="card" aria-label="Gastos de tarjeta">
             <h2 className="sectionTitle">
                 <span className="sectionTitleIcon" aria-hidden>&#9646;</span>
-                Card expenses
-                {cardItems.length > 0 && <span className="sectionBadge">{cardItems.length} charges • {formatCurrency(grandTotal, currency)}</span>}
+                Gastos de tarjeta
+                {cardItems.length > 0 && <span className="sectionBadge">{cardItems.length} {cardItems.length === 1 ? 'cargo' : 'cargos'} • {formatCurrency(grandTotal, currency)}</span>}
             </h2>
 
             <div className="cardExpensesTable">
                 {/* Header row */}
                 <div className="cardTableHeader">
-                    <span className="cardColConcept">Card</span>
+                    <span className="cardColConcept">Tarjeta</span>
                     {members.map((m) => (
                         <span key={m.id} className="cardColMember">{m.name}</span>
                     ))}
@@ -97,7 +97,7 @@ export function CardExpensesPanel({ items = [], members = [], currency = 'MXN' }
                 </div>
 
                 <div className="cardGrandTotal">
-                    <span className="cardGrandTotalLabel">Grand total</span>
+                    <span className="cardGrandTotalLabel">Gran total</span>
                     <span className="cardGrandTotalValue">{formatCurrency(grandTotal, currency)}</span>
                 </div>
             </div>

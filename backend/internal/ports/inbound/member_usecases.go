@@ -50,6 +50,26 @@ type DeleteMemberInput struct {
 	HouseholdID string
 }
 
+// CalculateRemainingSalaryInput defines one period request for member finance reporting.
+type CalculateRemainingSalaryInput struct {
+	HouseholdID string
+	MemberID    string
+	Year        int
+	Month       int
+}
+
+// CalculateRemainingSalaryOutput contains member finance totals for one period.
+type CalculateRemainingSalaryOutput struct {
+	HouseholdID           string
+	MemberID              string
+	Year                  int
+	Month                 int
+	MonthlySalaryCents    int64
+	PersonalExpensesCents int64
+	AllocatedDebtCents    int64
+	RemainingSalaryCents  int64
+}
+
 type RegisterMemberUseCase interface {
 	Execute(ctx context.Context, input RegisterMemberInput) (RegisterMemberOutput, error)
 }
@@ -64,4 +84,8 @@ type UpdateMemberUseCase interface {
 
 type DeleteMemberUseCase interface {
 	Execute(ctx context.Context, input DeleteMemberInput) error
+}
+
+type CalculateRemainingSalaryUseCase interface {
+	Execute(ctx context.Context, input CalculateRemainingSalaryInput) (CalculateRemainingSalaryOutput, error)
 }

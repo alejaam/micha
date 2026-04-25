@@ -305,6 +305,76 @@ func TestRegisterExpense_OwnerCanCreateMSI(t *testing.T) {
 	}
 }
 
+func TestRegisterExpense_WithOwnedCardFromAnotherMember_Forbidden(t *testing.T) {
+	t.Parallel()
+	repo := newMockRepo()
+	hhRepo := newMockHouseholdRepo("hh-1")
+	mRepo := newMockMemberRepo()
+	now := time.Now()
+	mRepo.seedMemberWithUser("m-owner", "hh-1", "u-owner", now)
+	mRepo.seedMemberWithUser("m-other", "hh-1", "u-other", now.Add(time.Minute))
+	cardRepo := newMockCardRepo()
+	cardRepo.seedOwnedCard("card-1", "hh-1", "m-owner", "Nu Personal")
+	catRepo := newMockCategoryRepo()
+	catRepo.seedCategory("cat-other", "hh-1", "other")
+	instRepo := newMockInstallmentRepo()
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"))
+
+	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
+		HouseholdID:    "hh-1",
+		PaidByMemberID: "m-other",
+		CurrentUserID:  "u-other",
+		AmountCents:    3100,
+		Description:    "Compra",
+		IsShared:       true,
+		Currency:       "MXN",
+		PaymentMethod:  "card",
+		ExpenseType:    "variable",
+		CardID:         "card-1",
+	})
+	if !errors.Is(err, shared.ErrForbidden) {
+		t.Fatalf("expected shared.ErrForbidden, got %v", err)
+	}
+}
+
+func TestRegisterExpense_PersonalCategoryForcesUnshared(t *testing.T) {
+	t.Parallel()
+	repo := newMockRepo()
+	hhRepo := newMockHouseholdRepo("hh-1")
+	mRepo := newMockMemberRepo()
+	mRepo.seedMemberWithUser("m-1", "hh-1", "u-1", time.Now())
+	cardRepo := newMockCardRepo()
+	catRepo := newMockCategoryRepo()
+	catRepo.seedCategory("cat-other", "hh-1", "other")
+	catRepo.seedCategory("cat-personal", "hh-1", "personal")
+	instRepo := newMockInstallmentRepo()
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"))
+
+	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
+		HouseholdID:    "hh-1",
+		PaidByMemberID: "m-1",
+		CurrentUserID:  "u-1",
+		AmountCents:    1200,
+		Description:    "Spotify",
+		IsShared:       true,
+		Currency:       "MXN",
+		PaymentMethod:  "card",
+		ExpenseType:    "variable",
+		CategoryID:     "personal",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	saved, err := repo.FindByID(context.Background(), "exp-1")
+	if err != nil {
+		t.Fatalf("find saved expense: %v", err)
+	}
+	if saved.IsShared() {
+		t.Fatalf("expected personal expense to be forced as non-shared")
+	}
+}
+
 func TestRegisterExpense_MemberCanCreateFixed(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()

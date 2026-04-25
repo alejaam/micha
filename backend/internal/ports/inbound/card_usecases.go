@@ -8,10 +8,11 @@ import (
 
 // RegisterCardInput contains required data to register a card.
 type RegisterCardInput struct {
-	HouseholdID string
-	BankName    string
-	CardName    string
-	CutoffDay   int
+	HouseholdID   string
+	OwnerMemberID string
+	BankName      string
+	CardName      string
+	CutoffDay     int
 }
 
 // RegisterCardOutput contains the created card identifier.
