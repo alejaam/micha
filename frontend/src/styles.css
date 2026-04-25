@@ -1296,7 +1296,8 @@ ul {
     width: 100%;
     max-width: 480px;
     max-height: 90dvh;
-    overflow: visible;
+    overflow-y: auto;
+    overflow-x: hidden;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     animation: slideUp var(--dur-slow) var(--ease-spring) forwards;
     opacity: 1;

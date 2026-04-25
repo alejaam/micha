@@ -305,7 +305,7 @@ export function ExpenseModal({
                     className="btn btnGhost btnSm advancedToggle"
                     onClick={() => setShowAdvanced((v) => !v)}
                 >
-                    {showAdvanced ? '▲ Ocultar opciones' : '▼ More options'}
+                    {showAdvanced ? '▲ Ocultar opciones' : '▼ Más opciones'}
                 </button>
 
                 {showAdvanced && (
