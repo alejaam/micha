@@ -254,6 +254,18 @@ func (r MemberRepository) CountActiveByHousehold(ctx context.Context, householdI
 	return count, nil
 }
 
+// LinkByEmail links any member record matching the email (and with null user_id) to the given userID.
+func (r MemberRepository) LinkByEmail(ctx context.Context, email, userID string) error {
+	_, err := r.db.Exec(ctx,
+		`UPDATE members SET user_id = $1, updated_at = NOW() WHERE LOWER(email) = LOWER($2) AND user_id IS NULL`,
+		userID, email,
+	)
+	if err != nil {
+		return fmt.Errorf("member repository linkByEmail: %w", err)
+	}
+	return nil
+}
+
 func scanMember(r row) (member.Member, error) {
 	var (
 		id                 string

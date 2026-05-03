@@ -41,9 +41,10 @@ func NewClosePeriodUseCase(
 		expenseRepo:     expenseRepo,
 		installmentRepo: installmentRepo,
 		idGenerator:     idGenerator,
-		now:             time.Now,
+		now:             appshared.Now,
 	}
 }
+
 
 func (u ClosePeriodUseCase) Execute(ctx context.Context, input inbound.ClosePeriodInput) (inbound.ClosePeriodOutput, error) {
 	// 1. Retrieve the household and current member/actor.
@@ -91,7 +92,17 @@ func (u ClosePeriodUseCase) Execute(ctx context.Context, input inbound.ClosePeri
 
 	// 5. Create Rollover (Next Period).
 	nextStart := p.EndDate().Add(24 * time.Hour)
-	nextEnd := nextStart.AddDate(0, 1, -1) // Assume monthly
+	
+	var nextEnd time.Time
+	if h.Attributes().PeriodFrequency == "biweekly" {
+		nextEnd = nextStart.AddDate(0, 0, 14) // Sumar 14 días para que el total sean 15
+	} else {
+		// Mensual: misma fecha el próximo mes
+		nextEnd = nextStart.AddDate(0, 1, -1)
+	}
+
+	// Asegurar que el nextEnd respeta el closingDay si es posible (ajustar a fin de mes si el día no existe)
+	// Para mensual es fácil con AddDate(0, 1, -1) si nextStart es closingDay+1.
 	
 	nextPeriod, err := period.New(
 		period.ID(u.idGenerator.NewID()),
@@ -140,7 +151,7 @@ func (u ClosePeriodUseCase) validateConsensus(ctx context.Context, householdID, 
 
 	for _, m := range members {
 		status, exists := approvalMap[string(m.ID())]
-		if !exists {
+		if exists {
 			return fmt.Errorf("member %s has not voted", m.ID())
 		}
 		if status == periodapproval.ApprovalStatusObjected {

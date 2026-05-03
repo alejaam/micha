@@ -94,7 +94,7 @@ export async function loginUser({ email, password }) {
     return parseResponse(response)
 }
 
-export async function createHousehold({ name, settlementMode = 'equal', currency = 'MXN' }) {
+export async function createHousehold({ name, settlementMode = 'equal', currency = 'MXN', closingDay = 15, periodFrequency = 'monthly' }) {
     const response = await fetch('/v1/households', {
         method: 'POST',
         headers: buildProtectedHeaders(),
@@ -102,6 +102,8 @@ export async function createHousehold({ name, settlementMode = 'equal', currency
             name,
             settlement_mode: settlementMode,
             currency,
+            closing_day: closingDay,
+            period_frequency: periodFrequency,
         }),
     })
 
@@ -328,6 +330,25 @@ export async function closePeriod({ householdId, periodId, force = false }) {
         method: 'POST',
         headers: buildProtectedHeaders(),
         body: JSON.stringify({ force }),
+    })
+    return parseResponse(response)
+}
+
+export async function advanceTime(days) {
+    const response = await fetch(`/v1/dev/time-offset?days=${days}`, {
+        method: 'POST',
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
+export async function listPeriods({ householdId, limit = 20, offset = 0 }) {
+    const params = new URLSearchParams({
+        limit: String(limit),
+        offset: String(offset),
+    })
+    const response = await fetch(`/v1/households/${householdId}/periods?${params.toString()}`, {
+        headers: buildProtectedHeaders(),
     })
     return parseResponse(response)
 }

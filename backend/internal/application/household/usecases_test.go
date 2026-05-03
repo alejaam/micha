@@ -146,7 +146,7 @@ func TestUpdateSplitConfig_Success(t *testing.T) {
 	t.Parallel()
 	repo := newMockHouseholdRepo()
 	now := time.Now()
-	h, _ := household.New(household.ID("hh-1"), "Casa", household.SettlementModeEqual, "MXN", now)
+	h, _ := household.New(household.ID("hh-1"), "Casa", "u-1", household.SettlementModeEqual, "MXN", now)
 	_ = repo.Save(context.Background(), h)
 
 	uc := householdapp.NewUpdateSplitConfigUseCase(repo)
@@ -170,7 +170,7 @@ func TestUpdateSplitConfig_InvalidSum(t *testing.T) {
 	t.Parallel()
 	repo := newMockHouseholdRepo()
 	now := time.Now()
-	h, _ := household.New(household.ID("hh-1"), "Casa", household.SettlementModeEqual, "MXN", now)
+	h, _ := household.New(household.ID("hh-1"), "Casa", "u-1", household.SettlementModeEqual, "MXN", now)
 	_ = repo.Save(context.Background(), h)
 
 	uc := householdapp.NewUpdateSplitConfigUseCase(repo)
@@ -204,7 +204,7 @@ func TestListHouseholds_Success(t *testing.T) {
 	t.Parallel()
 	repo := newMockHouseholdRepo()
 	now := time.Now()
-	h, _ := household.New(household.ID("hh-1"), "Casa", household.SettlementModeEqual, "MXN", now)
+	h, _ := household.New(household.ID("hh-1"), "Casa", "u-1", household.SettlementModeEqual, "MXN", now)
 	_ = repo.Save(context.Background(), h)
 	uc := householdapp.NewListHouseholdsUseCase(repo)
 

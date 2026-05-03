@@ -139,6 +139,21 @@ func (m *mockRepo) Update(_ context.Context, e expense.Expense) error {
 	return nil
 }
 
+func (m *mockRepo) ListByPeriod(_ context.Context, periodID string) ([]expense.Expense, error) {
+	if m.listErr != nil {
+		return nil, m.listErr
+	}
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	var result []expense.Expense
+	for _, e := range m.expenses {
+		if e.Attributes().PeriodID == periodID && e.DeletedAt() == nil {
+			result = append(result, e)
+		}
+	}
+	return result, nil
+}
+
 func (m *mockRepo) ListByHouseholdAndPeriod(_ context.Context, householdID string, from, to time.Time) ([]expense.Expense, error) {
 	if m.listErr != nil {
 		return nil, m.listErr
@@ -148,42 +163,19 @@ func (m *mockRepo) ListByHouseholdAndPeriod(_ context.Context, householdID strin
 
 	result := make([]expense.Expense, 0)
 	for _, e := range m.expenses {
-		if e.HouseholdID() != householdID || e.DeletedAt() != nil {
-			continue
+		if e.HouseholdID() == householdID && e.DeletedAt() == nil && (e.CreatedAt().After(from) || e.CreatedAt().Equal(from)) && e.CreatedAt().Before(to) {
+			result = append(result, e)
 		}
-		if e.CreatedAt().Before(from) || !e.CreatedAt().Before(to) {
-			continue
-		}
-		result = append(result, e)
 	}
-
 	return result, nil
 }
 
 func (m *mockRepo) SumPersonalByMemberAndPeriod(_ context.Context, householdID, memberID string, from, to time.Time) (int64, error) {
-	if m.listErr != nil {
-		return 0, m.listErr
-	}
-	m.mu.RLock()
-	defer m.mu.RUnlock()
+	return 0, nil
+}
 
-	var total int64
-	for _, e := range m.expenses {
-		if e.HouseholdID() != householdID || e.DeletedAt() != nil {
-			continue
-		}
-		if e.PaidByMemberID() != memberID {
-			continue
-		}
-		if e.CreatedAt().Before(from) || !e.CreatedAt().Before(to) {
-			continue
-		}
-		if e.CategoryID() == "cat-personal" && !e.IsShared() {
-			total += e.AmountCents()
-		}
-	}
-
-	return total, nil
+func (m *mockRepo) AdoptOrphanExpenses(_ context.Context, _, _ string, _, _ time.Time) error {
+	return nil
 }
 
 // mockHouseholdRepo is a minimal in-memory mock for outbound.HouseholdRepository.
@@ -294,14 +286,15 @@ func (r *mockMemberRepo) ListAllByHousehold(_ context.Context, householdID strin
 	}
 	return res, nil
 }
-func (r *mockMemberRepo) ListByHousehold(_ context.Context, _ string, _, _ int) ([]member.Member, error) {
-	return nil, nil
+func (r *mockMemberRepo) ListByHousehold(_ context.Context, householdID string, _, _ int) ([]member.Member, error) {
+	return r.ListAllByHousehold(context.Background(), householdID)
 }
 func (r *mockMemberRepo) Update(_ context.Context, _ member.Member) error { return nil }
 func (r *mockMemberRepo) Delete(_ context.Context, _ string) error        { return nil }
 func (r *mockMemberRepo) CountActiveByHousehold(_ context.Context, _ string) (int, error) {
-	return len(r.members), nil
+	return 0, nil
 }
+func (r *mockMemberRepo) LinkByEmail(_ context.Context, _, _ string) error { return nil }
 
 type mockCategoryRepoActual struct {
 	mu   sync.Mutex

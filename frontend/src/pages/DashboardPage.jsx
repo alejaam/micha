@@ -9,6 +9,7 @@ import { ExpenseSummary } from '../components/ExpenseSummary'
 import { FAB } from '../components/FAB'
 import { MembersPanel } from '../components/MembersPanel'
 import { PeriodManagementPanel } from '../components/PeriodManagementPanel'
+import { PeriodHistory } from '../components/PeriodHistory'
 import { RecentExpenses } from '../components/RecentExpenses'
 import { RemainingSalaryPanel } from '../components/RemainingSalaryPanel'
 import { useAppShell } from '../context/AppShellContext'
@@ -187,6 +188,8 @@ export function DashboardPage() {
                                 members={members}
                                 currency={activeCurrency}
                             />
+
+                            <PeriodHistory householdId={householdId} />
 
                             <button
                                 type="button"

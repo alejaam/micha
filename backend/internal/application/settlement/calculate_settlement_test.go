@@ -166,7 +166,7 @@ type householdMock struct {
 
 func newHouseholdMock(t *testing.T) *householdMock {
 	t.Helper()
-	h, err := household.New(household.ID("hh-1"), "Casa", household.SettlementModeEqual, "MXN", time.Now())
+	h, err := household.New(household.ID("hh-1"), "Casa", "u-1", household.SettlementModeEqual, "MXN", time.Now())
 	if err != nil {
 		t.Fatalf("household.New: %v", err)
 	}
@@ -241,6 +241,7 @@ func (m *memberMock) Delete(_ context.Context, _ string) error    { return nil }
 func (m *memberMock) CountActiveByHousehold(_ context.Context, _ string) (int, error) {
 	return len(m.members), nil
 }
+func (m *memberMock) LinkByEmail(_ context.Context, _, _ string) error { return nil }
 
 type expenseMock struct {
 	expenses []expense.Expense
@@ -284,4 +285,10 @@ func (m *expenseMock) ListByHouseholdAndPeriod(_ context.Context, householdID st
 }
 func (m *expenseMock) SumPersonalByMemberAndPeriod(_ context.Context, _, _ string, _, _ time.Time) (int64, error) {
 	return 0, nil
+}
+func (m *expenseMock) ListByPeriod(_ context.Context, _ string) ([]expense.Expense, error) {
+	return nil, nil
+}
+func (m *expenseMock) AdoptOrphanExpenses(_ context.Context, _, _ string, _, _ time.Time) error {
+	return nil
 }

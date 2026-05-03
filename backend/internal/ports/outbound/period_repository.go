@@ -21,4 +21,7 @@ type PeriodRepository interface {
 
 	// GetLatestByHousehold retrieves the latest period (regardless of status) for a household.
 	GetLatestByHousehold(ctx context.Context, householdID string) (period.Period, error)
+
+	// ListByHousehold retrieves all periods for a household, ordered by start_date DESC.
+	ListByHousehold(ctx context.Context, householdID string, limit, offset int) ([]period.Period, error)
 }

@@ -356,6 +356,18 @@ func (m *mockMemberRepo) CountActiveByHousehold(_ context.Context, householdID s
 	return count, nil
 }
 
+func (m *mockMemberRepo) LinkByEmail(_ context.Context, email, userID string) error {
+	for id, mem := range m.members {
+		if mem.Email() == email && mem.UserID() == "" {
+			attrs := mem.Attributes()
+			attrs.UserID = userID
+			updated, _ := member.NewFromAttributes(attrs)
+			m.members[id] = updated
+		}
+	}
+	return nil
+}
+
 // --- Helper to create test expenses ---
 
 func makeTestExpense(t *testing.T, id, householdID string, amountCents int64) expense.Expense {

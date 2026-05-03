@@ -68,7 +68,7 @@ func NewRegisterExpenseUseCaseWithPolicy(
 		categoryRepo:       categoryRepo,
 		installmentRepo:    installmentRepo,
 		idGenerator:        idGenerator,
-		now:                time.Now,
+		now:                appshared.Now,
 		allowOwnerOnBehalf: allowOwnerOnBehalf,
 	}
 }

@@ -147,6 +147,10 @@ func (m *mockMemberRepo) CountActiveByHousehold(_ context.Context, householdID s
 	return count, nil
 }
 
+func (m *mockMemberRepo) LinkByEmail(_ context.Context, _, _ string) error {
+	return nil
+}
+
 func TestRegisterMember_Success(t *testing.T) {
 	t.Parallel()
 	repo := newMockMemberRepo()
@@ -293,6 +297,12 @@ func (r remainingSalaryExpenseRepo) SumPersonalByMemberAndPeriod(context.Context
 	return r.personalByUser, nil
 }
 func (r remainingSalaryExpenseRepo) Update(context.Context, expense.Expense) error { return nil }
+func (r remainingSalaryExpenseRepo) AdoptOrphanExpenses(context.Context, string, string, time.Time, time.Time) error {
+	return nil
+}
+func (r remainingSalaryExpenseRepo) ListByPeriod(context.Context, string) ([]expense.Expense, error) {
+	return nil, nil
+}
 
 type remainingSalaryInstallmentRepo struct{}
 

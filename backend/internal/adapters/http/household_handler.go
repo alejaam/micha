@@ -32,9 +32,11 @@ func newHouseholdHandler(deps HouseholdHandlerDeps) householdHandler {
 // handleCreate handles POST /v1/households.
 func (h householdHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Name           string `json:"name"`
-		SettlementMode string `json:"settlement_mode"`
-		Currency       string `json:"currency"`
+		Name            string `json:"name"`
+		SettlementMode  string `json:"settlement_mode"`
+		Currency        string `json:"currency"`
+		ClosingDay      int    `json:"closing_day"`
+		PeriodFrequency string `json:"period_frequency"`
 	}
 	if err := decodeJSON(r, w, &body); err != nil {
 		return
@@ -43,10 +45,12 @@ func (h householdHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserIDFromContext(r.Context())
 
 	out, err := h.deps.Register.Execute(r.Context(), inbound.RegisterHouseholdInput{
-		Name:           body.Name,
-		SettlementMode: household.SettlementMode(body.SettlementMode),
-		Currency:       body.Currency,
-		CurrentUserID:  userID,
+		Name:            body.Name,
+		SettlementMode:  household.SettlementMode(body.SettlementMode),
+		Currency:        body.Currency,
+		ClosingDay:      body.ClosingDay,
+		PeriodFrequency: body.PeriodFrequency,
+		CurrentUserID:   userID,
 	})
 	if err != nil {
 		writeErrorFromHouseholdDomain(w, err)
@@ -80,12 +84,14 @@ func (h householdHandler) handleList(w http.ResponseWriter, r *http.Request) {
 	for _, item := range households {
 		attrs := item.Attributes()
 		items = append(items, map[string]any{
-			"id":              string(attrs.ID),
-			"name":            attrs.Name,
-			"settlement_mode": attrs.SettlementMode,
-			"currency":        attrs.Currency,
-			"created_at":      attrs.CreatedAt,
-			"updated_at":      attrs.UpdatedAt,
+			"id":               string(attrs.ID),
+			"name":             attrs.Name,
+			"settlement_mode":  attrs.SettlementMode,
+			"currency":         attrs.Currency,
+			"closing_day":      attrs.ClosingDay,
+			"period_frequency": attrs.PeriodFrequency,
+			"created_at":       attrs.CreatedAt,
+			"updated_at":       attrs.UpdatedAt,
 		})
 	}
 
@@ -133,13 +139,15 @@ func (h householdHandler) handleGet(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"data": map[string]any{
-			"id":              string(attrs.ID),
-			"name":            attrs.Name,
-			"settlement_mode": attrs.SettlementMode,
-			"currency":        attrs.Currency,
-			"split_config":    splitConfig,
-			"created_at":      attrs.CreatedAt,
-			"updated_at":      attrs.UpdatedAt,
+			"id":               string(attrs.ID),
+			"name":             attrs.Name,
+			"settlement_mode":  attrs.SettlementMode,
+			"currency":         attrs.Currency,
+			"closing_day":      attrs.ClosingDay,
+			"period_frequency": attrs.PeriodFrequency,
+			"split_config":     splitConfig,
+			"created_at":       attrs.CreatedAt,
+			"updated_at":       attrs.UpdatedAt,
 		},
 	})
 }
@@ -153,19 +161,23 @@ func (h householdHandler) handleUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		Name           string `json:"name"`
-		SettlementMode string `json:"settlement_mode"`
-		Currency       string `json:"currency"`
+		Name            string `json:"name"`
+		SettlementMode  string `json:"settlement_mode"`
+		Currency        string `json:"currency"`
+		ClosingDay      int    `json:"closing_day"`
+		PeriodFrequency string `json:"period_frequency"`
 	}
 	if err := decodeJSON(r, w, &body); err != nil {
 		return
 	}
 
 	err := h.deps.Update.Execute(r.Context(), inbound.UpdateHouseholdInput{
-		HouseholdID:    householdID,
-		Name:           body.Name,
-		SettlementMode: household.SettlementMode(body.SettlementMode),
-		Currency:       body.Currency,
+		HouseholdID:     householdID,
+		Name:            body.Name,
+		SettlementMode:  household.SettlementMode(body.SettlementMode),
+		Currency:        body.Currency,
+		ClosingDay:      body.ClosingDay,
+		PeriodFrequency: body.PeriodFrequency,
 	})
 	if err != nil {
 		writeErrorFromHouseholdDomain(w, err)

@@ -88,6 +88,11 @@ func (h authHandler) handleMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.deps.Members != nil {
+		// Auto-link any pending member records for this email before listing households.
+		if err := h.deps.Members.LinkByEmail(r.Context(), email, userID); err != nil {
+			slog.WarnContext(r.Context(), "failed to auto-link member by email", "email", email, "error", err)
+		}
+
 		households, err := h.deps.Members.ListHouseholdIDsByUserID(r.Context(), userID)
 		if err == nil {
 			roles := make([]map[string]any, 0, len(households))

@@ -16,8 +16,6 @@ export function PeriodManagementPanel({
     period,
     onStatusChange,
     isOwner = false,
-    members = [],
-    currentUserMemberId = '',
 }) {
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState('')

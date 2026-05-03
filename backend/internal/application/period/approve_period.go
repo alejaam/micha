@@ -32,7 +32,7 @@ func NewApprovePeriodUseCase(
 		periodRepo:   periodRepo,
 		memberRepo:   memberRepo,
 		idGenerator:  idGenerator,
-		now:          time.Now,
+		now:          appshared.Now,
 	}
 }
 

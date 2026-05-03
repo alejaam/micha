@@ -4,8 +4,8 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"time"
 
+	appshared "micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/settlement"
 	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
@@ -32,7 +32,7 @@ func (h settlementHandler) handleGetMonthly(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	now := time.Now().UTC()
+	now := appshared.Now().UTC()
 	year := queryInt(r, "year", now.Year())
 	month := queryInt(r, "month", int(now.Month()))
 

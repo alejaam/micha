@@ -80,9 +80,9 @@ func NewHouseholdRepository(db *pgxpool.Pool) HouseholdRepository {
 func (r HouseholdRepository) Save(ctx context.Context, h household.Household) error {
 	attrs := h.Attributes()
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO households (id, name, owner_id, settlement_mode, currency, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		string(attrs.ID), attrs.Name, nullIfEmpty(attrs.OwnerID), string(attrs.SettlementMode), attrs.Currency, attrs.CreatedAt, attrs.UpdatedAt,
+		`INSERT INTO households (id, name, owner_id, settlement_mode, currency, closing_day, period_frequency, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+		string(attrs.ID), attrs.Name, nullIfEmpty(attrs.OwnerID), string(attrs.SettlementMode), attrs.Currency, attrs.ClosingDay, attrs.PeriodFrequency, attrs.CreatedAt, attrs.UpdatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("household repository save: %w", err)
@@ -94,7 +94,7 @@ func (r HouseholdRepository) Save(ctx context.Context, h household.Household) er
 // FindByID retrieves a household by ID.
 func (r HouseholdRepository) FindByID(ctx context.Context, id string) (household.Household, error) {
 	row := r.db.QueryRow(ctx,
-		`SELECT id, name, owner_id, settlement_mode, currency, created_at, updated_at
+		`SELECT id, name, owner_id, settlement_mode, currency, closing_day, period_frequency, created_at, updated_at
 			FROM households
 			WHERE id = $1`,
 		id,
@@ -102,7 +102,7 @@ func (r HouseholdRepository) FindByID(ctx context.Context, id string) (household
 
 	h, err := scanHousehold(row)
 	if err != nil {
-		// FALLBACK: If owner_id column is missing, try legacy query
+		// FALLBACK: If owner_id or new columns are missing, try legacy query
 		legacyRow := r.db.QueryRow(ctx,
 			`SELECT id, name, settlement_mode, currency, created_at, updated_at
 				FROM households
@@ -115,13 +115,15 @@ func (r HouseholdRepository) FindByID(ctx context.Context, id string) (household
 		)
 		if lerr := legacyRow.Scan(&lid, &name, &sm, &curr, &ca, &ua); lerr == nil {
 			return household.NewFromAttributes(household.Attributes{
-				ID:             household.ID(lid),
-				Name:           name,
-				OwnerID:        "",
-				SettlementMode: household.SettlementMode(sm),
-				Currency:       curr,
-				CreatedAt:      ca,
-				UpdatedAt:      ua,
+				ID:              household.ID(lid),
+				Name:            name,
+				OwnerID:         "",
+				SettlementMode:  household.SettlementMode(sm),
+				Currency:        curr,
+				ClosingDay:      15,
+				PeriodFrequency: "monthly",
+				CreatedAt:       ca,
+				UpdatedAt:       ua,
 			})
 		}
 
@@ -143,7 +145,7 @@ func (r HouseholdRepository) FindByID(ctx context.Context, id string) (household
 // List returns households ordered by created_at DESC.
 func (r HouseholdRepository) List(ctx context.Context, limit, offset int) ([]household.Household, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, name, owner_id, settlement_mode, currency, created_at, updated_at
+		`SELECT id, name, owner_id, settlement_mode, currency, closing_day, period_frequency, created_at, updated_at
 			FROM households
 			ORDER BY created_at DESC
 			LIMIT $1 OFFSET $2`,
@@ -177,9 +179,11 @@ func (r HouseholdRepository) Update(ctx context.Context, h household.Household) 
 			SET name = $1,
 				settlement_mode = $2,
 				currency = $3,
-				updated_at = $4
-			WHERE id = $5`,
-		attrs.Name, string(attrs.SettlementMode), attrs.Currency, attrs.UpdatedAt, string(attrs.ID),
+				closing_day = $4,
+				period_frequency = $5,
+				updated_at = $6
+			WHERE id = $7`,
+		attrs.Name, string(attrs.SettlementMode), attrs.Currency, attrs.ClosingDay, attrs.PeriodFrequency, attrs.UpdatedAt, string(attrs.ID),
 	)
 	if err != nil {
 		return fmt.Errorf("household repository update: %w", err)
@@ -203,7 +207,7 @@ var _ outbound.HouseholdRepository = HouseholdRepository{}
 // ListByUserID returns households that the given user belongs to (via members table).
 func (r HouseholdRepository) ListByUserID(ctx context.Context, userID string, limit, offset int) ([]household.Household, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT h.id, h.name, h.owner_id, h.settlement_mode, h.currency, h.created_at, h.updated_at
+		`SELECT h.id, h.name, h.owner_id, h.settlement_mode, h.currency, h.closing_day, h.period_frequency, h.created_at, h.updated_at
 			FROM households h
 			INNER JOIN members m ON m.household_id = h.id
 			WHERE m.user_id = $1
@@ -233,26 +237,30 @@ func (r HouseholdRepository) ListByUserID(ctx context.Context, userID string, li
 
 func scanHousehold(r row) (household.Household, error) {
 	var (
-		id             string
-		name           string
-		ownerID        *string
-		settlementMode string
-		currency       string
-		createdAt      time.Time
-		updatedAt      time.Time
+		id              string
+		name            string
+		ownerID         *string
+		settlementMode  string
+		currency        string
+		closingDay      int
+		periodFrequency string
+		createdAt       time.Time
+		updatedAt       time.Time
 	)
 
-	if err := r.Scan(&id, &name, &ownerID, &settlementMode, &currency, &createdAt, &updatedAt); err != nil {
+	if err := r.Scan(&id, &name, &ownerID, &settlementMode, &currency, &closingDay, &periodFrequency, &createdAt, &updatedAt); err != nil {
 		return household.Household{}, err
 	}
 
 	return household.NewFromAttributes(household.Attributes{
-		ID:             household.ID(id),
-		Name:           name,
-		OwnerID:        valueOrEmptyString(ownerID),
-		SettlementMode: household.SettlementMode(settlementMode),
-		Currency:       currency,
-		CreatedAt:      createdAt,
-		UpdatedAt:      updatedAt,
+		ID:              household.ID(id),
+		Name:            name,
+		OwnerID:         valueOrEmptyString(ownerID),
+		SettlementMode:  household.SettlementMode(settlementMode),
+		Currency:        currency,
+		ClosingDay:      closingDay,
+		PeriodFrequency: periodFrequency,
+		CreatedAt:       createdAt,
+		UpdatedAt:       updatedAt,
 	})
 }

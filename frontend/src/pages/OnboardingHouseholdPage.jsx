@@ -32,6 +32,8 @@ export function OnboardingHouseholdPage() {
     const [hhName, setHhName] = useState('')
     const [settlementMode, setSettlementMode] = useState('equal')
     const [currency, setCurrency] = useState('MXN')
+    const [closingDay, setClosingDay] = useState(15)
+    const [periodFrequency, setPeriodFrequency] = useState('monthly')
 
     // Member state
     const [memberName, setMemberName] = useState('')
@@ -53,6 +55,8 @@ export function OnboardingHouseholdPage() {
                 name: hhName.trim(),
                 settlementMode,
                 currency,
+                closingDay: Number(closingDay),
+                periodFrequency,
             })
             
             const createdHouseholdId = hhOut?.household_id ?? hhOut?.id ?? ''
@@ -133,6 +137,33 @@ export function OnboardingHouseholdPage() {
                             {CURRENCIES.map((c) => (
                                 <option key={c.code} value={c.code}>{c.label}</option>
                             ))}
+                        </select>
+                    </FormField>
+
+                    <FormField label="Día de cierre" htmlFor="hhClosingDay">
+                        <input
+                            id="hhClosingDay"
+                            className="input"
+                            type="number"
+                            min="1"
+                            max="31"
+                            value={closingDay}
+                            onChange={(e) => setClosingDay(e.target.value)}
+                            disabled={busy}
+                        />
+                        <p className="formHint">Día del mes en que se cierra el periodo.</p>
+                    </FormField>
+
+                    <FormField label="Frecuencia del periodo" htmlFor="hhFrequency">
+                        <select
+                            id="hhFrequency"
+                            className="input"
+                            value={periodFrequency}
+                            onChange={(e) => setPeriodFrequency(e.target.value)}
+                            disabled={busy}
+                        >
+                            <option value="monthly">Mensual</option>
+                            <option value="biweekly">Quincenal</option>
                         </select>
                     </FormField>
                 </div>
