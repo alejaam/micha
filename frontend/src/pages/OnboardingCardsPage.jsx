@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { createCard, listCards } from '../api'
 import { MEXICAN_BANKS } from '../constants/mexicanBanks'
 import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { useFormField } from '../hooks/useFormField'
-import { useSlideDirection } from '../hooks/useSlideDirection'
 import {
     AuthCard,
     AuthHeader,
@@ -13,22 +12,13 @@ import {
     AuthInput,
     AuthButton,
     AuthBanner,
-    AnimatedStep,
 } from '../ui/auth'
-
-const ONBOARDING_STEP_PATHS = [
-    '/onboarding/household',
-    '/onboarding/cards',
-    '/onboarding/fixed-expenses',
-]
 
 function preferredCardStorageKey(householdId) {
     return `micha_preferred_card_${householdId}`
 }
 
 export function OnboardingCardsPage() {
-    const { pathname } = useLocation()
-    const direction = useSlideDirection(ONBOARDING_STEP_PATHS)
     const { handleProtectedError } = useAuth()
     const { householdId } = useAppShell()
     const navigate = useNavigate()
@@ -143,8 +133,7 @@ export function OnboardingCardsPage() {
 
     if (!householdId) {
         return (
-            <AnimatedStep pathname={pathname} direction={direction}>
-                <AuthCard>
+            <AuthCard>
                     <AuthBanner type="error">
                         No hay un hogar seleccionado. Creá tu hogar primero.
                     </AuthBanner>
@@ -157,15 +146,13 @@ export function OnboardingCardsPage() {
                         Ir a crear hogar
                     </AuthButton>
                 </AuthCard>
-            </AnimatedStep>
         )
     }
 
     return (
-        <AnimatedStep pathname={pathname} direction={direction}>
-            <AuthCard>
+        <AuthCard>
                 <AuthHeader
-                    eyebrow="Paso 2 de 2"
+                    eyebrow="Paso 2 de 3"
                     title="Agregar tus tarjetas"
                     subtitle="Creá al menos una tarjeta para usarla al registrar tus primeros gastos."
                 />
@@ -344,6 +331,5 @@ export function OnboardingCardsPage() {
                     </AuthButton>
                 </div>
             </AuthCard>
-        </AnimatedStep>
     )
 }

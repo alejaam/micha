@@ -20,7 +20,7 @@ export function AuthFormField({ label, htmlFor, error, children }) {
                 </label>
             ) : null}
             {children}
-            {error ? <p className="pd-errorText">{error}</p> : null}
+            {error ? <p className="pd-errorText" aria-live="polite">{error}</p> : null}
         </div>
     )
 }

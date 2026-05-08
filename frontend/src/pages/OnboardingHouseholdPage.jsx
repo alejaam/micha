@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { createHousehold, createMember } from '../api'
 import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { useFormField } from '../hooks/useFormField'
-import { useSlideDirection } from '../hooks/useSlideDirection'
 import {
     AuthCard,
     AuthHeader,
@@ -12,15 +11,8 @@ import {
     AuthInput,
     AuthButton,
     AuthBanner,
-    AnimatedStep,
 } from '../ui/auth'
 import { dollarsToCents } from '../utils'
-
-const ONBOARDING_STEP_PATHS = [
-    '/onboarding/household',
-    '/onboarding/cards',
-    '/onboarding/fixed-expenses',
-]
 
 const CURRENCIES = [
     { code: 'MXN', label: 'MXN — Peso mexicano' },
@@ -40,8 +32,6 @@ const SETTLEMENT_HINTS = {
 }
 
 export function OnboardingHouseholdPage() {
-    const { pathname } = useLocation()
-    const direction = useSlideDirection(ONBOARDING_STEP_PATHS)
     const { user, handleProtectedError } = useAuth()
     const { setHouseholdId, loadHouseholds } = useAppShell()
     const navigate = useNavigate()
@@ -123,10 +113,9 @@ export function OnboardingHouseholdPage() {
     }
 
     return (
-        <AnimatedStep pathname={pathname} direction={direction}>
-            <AuthCard>
+        <AuthCard>
                 <AuthHeader
-                    eyebrow="Paso 1 de 2"
+                    eyebrow="Paso 1 de 3"
                     title="Crear tu hogar"
                     subtitle="Un hogar agrupa todos los gastos y miembros compartidos."
                 />
@@ -293,6 +282,5 @@ export function OnboardingHouseholdPage() {
                     </AuthButton>
                 </form>
             </AuthCard>
-        </AnimatedStep>
     )
 }
