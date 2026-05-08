@@ -329,6 +329,115 @@
     }
 }
 
+/* ─── Utility classes ──────────────────────────────────────────────────── */
+
+.pd-hint {
+    font-size: 0.8125rem;
+    color: var(--pd-text-muted);
+    margin-top: var(--pd-sp-xs);
+    line-height: 1.5;
+}
+
+.pd-note {
+    font-size: 0.875rem;
+    color: var(--pd-text-muted);
+    line-height: 1.6;
+    margin-bottom: var(--pd-sp-md);
+}
+
+.pd-divider {
+    border: none;
+    border-top: 1px solid var(--pd-border);
+    margin: var(--pd-sp-lg) 0;
+}
+
+.pd-cardList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pd-sp-sm);
+    margin-bottom: var(--pd-sp-md);
+}
+
+.pd-cardItem {
+    display: flex;
+    align-items: center;
+    gap: var(--pd-sp-sm);
+    padding: var(--pd-sp-md);
+    background: #1a1a25;
+    border: 1px solid #2a2a3a;
+    border-radius: var(--pd-radius-sm);
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.pd-cardItem:hover {
+    border-color: var(--pd-violet);
+}
+
+.pd-cardItemSelected {
+    border-color: var(--pd-violet);
+    background: rgba(139, 92, 246, 0.08);
+}
+
+.pd-cardRadio {
+    accent-color: var(--pd-violet);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.pd-cardLabel {
+    font-size: 0.875rem;
+    color: var(--pd-text-primary);
+    font-weight: 500;
+}
+
+.pd-toggleRow {
+    display: flex;
+    align-items: center;
+    gap: var(--pd-sp-sm);
+    padding: var(--pd-sp-md);
+    margin-bottom: var(--pd-sp-md);
+    background: #1a1a25;
+    border: 1px solid #2a2a3a;
+    border-radius: var(--pd-radius-sm);
+    cursor: pointer;
+}
+
+.pd-toggleRow:hover {
+    border-color: var(--pd-violet);
+}
+
+.pd-toggleCheckbox {
+    accent-color: var(--pd-violet);
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.pd-toggleLabel {
+    font-size: 0.875rem;
+    color: var(--pd-text-primary);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.pd-inputGroup {
+    position: relative;
+}
+
+.pd-inputPrefix {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    color: var(--pd-text-muted);
+    pointer-events: none;
+}
+
+.pd-input.pd-inputWithPrefix {
+    padding-left: 28px;
+}
+
 /* ─── Animations ───────────────────────────────────────────────────────── */
 
 @keyframes pdFadeIn {

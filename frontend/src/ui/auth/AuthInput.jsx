@@ -8,12 +8,14 @@
  * @param {(e: React.ChangeEvent<HTMLInputElement>) => void} [onChange]
  * @param {boolean} [disabled]
  * @param {boolean} [hasError]
+ * @param {string} [className] — additional classes merged with .pd-input
  * @param {object} [rest] — additional props forwarded to <input>
  */
-export function AuthInput({ id, type = 'text', placeholder, value, onChange, disabled, hasError, ...rest }) {
+export function AuthInput({ id, type = 'text', placeholder, value, onChange, disabled, hasError, className, ...rest }) {
     const cls = [
         'pd-input',
         hasError ? 'pd-inputError' : '',
+        className || '',
     ].filter(Boolean).join(' ')
 
     return (
