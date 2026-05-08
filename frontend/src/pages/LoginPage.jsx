@@ -1,25 +1,30 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Banner } from '../ui/Banner'
-import { FormField } from '../ui/FormField'
+import { useFormField } from '../hooks/useFormField'
+import { AuthCard, AuthHeader, AuthFormField, AuthInput, AuthButton, AuthBanner } from '../ui/auth'
 
 export function LoginPage() {
     const { login } = useAuth()
     const navigate = useNavigate()
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
 
-    const canSubmit = email.trim() !== '' && password.trim() !== '' && !busy
+    const email = useFormField('', (v) => (v.trim() ? null : 'Ingresa un correo válido.'))
+    const password = useFormField('', (v) => (v ? null : 'Ingresa tu contraseña.'))
+
+    const canSubmit = email.value.trim() !== '' && password.value.trim() !== '' && !busy
 
     async function handleSubmit(e) {
         e.preventDefault()
+        email.setTouched(true)
+        password.setTouched(true)
+        if (!canSubmit) return
+
         setBusy(true)
         setError('')
         try {
-            await login({ email: email.trim(), password })
+            await login({ email: email.value.trim(), password: password.value })
             navigate('/', { replace: true })
         } catch (err) {
             setError(err.message)
@@ -29,51 +34,61 @@ export function LoginPage() {
     }
 
     return (
-        <section className="authCard card" aria-label="Sign in">
-            <div className="authHeader">
-                <p className="authEyebrow">Welcome to micha</p>
-                <h1 className="authTitle">Sign in to your household</h1>
-                <p className="authMeta">Use your registered email and password to continue.</p>
+        <AuthCard>
+            <AuthHeader
+                eyebrow="Bienvenido a micha"
+                title="Iniciar sesión"
+                subtitle="Usa tu correo y contraseña registrados para continuar."
+            />
+
+            <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+                <span className="pd-btn pd-btnPrimary" style={{ flex: 1, textAlign: 'center' }}>
+                    Iniciar sesión
+                </span>
+                <Link
+                    to="/register"
+                    className="pd-btn pd-btnGhost"
+                    style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}
+                >
+                    Crear cuenta
+                </Link>
             </div>
 
-            <div className="authSwitch">
-                <span className="btn btnPrimary btnSm">Sign in</span>
-                <Link to="/register" className="btn btnGhost btnSm">Create account</Link>
-            </div>
+            {error ? <AuthBanner type="error">{error}</AuthBanner> : null}
 
-            {error ? <Banner type="error">{error}</Banner> : null}
-
-            <form className="formStack" onSubmit={handleSubmit} noValidate>
-                <FormField label="Email" htmlFor="loginEmail">
-                    <input
+            <form onSubmit={handleSubmit} noValidate aria-label="Iniciar sesión">
+                <AuthFormField label="Correo electrónico" htmlFor="loginEmail" error={email.error}>
+                    <AuthInput
                         id="loginEmail"
-                        className="input"
                         type="email"
                         autoComplete="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="tucorreo@ejemplo.com"
+                        value={email.value}
+                        onChange={(e) => email.setValue(e.target.value)}
+                        onBlur={email.onBlur}
                         disabled={busy}
+                        hasError={!!email.error}
                     />
-                </FormField>
+                </AuthFormField>
 
-                <FormField label="Password" htmlFor="loginPassword">
-                    <input
+                <AuthFormField label="Contraseña" htmlFor="loginPassword" error={password.error}>
+                    <AuthInput
                         id="loginPassword"
-                        className="input"
                         type="password"
                         autoComplete="current-password"
                         placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={password.value}
+                        onChange={(e) => password.setValue(e.target.value)}
+                        onBlur={password.onBlur}
                         disabled={busy}
+                        hasError={!!password.error}
                     />
-                </FormField>
+                </AuthFormField>
 
-                <button type="submit" className="btn btnPrimary btnFull" disabled={!canSubmit}>
-                    {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Signing in…</> : 'Sign in'}
-                </button>
+                <AuthButton type="submit" fullWidth disabled={!canSubmit} busy={busy}>
+                    {busy ? 'Iniciando sesión…' : 'Iniciar sesión'}
+                </AuthButton>
             </form>
-        </section>
+        </AuthCard>
     )
 }

@@ -1,38 +1,48 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Banner } from '../ui/Banner'
-import { FormField } from '../ui/FormField'
+import { useFormField } from '../hooks/useFormField'
+import { AuthCard, AuthHeader, AuthFormField, AuthInput, AuthButton, AuthBanner } from '../ui/auth'
 
 export function RegisterPage() {
     const { register, login } = useAuth()
     const navigate = useNavigate()
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [confirmPassword, setConfirmPassword] = useState('')
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
 
-    const passwordsMatch = password === confirmPassword
+    const email = useFormField('', (v) => (v.trim() ? null : 'Ingresa un correo válido.'))
+    const password = useFormField('', (v) => {
+        if (!v) return 'Ingresa tu contraseña.'
+        if (v.length < 6) return 'Mínimo 6 caracteres.'
+        return null
+    })
+
+    const confirmPassword = useFormField('', (v) => {
+        if (!v) return 'Confirma tu contraseña.'
+        if (v !== password.value) return 'Las contraseñas no coinciden.'
+        return null
+    })
+
+    const passwordsMatch = password.value === confirmPassword.value
     const canSubmit =
-        email.trim() !== '' &&
-        password.trim() !== '' &&
-        confirmPassword.trim() !== '' &&
+        email.value.trim() !== '' &&
+        password.value.trim() !== '' &&
+        confirmPassword.value.trim() !== '' &&
         passwordsMatch &&
         !busy
 
     async function handleSubmit(e) {
         e.preventDefault()
-        if (!passwordsMatch) {
-            setError('Passwords do not match.')
-            return
-        }
+        email.setTouched(true)
+        password.setTouched(true)
+        confirmPassword.setTouched(true)
+        if (!canSubmit) return
+
         setBusy(true)
         setError('')
         try {
-            await register({ email: email.trim(), password })
-            // Auto-login with the same credentials — no need to type them again
-            await login({ email: email.trim(), password })
+            await register({ email: email.value.trim(), password: password.value })
+            await login({ email: email.value.trim(), password: password.value })
             navigate('/', { replace: true })
         } catch (err) {
             setError(err.message)
@@ -42,67 +52,75 @@ export function RegisterPage() {
     }
 
     return (
-        <section className="authCard card" aria-label="Create account">
-            <div className="authHeader">
-                <p className="authEyebrow">Welcome to micha</p>
-                <h1 className="authTitle">Create your account</h1>
-                <p className="authMeta">Create credentials to start tracking shared expenses.</p>
+        <AuthCard>
+            <AuthHeader
+                eyebrow="Bienvenido a micha"
+                title="Crear tu cuenta"
+                subtitle="Creá tus credenciales para empezar a gestionar gastos compartidos."
+            />
+
+            <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+                <Link
+                    to="/login"
+                    className="pd-btn pd-btnGhost"
+                    style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}
+                >
+                    Iniciar sesión
+                </Link>
+                <span className="pd-btn pd-btnPrimary" style={{ flex: 1, textAlign: 'center' }}>
+                    Crear cuenta
+                </span>
             </div>
 
-            <div className="authSwitch">
-                <Link to="/login" className="btn btnGhost btnSm">Sign in</Link>
-                <span className="btn btnPrimary btnSm">Create account</span>
-            </div>
+            {error ? <AuthBanner type="error">{error}</AuthBanner> : null}
 
-            {error ? <Banner type="error">{error}</Banner> : null}
-
-            <form className="formStack" onSubmit={handleSubmit} noValidate>
-                <FormField label="Email" htmlFor="regEmail">
-                    <input
+            <form onSubmit={handleSubmit} noValidate aria-label="Crear cuenta">
+                <AuthFormField label="Correo electrónico" htmlFor="regEmail" error={email.error}>
+                    <AuthInput
                         id="regEmail"
-                        className="input"
                         type="email"
                         autoComplete="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="tucorreo@ejemplo.com"
+                        value={email.value}
+                        onChange={(e) => email.setValue(e.target.value)}
+                        onBlur={email.onBlur}
                         disabled={busy}
+                        hasError={!!email.error}
                     />
-                </FormField>
+                </AuthFormField>
 
-                <FormField label="Password" htmlFor="regPassword">
-                    <input
+                <AuthFormField label="Contraseña" htmlFor="regPassword" error={password.error}>
+                    <AuthInput
                         id="regPassword"
-                        className="input"
                         type="password"
                         autoComplete="new-password"
                         placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        value={password.value}
+                        onChange={(e) => password.setValue(e.target.value)}
+                        onBlur={password.onBlur}
                         disabled={busy}
+                        hasError={!!password.error}
                     />
-                </FormField>
+                </AuthFormField>
 
-                <FormField label="Confirm password" htmlFor="regConfirmPassword">
-                    <input
+                <AuthFormField label="Confirmar contraseña" htmlFor="regConfirmPassword" error={confirmPassword.error}>
+                    <AuthInput
                         id="regConfirmPassword"
-                        className="input"
                         type="password"
                         autoComplete="new-password"
                         placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        value={confirmPassword.value}
+                        onChange={(e) => confirmPassword.setValue(e.target.value)}
+                        onBlur={confirmPassword.onBlur}
                         disabled={busy}
+                        hasError={!!confirmPassword.error}
                     />
-                    {confirmPassword && !passwordsMatch && (
-                        <p className="formHint formHintError">Passwords do not match</p>
-                    )}
-                </FormField>
+                </AuthFormField>
 
-                <button type="submit" className="btn btnPrimary btnFull" disabled={!canSubmit}>
-                    {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Creating account…</> : 'Create account'}
-                </button>
+                <AuthButton type="submit" fullWidth disabled={!canSubmit} busy={busy}>
+                    {busy ? 'Creando cuenta…' : 'Crear cuenta'}
+                </AuthButton>
             </form>
-        </section>
+        </AuthCard>
     )
 }
