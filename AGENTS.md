@@ -63,4 +63,17 @@ docker compose -f deploy/docker-compose.yml up --build  # full stack (Go + Postg
 - Endpoints: `/health` + full CRUD for expenses, households, members + settlement calculation
 - PostgreSQL: `localhost:5432`, db/user/pass: `micha` / `micha` / `micha_dev_password`
 
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues for `alejaam/micha`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default canonical labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Multi-context repo (`backend/`, `frontend/`). See `docs/agents/domain.md`.
 
