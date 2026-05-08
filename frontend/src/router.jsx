@@ -7,6 +7,7 @@ import { useDashboardUxState } from './hooks/useDashboardUxState'
 import { useHouseholds } from './hooks/useHouseholds'
 import { AppLayout } from './layouts/AppLayout'
 import { AuthLayout } from './layouts/AuthLayout'
+import { ProtectedOnboardingLayout } from './layouts/ProtectedOnboardingLayout'
 import { BalancesPage } from './pages/BalancesPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { ExpensesPage } from './pages/ExpensesPage'
@@ -37,10 +38,7 @@ const router = createBrowserRouter([
             { path: 'dashboard', element: <Navigate to="/" replace /> },
             { path: 'movements', element: <Navigate to="/expenses" replace /> },
             { path: 'settings', element: <Navigate to="/rules" replace /> },
-            { path: 'onboarding/household', element: <OnboardingHouseholdPage /> },
             { path: 'onboarding/member', element: <OnboardingMemberPage /> },
-            { path: 'onboarding/cards', element: <OnboardingCardsPage /> },
-            { path: 'onboarding/fixed-expenses', element: <OnboardingFixedExpensesPage /> },
             { path: 'members/new', element: <OnboardingMemberPage /> },
         ],
     },
@@ -49,6 +47,14 @@ const router = createBrowserRouter([
         children: [
             { path: '/login', element: <LoginPage /> },
             { path: '/register', element: <RegisterPage /> },
+        ],
+    },
+    {
+        element: <ProtectedOnboardingLayout />,
+        children: [
+            { path: '/onboarding/household', element: <OnboardingHouseholdPage /> },
+            { path: '/onboarding/cards', element: <OnboardingCardsPage /> },
+            { path: '/onboarding/fixed-expenses', element: <OnboardingFixedExpensesPage /> },
         ],
     },
     { path: '*', element: <Navigate to="/" replace /> },
