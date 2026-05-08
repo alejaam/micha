@@ -13,7 +13,7 @@ export function AuthLayout() {
     }
 
     return (
-        <main className="authShell">
+        <main className="premiumDark authShell">
             <Outlet />
         </main>
     )
