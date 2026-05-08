@@ -107,6 +107,34 @@ func (r PeriodRepository) GetLatestByHousehold(ctx context.Context, householdID 
 	return p, nil
 }
 
+func (r PeriodRepository) ListByHousehold(ctx context.Context, householdID string, limit, offset int) ([]period.Period, error) {
+	rows, err := r.db.Query(ctx,
+		`SELECT id, household_id, start_date, end_date, status, created_at, updated_at
+			FROM periods
+			WHERE household_id = $1
+			ORDER BY start_date DESC
+			LIMIT $2 OFFSET $3`,
+		householdID, limit, offset,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("period repository listByHousehold: %w", err)
+	}
+	defer rows.Close()
+
+	var periods []period.Period
+	for rows.Next() {
+		p, err := scanPeriod(rows)
+		if err != nil {
+			return nil, fmt.Errorf("period repository listByHousehold: scan: %w", err)
+		}
+		periods = append(periods, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("period repository listByHousehold: rows: %w", err)
+	}
+	return periods, nil
+}
+
 func scanPeriod(r pgx.Row) (period.Period, error) {
 	var (
 		id          string

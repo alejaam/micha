@@ -1,7 +1,7 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
 import { BottomNav } from '../components/BottomNav'
-import { PrimaryNav } from '../components/PrimaryNav'
+import { TimeSimulator } from '../components/TimeSimulator'
 import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { HouseholdDataProvider } from '../hooks/useHouseholdData'
@@ -13,7 +13,6 @@ import { HouseholdDataProvider } from '../hooks/useHouseholdData'
  */
 export function AppLayout() {
     const { isAuthenticated, logout } = useAuth()
-    const location = useLocation()
     const {
         health,
         householdId,
@@ -28,8 +27,6 @@ export function AppLayout() {
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />
     }
-
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 880
 
     return (
         <HouseholdDataProvider>
@@ -47,6 +44,7 @@ export function AppLayout() {
                 />
                 <Outlet />
                 <BottomNav />
+                <TimeSimulator onAdvanced={handleReload} />
             </div>
         </HouseholdDataProvider>
     )

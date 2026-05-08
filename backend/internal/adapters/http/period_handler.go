@@ -3,6 +3,8 @@ package httpadapter
 import (
 	"net/http"
 
+	appshared "micha/backend/internal/application/shared"
+	"micha/backend/internal/domain/period"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
 )
@@ -124,6 +126,7 @@ func (h *PeriodHandler) handleClose(w http.ResponseWriter, r *http.Request) {
 
 func (h *PeriodHandler) handleGetCurrent(w http.ResponseWriter, r *http.Request) {
 	householdID := r.PathValue("household_id")
+	userID, _ := UserIDFromContext(r.Context())
 
 	p, err := h.periodRepo.GetLatestByHousehold(r.Context(), householdID)
 	if err != nil {
@@ -138,6 +141,22 @@ func (h *PeriodHandler) handleGetCurrent(w http.ResponseWriter, r *http.Request)
 	}
 
 	attrs := p.Attributes()
+
+	// Natural Closing: If period is OPEN but EndDate has passed, transition to REVIEW automatically.
+	if attrs.Status == period.StatusOpen && appshared.Now().After(attrs.EndDate) {
+		_, err := h.transitionToReview.Execute(r.Context(), inbound.TransitionToReviewInput{
+			HouseholdID:   householdID,
+			PeriodID:      string(attrs.ID),
+			CurrentUserID: userID,
+		})
+		if err == nil {
+			// Reload period to return the updated status
+			if updated, reloadErr := h.periodRepo.GetByID(r.Context(), attrs.ID); reloadErr == nil {
+				attrs = updated.Attributes()
+			}
+		}
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"data": map[string]any{
 			"id":           string(attrs.ID),
@@ -149,4 +168,32 @@ func (h *PeriodHandler) handleGetCurrent(w http.ResponseWriter, r *http.Request)
 			"updated_at":   attrs.UpdatedAt,
 		},
 	})
+}
+
+func (h *PeriodHandler) handleListHistory(w http.ResponseWriter, r *http.Request) {
+	householdID := r.PathValue("household_id")
+	limit := queryInt(r, "limit", 20)
+	offset := queryInt(r, "offset", 0)
+
+	periods, err := h.periodRepo.ListByHousehold(r.Context(), householdID, limit, offset)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "DB_ERROR", err.Error())
+		return
+	}
+
+	items := make([]map[string]any, 0, len(periods))
+	for _, p := range periods {
+		attrs := p.Attributes()
+		items = append(items, map[string]any{
+			"id":           string(attrs.ID),
+			"household_id": attrs.HouseholdID,
+			"start_date":   attrs.StartDate,
+			"end_date":     attrs.EndDate,
+			"status":       string(attrs.Status),
+			"created_at":   attrs.CreatedAt,
+			"updated_at":   attrs.UpdatedAt,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"data": items})
 }

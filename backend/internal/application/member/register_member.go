@@ -33,7 +33,7 @@ func NewRegisterMemberUseCase(repo outbound.MemberRepository, idGenerator appsha
 	return RegisterMemberUseCase{
 		repo:        repo,
 		idGenerator: idGenerator,
-		now:         time.Now,
+		now:         appshared.Now,
 		inviteTTL:   24 * time.Hour,
 	}
 }

@@ -30,37 +30,43 @@ type ID string
 
 // Attributes is the flat DTO used for construction and rehydration.
 type Attributes struct {
-	ID             ID
-	Name           string
-	OwnerID        string
-	SettlementMode SettlementMode
-	Currency       string // ISO 4217 code (uppercase)
-	SplitConfig    SplitConfig
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID              ID
+	Name            string
+	OwnerID         string
+	SettlementMode  SettlementMode
+	Currency        string // ISO 4217 code (uppercase)
+	ClosingDay      int
+	PeriodFrequency string // monthly, biweekly
+	SplitConfig     SplitConfig
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 // Household is the aggregate root for a household.
 type Household struct {
-	id             ID
-	name           string
-	ownerID        string
-	settlementMode SettlementMode
-	currency       string
-	createdAt      time.Time
-	updatedAt      time.Time
+	id              ID
+	name            string
+	ownerID         string
+	settlementMode  SettlementMode
+	currency        string
+	closingDay      int
+	periodFrequency string
+	createdAt       time.Time
+	updatedAt       time.Time
 }
 
 // New constructs a Household from individual fields.
 func New(id ID, name string, ownerID string, settlementMode SettlementMode, currency string, createdAt time.Time) (Household, error) {
 	return NewFromAttributes(Attributes{
-		ID:             id,
-		Name:           name,
-		OwnerID:        ownerID,
-		SettlementMode: settlementMode,
-		Currency:       currency,
-		CreatedAt:      createdAt,
-		UpdatedAt:      createdAt,
+		ID:              id,
+		Name:            name,
+		OwnerID:         ownerID,
+		SettlementMode:  settlementMode,
+		Currency:        currency,
+		ClosingDay:      15,        // Default
+		PeriodFrequency: "monthly", // Default
+		CreatedAt:       createdAt,
+		UpdatedAt:       createdAt,
 	})
 }
 
@@ -86,38 +92,54 @@ func NewFromAttributes(attrs Attributes) (Household, error) {
 		return Household{}, ErrInvalidCurrency
 	}
 
+	// Validate ClosingDay
+	closingDay := attrs.ClosingDay
+	if closingDay < 1 || closingDay > 31 {
+		closingDay = 15 // Fallback to safe default
+	}
+
+	// Validate PeriodFrequency
+	frequency := strings.ToLower(strings.TrimSpace(attrs.PeriodFrequency))
+	if frequency != "monthly" && frequency != "biweekly" {
+		frequency = "monthly"
+	}
+
 	updatedAt := attrs.UpdatedAt
 	if updatedAt.IsZero() {
 		updatedAt = attrs.CreatedAt
 	}
 
 	return Household{
-		id:             attrs.ID,
-		name:           name,
-		ownerID:        strings.TrimSpace(attrs.OwnerID),
-		settlementMode: attrs.SettlementMode,
-		currency:       currency,
-		createdAt:      attrs.CreatedAt,
-		updatedAt:      updatedAt,
+		id:              attrs.ID,
+		name:            name,
+		ownerID:         strings.TrimSpace(attrs.OwnerID),
+		settlementMode:  attrs.SettlementMode,
+		currency:        currency,
+		closingDay:      closingDay,
+		periodFrequency: frequency,
+		createdAt:       attrs.CreatedAt,
+		updatedAt:       updatedAt,
 	}, nil
 }
 
 // Attributes returns a copy of all fields as a flat DTO.
 func (h Household) Attributes() Attributes {
 	return Attributes{
-		ID:             h.id,
-		Name:           h.name,
-		OwnerID:        h.ownerID,
-		SettlementMode: h.settlementMode,
-		Currency:       h.currency,
-		SplitConfig:    SplitConfig{}, // Always empty for now; loaded separately by adapters
-		CreatedAt:      h.createdAt,
-		UpdatedAt:      h.updatedAt,
+		ID:              h.id,
+		Name:            h.name,
+		OwnerID:         h.ownerID,
+		SettlementMode:  h.settlementMode,
+		Currency:        h.currency,
+		ClosingDay:      h.closingDay,
+		PeriodFrequency: h.periodFrequency,
+		SplitConfig:     SplitConfig{}, // Always empty for now; loaded separately by adapters
+		CreatedAt:       h.createdAt,
+		UpdatedAt:       h.updatedAt,
 	}
 }
 
 // UpdateConfig updates the household name, settlement mode and currency.
-func (h *Household) UpdateConfig(name string, settlementMode SettlementMode, currency string) error {
+func (h *Household) UpdateConfig(name string, settlementMode SettlementMode, currency string, closingDay int, frequency string) error {
 	name = strings.TrimSpace(name)
 	if name == "" {
 		return ErrInvalidName
@@ -132,9 +154,20 @@ func (h *Household) UpdateConfig(name string, settlementMode SettlementMode, cur
 		return ErrInvalidCurrency
 	}
 
+	if closingDay < 1 || closingDay > 31 {
+		return errors.New("invalid closing day")
+	}
+
+	frequency = strings.ToLower(strings.TrimSpace(frequency))
+	if frequency != "monthly" && frequency != "biweekly" {
+		return errors.New("invalid period frequency")
+	}
+
 	h.name = name
 	h.settlementMode = settlementMode
 	h.currency = currency
+	h.closingDay = closingDay
+	h.periodFrequency = frequency
 	h.updatedAt = time.Now()
 
 	return nil

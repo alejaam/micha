@@ -34,7 +34,7 @@ func NewInitializePeriodUseCase(
 		memberRepo:    memberRepo,
 		expenseRepo:   expenseRepo,
 		idGenerator:   idGenerator,
-		now:           time.Now,
+		now:           appshared.Now,
 	}
 }
 
@@ -57,10 +57,24 @@ func (u InitializePeriodUseCase) Execute(ctx context.Context, input inbound.Init
 		return inbound.InitializePeriodOutput{}, fmt.Errorf("initialize period: household already has periods")
 	}
 
-	// 3. Create initial period (from start of current month to end of month).
+	// 3. Create initial period based on household config.
 	now := u.now()
-	start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	end := start.AddDate(0, 1, -1)
+	closingDay := h.Attributes().ClosingDay
+	
+	var start, end time.Time
+	if now.Day() <= closingDay {
+		// We are before the closing day of the current month.
+		// Period started last month on day+1.
+		lastMonth := now.AddDate(0, -1, 0)
+		start = time.Date(lastMonth.Year(), lastMonth.Month(), closingDay+1, 0, 0, 0, 0, now.Location())
+		end = time.Date(now.Year(), now.Month(), closingDay, 23, 59, 59, 999999999, now.Location())
+	} else {
+		// We are after the closing day.
+		// Period started this month on day+1.
+		start = time.Date(now.Year(), now.Month(), closingDay+1, 0, 0, 0, 0, now.Location())
+		nextMonth := now.AddDate(0, 1, 0)
+		end = time.Date(nextMonth.Year(), nextMonth.Month(), closingDay, 23, 59, 59, 999999999, now.Location())
+	}
 
 	p, err := period.New(
 		period.ID(u.idGenerator.NewID()),

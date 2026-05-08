@@ -4,10 +4,9 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"time"
-
 	"github.com/google/uuid"
 
+	appshared "micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
 )
@@ -39,7 +38,7 @@ func (h memberFinanceHandler) handleGetRemainingSalary(w http.ResponseWriter, r 
 		return
 	}
 
-	now := time.Now().UTC()
+	now := appshared.Now().UTC()
 	year := queryInt(r, "year", now.Year())
 	month := queryInt(r, "month", int(now.Month()))
 	if year < 2000 || year > 2200 {

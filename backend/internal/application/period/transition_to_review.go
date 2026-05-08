@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	appshared "micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/period"
 	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
@@ -24,7 +25,7 @@ func NewTransitionToReviewUseCase(
 	return TransitionToReviewUseCase{
 		periodRepo: periodRepo,
 		memberRepo: memberRepo,
-		now:        time.Now,
+		now:        appshared.Now,
 	}
 }
 

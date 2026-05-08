@@ -1,0 +1,349 @@
+/* ─── Premium Dark — Scoped container tokens ────────────────────────────── */
+/* All tokens live under .premiumDark to avoid polluting :root / light theme. */
+/* Classes use .pd- prefix for collision safety with 3069-line styles.css.    */
+
+.premiumDark {
+    /* Backgrounds */
+    --pd-bg: #0a0a0f;
+    --pd-surface: #13131f;
+    --pd-surface-hover: #1a1a28;
+    --pd-border: #1f1f2e;
+
+    /* Text */
+    --pd-text-primary: #f8f8fc;
+    --pd-text-secondary: #a0a0b8;
+    --pd-text-muted: #6e6e8a;
+
+    /* Accents */
+    --pd-violet: #8b5cf6;
+    --pd-violet-hover: #7c3aed;
+    --pd-amber: #f59e0b;
+    --pd-error: #ef4444;
+    --pd-success: #22c55e;
+
+    /* Radii */
+    --pd-radius-sm: 8px;
+    --pd-radius-md: 12px;
+    --pd-radius-lg: 16px;
+
+    /* Spacing */
+    --pd-sp-xs: 4px;
+    --pd-sp-sm: 8px;
+    --pd-sp-md: 16px;
+    --pd-sp-lg: 24px;
+    --pd-sp-xl: 32px;
+
+    /* Typography */
+    --pd-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --pd-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+    background-color: var(--pd-bg);
+    color: var(--pd-text-secondary);
+    font-family: var(--pd-font-sans);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* ─── Auth Shell ──────────────────────────────────────────────────────── */
+
+.premiumDark.authShell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: var(--pd-sp-lg);
+}
+
+/* ─── Onboarding Shell ────────────────────────────────────────────────── */
+
+.premiumDark.onboardingShell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: var(--pd-sp-xl);
+}
+
+/* ─── AuthCard ─────────────────────────────────────────────────────────── */
+
+.pd-card {
+    max-width: 440px;
+    width: 100%;
+    padding: var(--pd-sp-xl);
+    border-radius: var(--pd-radius-lg);
+    background: var(--pd-surface);
+    border: 1px solid var(--pd-border);
+}
+
+@media (max-width: 639px) {
+    .pd-card {
+        max-width: 100%;
+        padding: var(--pd-sp-lg);
+        border-radius: var(--pd-radius-md);
+    }
+}
+
+/* ─── AuthHeader ───────────────────────────────────────────────────────── */
+
+.pd-header {
+    margin-bottom: var(--pd-sp-lg);
+}
+
+.pd-eyebrow {
+    font-family: var(--pd-font-sans);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--pd-violet);
+    margin: 0 0 var(--pd-sp-xs);
+}
+
+.pd-title {
+    font-family: var(--pd-font-sans);
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--pd-text-primary);
+    margin: 0 0 var(--pd-sp-sm);
+}
+
+.pd-subtitle {
+    font-family: var(--pd-font-sans);
+    font-size: 0.9375rem;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--pd-text-muted);
+    margin: 0;
+}
+
+/* ─── AuthFormField ────────────────────────────────────────────────────── */
+
+.pd-field {
+    margin-bottom: var(--pd-sp-md);
+}
+
+.pd-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--pd-text-secondary);
+    margin-bottom: var(--pd-sp-sm);
+}
+
+.pd-fieldError .pd-label {
+    color: var(--pd-error);
+}
+
+.pd-errorText {
+    font-size: 0.8125rem;
+    color: var(--pd-error);
+    margin-top: var(--pd-sp-xs);
+}
+
+/* ─── AuthInput ────────────────────────────────────────────────────────── */
+
+.pd-input {
+    display: block;
+    width: 100%;
+    padding: 12px var(--pd-sp-md);
+    font-family: var(--pd-font-sans);
+    font-size: 0.9375rem;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--pd-text-primary);
+    background: #1a1a25;
+    border: 1px solid #2a2a3a;
+    border-radius: var(--pd-radius-sm);
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+}
+
+.pd-input::placeholder {
+    color: #5a5a6e;
+}
+
+.pd-input:focus {
+    border-color: var(--pd-violet);
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
+}
+
+.pd-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pd-inputError {
+    border-color: var(--pd-error);
+}
+
+.pd-inputError:focus {
+    border-color: var(--pd-error);
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+}
+
+/* ─── AuthButton ───────────────────────────────────────────────────────── */
+
+.pd-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--pd-sp-sm);
+    height: 48px;
+    padding: 0 var(--pd-sp-lg);
+    font-family: var(--pd-font-sans);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1;
+    border: none;
+    border-radius: var(--pd-radius-md);
+    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+    text-decoration: none;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+.pd-btnPrimary {
+    background: var(--pd-violet);
+    color: #ffffff;
+}
+
+.pd-btnPrimary:hover:not(:disabled) {
+    background: var(--pd-violet-hover);
+}
+
+.pd-btnGhost {
+    background: transparent;
+    color: var(--pd-text-secondary);
+    border: 1px solid var(--pd-border);
+}
+
+.pd-btnGhost:hover:not(:disabled) {
+    background: var(--pd-surface-hover);
+    color: var(--pd-text-primary);
+}
+
+.pd-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pd-btnFull {
+    width: 100%;
+}
+
+.pd-btnSpinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: pdSpin 0.6s linear infinite;
+}
+
+@keyframes pdSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* ─── AuthBanner ───────────────────────────────────────────────────────── */
+
+.pd-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--pd-sp-sm);
+    padding: var(--pd-sp-md);
+    margin-bottom: var(--pd-sp-md);
+    border-radius: var(--pd-radius-sm);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-left: 3px solid transparent;
+}
+
+.pd-bannerError {
+    background: rgba(239, 68, 68, 0.1);
+    border-left-color: var(--pd-error);
+    color: #fca5a5;
+}
+
+.pd-bannerSuccess {
+    background: rgba(34, 197, 94, 0.1);
+    border-left-color: var(--pd-success);
+    color: #86efac;
+}
+
+.pd-bannerIcon {
+    flex-shrink: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* ─── StepIndicator ────────────────────────────────────────────────────── */
+
+.pd-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--pd-sp-md);
+    margin-bottom: var(--pd-sp-xl);
+}
+
+.pd-step {
+    display: flex;
+    align-items: center;
+    gap: var(--pd-sp-sm);
+}
+
+.pd-stepDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--pd-text-muted);
+    transition: background 0.2s ease;
+}
+
+.pd-stepDotActive {
+    background: var(--pd-violet);
+}
+
+.pd-stepDotCompleted {
+    background: var(--pd-success);
+}
+
+.pd-stepLabel {
+    font-size: 0.8125rem;
+    color: var(--pd-text-muted);
+    white-space: nowrap;
+}
+
+.pd-stepActive .pd-stepLabel {
+    color: var(--pd-text-primary);
+    font-weight: 600;
+}
+
+@media (max-width: 639px) {
+    .pd-stepLabel {
+        display: none;
+    }
+}
+
+/* ─── Animations ───────────────────────────────────────────────────────── */
+
+@keyframes pdFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ─── Reduced motion ───────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+    .pd-card,
+    .pd-input,
+    .pd-btn,
+    .pd-banner,
+    .pd-stepDot {
+        transition-duration: 0.01ms !important;
+    }
+}

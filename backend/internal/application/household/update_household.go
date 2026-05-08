@@ -28,7 +28,7 @@ func (u UpdateHouseholdUseCase) Execute(ctx context.Context, input inbound.Updat
 		return fmt.Errorf("update household: %w", err)
 	}
 
-	if err := h.UpdateConfig(input.Name, input.SettlementMode, input.Currency); err != nil {
+	if err := h.UpdateConfig(input.Name, input.SettlementMode, input.Currency, input.ClosingDay, input.PeriodFrequency); err != nil {
 		return fmt.Errorf("update household: %w", err)
 	}
 

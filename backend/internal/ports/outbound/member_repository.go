@@ -25,4 +25,6 @@ type MemberRepository interface {
 	Delete(ctx context.Context, id string) error
 	// CountActiveByHousehold returns the count of non-deleted members in a household.
 	CountActiveByHousehold(ctx context.Context, householdID string) (int, error)
+	// LinkByEmail links any member record matching the email (and with null user_id) to the given userID.
+	LinkByEmail(ctx context.Context, email, userID string) error
 }

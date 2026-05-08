@@ -14,6 +14,7 @@ type Config struct {
 	JWTSecret          string
 	AllowedOrigins     []string
 	AllowOwnerOnBehalf bool
+	Environment        string
 }
 
 // Load reads configuration from environment variables.
@@ -22,6 +23,11 @@ func Load() (Config, error) {
 	port := os.Getenv("HTTP_PORT")
 	if port == "" {
 		port = "8080"
+	}
+
+	env := os.Getenv("ENVIRONMENT")
+	if env == "" {
+		env = "development"
 	}
 
 	dbURL := os.Getenv("DATABASE_URL")
@@ -40,6 +46,7 @@ func Load() (Config, error) {
 		JWTSecret:          jwtSecret,
 		AllowedOrigins:     parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS")),
 		AllowOwnerOnBehalf: parseBoolDefaultTrue(os.Getenv("ALLOW_OWNER_ON_BEHALF")),
+		Environment:        env,
 	}, nil
 }
 

@@ -39,19 +39,21 @@ type RegisterHouseholdUseCase struct {
 
 // NewRegisterHouseholdUseCase constructs RegisterHouseholdUseCase.
 func NewRegisterHouseholdUseCase(repo outbound.HouseholdRepository, categoryRepo outbound.CategoryRepository, idGenerator appshared.IDGenerator) RegisterHouseholdUseCase {
-	return RegisterHouseholdUseCase{repo: repo, categoryRepo: categoryRepo, idGenerator: idGenerator, now: time.Now}
+	return RegisterHouseholdUseCase{repo: repo, categoryRepo: categoryRepo, idGenerator: idGenerator, now: appshared.Now}
 }
 
 // Execute creates a household, stores it, and seeds its default categories.
 func (u RegisterHouseholdUseCase) Execute(ctx context.Context, input inbound.RegisterHouseholdInput) (inbound.RegisterHouseholdOutput, error) {
-	h, err := household.New(
-		household.ID(u.idGenerator.NewID()),
-		input.Name,
-		input.CurrentUserID,
-		input.SettlementMode,
-		input.Currency,
-		u.now(),
-	)
+	h, err := household.NewFromAttributes(household.Attributes{
+		ID:              household.ID(u.idGenerator.NewID()),
+		Name:            input.Name,
+		OwnerID:         input.CurrentUserID,
+		SettlementMode:  input.SettlementMode,
+		Currency:        input.Currency,
+		ClosingDay:      input.ClosingDay,
+		PeriodFrequency: input.PeriodFrequency,
+		CreatedAt:       u.now(),
+	})
 	if err != nil {
 		return inbound.RegisterHouseholdOutput{}, fmt.Errorf("register household: %w", err)
 	}

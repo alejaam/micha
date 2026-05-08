@@ -22,6 +22,7 @@ type ServerDependencies struct {
 	JWTValidator     outbound.TokenValidator
 	MemberRepo       outbound.MemberRepository
 	AllowedOrigins   []string
+	IsDev            bool
 }
 
 // Server is the primary HTTP adapter.
@@ -106,10 +107,16 @@ func NewServer(port string, deps ServerDependencies) Server {
 
 	ph := newPeriodHandler(deps.Period)
 	mux.Handle("GET /v1/households/{household_id}/periods/current", protectHousehold(http.HandlerFunc(ph.handleGetCurrent)))
+	mux.Handle("GET /v1/households/{household_id}/periods", protectHousehold(http.HandlerFunc(ph.handleListHistory)))
 	mux.Handle("POST /v1/households/{household_id}/periods/initialize", protectHousehold(http.HandlerFunc(ph.handleInitialize)))
 	mux.Handle("POST /v1/households/{household_id}/periods/{period_id}/review", protectHousehold(http.HandlerFunc(ph.handleTransitionToReview)))
 	mux.Handle("POST /v1/households/{household_id}/periods/{period_id}/approve", protectHousehold(http.HandlerFunc(ph.handleApprove)))
 	mux.Handle("POST /v1/households/{household_id}/periods/{period_id}/close", protectHousehold(http.HandlerFunc(ph.handleClose)))
+
+	if deps.IsDev {
+		dh := newDevHandler()
+		mux.HandleFunc("POST /v1/dev/time-offset", dh.handleTimeOffset)
+	}
 
 	// Apply middleware chain: RequestID -> CORS -> routes
 	cors := CORSMiddleware(CORSConfig{AllowedOrigins: deps.AllowedOrigins})

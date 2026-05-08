@@ -8,10 +8,12 @@ import (
 
 // RegisterHouseholdInput contains required data to register a household.
 type RegisterHouseholdInput struct {
-	Name           string
-	SettlementMode household.SettlementMode
-	Currency       string
-	CurrentUserID  string
+	Name            string
+	SettlementMode  household.SettlementMode
+	Currency        string
+	ClosingDay      int
+	PeriodFrequency string
+	CurrentUserID   string
 }
 
 // RegisterHouseholdOutput contains created household identifiers.
@@ -29,10 +31,12 @@ type ListHouseholdsQuery struct {
 
 // UpdateHouseholdInput contains mutable fields for updating a household.
 type UpdateHouseholdInput struct {
-	HouseholdID    string
-	Name           string
-	SettlementMode household.SettlementMode
-	Currency       string
+	HouseholdID     string
+	Name            string
+	SettlementMode  household.SettlementMode
+	Currency        string
+	ClosingDay      int
+	PeriodFrequency string
 }
 
 type RegisterHouseholdUseCase interface {
