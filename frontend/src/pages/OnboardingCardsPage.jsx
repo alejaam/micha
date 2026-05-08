@@ -1,24 +1,38 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { createCard, listCards } from '../api'
 import { MEXICAN_BANKS } from '../constants/mexicanBanks'
 import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
-import { Banner } from '../ui/Banner'
-import { FormField } from '../ui/FormField'
+import { useFormField } from '../hooks/useFormField'
+import { useSlideDirection } from '../hooks/useSlideDirection'
+import {
+    AuthCard,
+    AuthHeader,
+    AuthFormField,
+    AuthInput,
+    AuthButton,
+    AuthBanner,
+    AnimatedStep,
+} from '../ui/auth'
+
+const ONBOARDING_STEP_PATHS = [
+    '/onboarding/household',
+    '/onboarding/cards',
+    '/onboarding/fixed-expenses',
+]
 
 function preferredCardStorageKey(householdId) {
     return `micha_preferred_card_${householdId}`
 }
 
 export function OnboardingCardsPage() {
+    const { pathname } = useLocation()
+    const direction = useSlideDirection(ONBOARDING_STEP_PATHS)
     const { handleProtectedError } = useAuth()
     const { householdId } = useAppShell()
     const navigate = useNavigate()
 
-    const [bankName, setBankName] = useState(MEXICAN_BANKS[0].value)
-    const [cardName, setCardName] = useState('')
-    const [cutoffDay, setCutoffDay] = useState('15')
     const [cards, setCards] = useState([])
     const [selectedCardId, setSelectedCardId] = useState('')
     const [loading, setLoading] = useState(false)
@@ -26,6 +40,20 @@ export function OnboardingCardsPage() {
     const [error, setError] = useState('')
     const [message, setMessage] = useState('')
     const [showForm, setShowForm] = useState(true)
+
+    const banco = useFormField(MEXICAN_BANKS[0].value, (v) =>
+        v.trim() ? null : 'El banco es obligatorio.',
+    )
+    const nombreTarjeta = useFormField('', (v) =>
+        v.trim() ? null : 'El nombre es obligatorio.',
+    )
+    const diaCorte = useFormField('15', (v) => {
+        if (!v.trim()) return null
+        const n = Number(v)
+        if (!Number.isInteger(n) || n < 1 || n > 31)
+            return 'Ingresa un día entre 1 y 31.'
+        return null
+    })
 
     const hasCards = cards.length > 0
 
@@ -38,8 +66,14 @@ export function OnboardingCardsPage() {
             const items = Array.isArray(data) ? data : []
             setCards(items)
 
-            const preferredCardId = localStorage.getItem(preferredCardStorageKey(householdId)) ?? ''
-            if (preferredCardId && items.some((item) => item.id === preferredCardId)) {
+            const preferredCardId =
+                localStorage.getItem(
+                    preferredCardStorageKey(householdId),
+                ) ?? ''
+            if (
+                preferredCardId &&
+                items.some((item) => item.id === preferredCardId)
+            ) {
                 setSelectedCardId(preferredCardId)
             } else if (items.length > 0) {
                 setSelectedCardId(items[0].id)
@@ -59,13 +93,22 @@ export function OnboardingCardsPage() {
 
     useEffect(() => {
         if (!householdId || !selectedCardId) return
-        localStorage.setItem(preferredCardStorageKey(householdId), selectedCardId)
+        localStorage.setItem(
+            preferredCardStorageKey(householdId),
+            selectedCardId,
+        )
     }, [householdId, selectedCardId])
 
     const canCreate = useMemo(() => {
-        const day = Number(cutoffDay)
-        return bankName.trim() !== '' && cardName.trim() !== '' && Number.isInteger(day) && day >= 1 && day <= 31
-    }, [bankName, cardName, cutoffDay])
+        const day = Number(diaCorte.value)
+        return (
+            banco.value.trim() !== '' &&
+            nombreTarjeta.value.trim() !== '' &&
+            Number.isInteger(day) &&
+            day >= 1 &&
+            day <= 31
+        )
+    }, [banco.value, nombreTarjeta.value, diaCorte.value])
 
     async function handleCreateCard(e) {
         e.preventDefault()
@@ -77,14 +120,14 @@ export function OnboardingCardsPage() {
         try {
             await createCard({
                 householdId,
-                bankName: bankName.trim(),
-                cardName: cardName.trim(),
-                cutoffDay: Number(cutoffDay),
+                bankName: banco.value.trim(),
+                cardName: nombreTarjeta.value.trim(),
+                cutoffDay: Number(diaCorte.value),
             })
-            setBankName(MEXICAN_BANKS[0].value)
-            setCardName('')
-            setCutoffDay('15')
-            setMessage('Card added successfully.')
+            banco.setValue(MEXICAN_BANKS[0].value)
+            nombreTarjeta.setValue('')
+            diaCorte.setValue('15')
+            setMessage('Tarjeta agregada correctamente.')
             setShowForm(false)
             await loadCards()
         } catch (err) {
@@ -100,117 +143,207 @@ export function OnboardingCardsPage() {
 
     if (!householdId) {
         return (
-            <div className="card">
-                <Banner type="error">No household selected. Create your household first.</Banner>
-                <button className="btn mt-4" onClick={() => navigate('/onboarding/household', { replace: true })}>Go to household setup</button>
-            </div>
+            <AnimatedStep pathname={pathname} direction={direction}>
+                <AuthCard>
+                    <AuthBanner type="error">
+                        No hay un hogar seleccionado. Creá tu hogar primero.
+                    </AuthBanner>
+                    <AuthButton
+                        fullWidth
+                        onClick={() =>
+                            navigate('/onboarding/household', { replace: true })
+                        }
+                    >
+                        Ir a crear hogar
+                    </AuthButton>
+                </AuthCard>
+            </AnimatedStep>
         )
     }
 
     return (
-        <section className="card onboardingCard" aria-label="Set up your cards">
-            <div className="onboardingHeader">
-                <p className="authEyebrow">Setup step</p>
-                <h2 className="authTitle">Add your cards</h2>
-                <p className="authMeta">Create at least one card so it is ready when you register your first expense.</p>
-            </div>
+        <AnimatedStep pathname={pathname} direction={direction}>
+            <AuthCard>
+                <AuthHeader
+                    eyebrow="Paso 2 de 2"
+                    title="Agregar tus tarjetas"
+                    subtitle="Creá al menos una tarjeta para usarla al registrar tus primeros gastos."
+                />
 
-            {error ? <Banner type="error">{error}</Banner> : null}
-            {message && !showForm ? <Banner type="ok">{message}</Banner> : null}
+                {error ? <AuthBanner type="error">{error}</AuthBanner> : null}
+                {message && !showForm ? (
+                    <AuthBanner type="success">{message}</AuthBanner>
+                ) : null}
 
-            {!showForm && hasCards && (
-                <div className="card mt-4 p-4 border border-dim rounded-md bg-secondary">
-                    <label className="sharedToggleLabel mb-0 flex items-center gap-2 cursor-pointer" htmlFor="addAnotherCard">
+                {!showForm && hasCards && (
+                    <label className="pd-toggleRow" htmlFor="addAnotherCard">
                         <input
                             id="addAnotherCard"
                             type="checkbox"
-                            className="w-5 h-5 accent-primary"
+                            className="pd-toggleCheckbox"
                             checked={showForm}
                             onChange={(e) => {
                                 setShowForm(e.target.checked)
                                 if (e.target.checked) setMessage('')
                             }}
                         />
-                        <span className="font-medium text-primary">Add another card</span>
+                        <span className="pd-toggleLabel">
+                            Agregar otra tarjeta
+                        </span>
                     </label>
-                </div>
-            )}
-
-            {showForm && (
-                <form className="formStack mt-4" onSubmit={handleCreateCard}>
-                    <FormField label="Bank" htmlFor="onboardingBankName">
-                    <select
-                        id="onboardingBankName"
-                        className="input"
-                        value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
-                        disabled={saving}
-                    >
-                        {MEXICAN_BANKS.map((bank) => (
-                            <option key={bank.value} value={bank.value}>{bank.label}</option>
-                        ))}
-                    </select>
-                </FormField>
-
-                <FormField label="Card name" htmlFor="onboardingCardName">
-                    <input
-                        id="onboardingCardName"
-                        className="input"
-                        value={cardName}
-                        onChange={(e) => setCardName(e.target.value)}
-                        placeholder="e.g. Platinum"
-                        disabled={saving}
-                    />
-                </FormField>
-
-                <FormField label="Cutoff day" htmlFor="onboardingCutoffDay">
-                    <input
-                        id="onboardingCutoffDay"
-                        className="input"
-                        type="number"
-                        min="1"
-                        max="31"
-                        value={cutoffDay}
-                        onChange={(e) => setCutoffDay(e.target.value)}
-                        disabled={saving}
-                    />
-                </FormField>
-
-                <button type="submit" className="btn btnPrimary w-full" disabled={!canCreate || saving}>
-                    {saving ? 'Adding...' : 'Save card'}
-                </button>
-            </form>
-            )}
-
-            <div className="formSection mt-8">
-                <h3 className="sectionTitle">Your cards</h3>
-                {loading ? (
-                    <p className="text-sm text-dim">Loading cards...</p>
-                ) : !hasCards ? (
-                    <p className="text-sm text-dim">No cards yet. You can add one now or skip and do it later.</p>
-                ) : (
-                    <div className="formStack">
-                        {cards.map((item) => (
-                            <label key={item.id} className="sharedToggleLabel" htmlFor={`preferred-card-${item.id}`}>
-                                <input
-                                    id={`preferred-card-${item.id}`}
-                                    type="radio"
-                                    name="preferred-card"
-                                    value={item.id}
-                                    checked={selectedCardId === item.id}
-                                    onChange={() => setSelectedCardId(item.id)}
-                                />
-                                <span className="sharedToggleText">{item.bank_name} - {item.card_name} (cutoff {item.cutoff_day})</span>
-                            </label>
-                        ))}
-                        <p className="formHint">Selected card will be preselected when creating expenses.</p>
-                    </div>
                 )}
-            </div>
 
-            <div className="flex gap-4 mt-4">
-                <button type="button" className="btn btnPrimary flex-1" onClick={handleContinue} disabled={!hasCards}>Continue to fixed expenses</button>
-            </div>
-        </section>
+                {showForm && (
+                    <form
+                        className="pd-field"
+                        onSubmit={handleCreateCard}
+                        noValidate
+                        aria-label="Agregar tarjeta"
+                    >
+                        <AuthFormField label="Banco" htmlFor="cardBanco">
+                            <select
+                                id="cardBanco"
+                                className="pd-input"
+                                value={banco.value}
+                                onChange={(e) =>
+                                    banco.setValue(e.target.value)
+                                }
+                                disabled={saving}
+                            >
+                                {MEXICAN_BANKS.map((bank) => (
+                                    <option key={bank.value} value={bank.value}>
+                                        {bank.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </AuthFormField>
+
+                        <AuthFormField
+                            label="Nombre de la tarjeta"
+                            htmlFor="cardNombre"
+                            error={nombreTarjeta.error}
+                        >
+                            <AuthInput
+                                id="cardNombre"
+                                placeholder="Ej. Platinum"
+                                value={nombreTarjeta.value}
+                                onChange={(e) =>
+                                    nombreTarjeta.setValue(e.target.value)
+                                }
+                                onBlur={nombreTarjeta.onBlur}
+                                disabled={saving}
+                                hasError={!!nombreTarjeta.error}
+                            />
+                        </AuthFormField>
+
+                        <AuthFormField
+                            label="Día de corte"
+                            htmlFor="cardCorte"
+                            error={diaCorte.error}
+                        >
+                            <AuthInput
+                                id="cardCorte"
+                                type="number"
+                                min="1"
+                                max="31"
+                                placeholder="15"
+                                value={diaCorte.value}
+                                onChange={(e) =>
+                                    diaCorte.setValue(e.target.value)
+                                }
+                                onBlur={diaCorte.onBlur}
+                                disabled={saving}
+                                hasError={!!diaCorte.error}
+                            />
+                        </AuthFormField>
+
+                        <AuthButton
+                            type="submit"
+                            fullWidth
+                            disabled={!canCreate || saving}
+                            busy={saving}
+                        >
+                            {saving ? 'Guardando…' : 'Guardar tarjeta'}
+                        </AuthButton>
+                    </form>
+                )}
+
+                <div style={{ marginTop: 24 }}>
+                    <p
+                        style={{
+                            fontSize: '0.9375rem',
+                            fontWeight: 700,
+                            lineHeight: '1.15',
+                            color: 'var(--pd-text-primary)',
+                            margin: '0 0 12px',
+                        }}
+                    >
+                        Tus tarjetas
+                    </p>
+                    {loading ? (
+                        <p className="pd-hint">Cargando tarjetas…</p>
+                    ) : !hasCards ? (
+                        <p className="pd-hint">
+                            Todavía no tenés tarjetas. Podés agregar una ahora o
+                            hacerlo más tarde.
+                        </p>
+                    ) : (
+                        <>
+                            <div className="pd-cardList">
+                                {cards.map((item) => {
+                                    const isSelected =
+                                        selectedCardId === item.id
+                                    return (
+                                        <label
+                                            key={item.id}
+                                            className={`pd-cardItem${isSelected ? ' pd-cardItemSelected' : ''}`}
+                                            htmlFor={`card-${item.id}`}
+                                        >
+                                            <input
+                                                id={`card-${item.id}`}
+                                                type="radio"
+                                                name="preferred-card"
+                                                className="pd-cardRadio"
+                                                value={item.id}
+                                                checked={isSelected}
+                                                onChange={() =>
+                                                    setSelectedCardId(item.id)
+                                                }
+                                            />
+                                            <span className="pd-cardLabel">
+                                                {item.bank_name} —{' '}
+                                                {item.card_name} (corte{' '}
+                                                {item.cutoff_day})
+                                            </span>
+                                        </label>
+                                    )
+                                })}
+                            </div>
+                            <p className="pd-hint">
+                                La tarjeta seleccionada será la predeterminada
+                                al crear gastos.
+                            </p>
+                        </>
+                    )}
+                </div>
+
+                <div
+                    style={{
+                        display: 'flex',
+                        gap: 8,
+                        marginTop: 24,
+                    }}
+                >
+                    <AuthButton
+                        type="button"
+                        fullWidth
+                        onClick={handleContinue}
+                        disabled={!hasCards}
+                    >
+                        Continuar a gastos fijos
+                    </AuthButton>
+                </div>
+            </AuthCard>
+        </AnimatedStep>
     )
 }
