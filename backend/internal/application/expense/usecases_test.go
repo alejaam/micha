@@ -213,6 +213,7 @@ func TestRegisterExpense_PendingMember_Rejected(t *testing.T) {
 	repo := newMockRepo()
 	hhRepo := newMockHouseholdRepo("hh-1")
 	mRepo := &pendingMemberMock{mockMemberRepo: *newMockMemberRepo()}
+	mRepo.seedMemberWithUser("m-actor", "hh-1", "user-linked", time.Now())
 	mRepo.seedMember("m-pending", "hh-1")
 	cardRepo := newMockCardRepo()
 	catRepo := newMockCategoryRepo()

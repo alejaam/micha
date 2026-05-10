@@ -151,7 +151,7 @@ func (u ClosePeriodUseCase) validateConsensus(ctx context.Context, householdID, 
 
 	for _, m := range members {
 		status, exists := approvalMap[string(m.ID())]
-		if exists {
+		if !exists {
 			return fmt.Errorf("member %s has not voted", m.ID())
 		}
 		if status == periodapproval.ApprovalStatusObjected {
@@ -176,7 +176,10 @@ func (u ClosePeriodUseCase) rolloverFixedExpenses(ctx context.Context, currentPe
 			attrs.CreatedAt = now
 			attrs.UpdatedAt = now
 			
-			cloned, _ := expense.NewFromAttributes(attrs)
+			cloned, err := expense.NewFromAttributes(attrs)
+			if err != nil {
+				return fmt.Errorf("failed to clone fixed expense: %w", err)
+			}
 			if err := u.expenseRepo.Save(ctx, cloned); err != nil {
 				return err
 			}
@@ -199,20 +202,31 @@ func (u ClosePeriodUseCase) rolloverInstallments(ctx context.Context, nextPeriod
 	for _, inst := range installments {
 		// Create a virtual expense for this installment in the new period.
 		// This makes the installment visible in the expense list for the month.
-		e, _ := expense.NewFromAttributes(expense.ExpenseAttributes{
+		// We need the parent expense's category_id to satisfy the NOT NULL FK constraint.
+		parentExpense, err := u.expenseRepo.FindByID(ctx, inst.ExpenseID())
+		if err != nil {
+			return fmt.Errorf("failed to find parent expense for installment %s: %w", inst.ExpenseID(), err)
+		}
+
+		e, err := expense.NewFromAttributes(expense.ExpenseAttributes{
 			ID:                expense.ID(u.idGenerator.NewID()),
 			HouseholdID:       nextPeriod.HouseholdID(),
 			PaidByMemberID:    inst.PaidByMemberID(),
 			PeriodID:          string(nextPeriod.ID()),
+			CategoryID:        parentExpense.CategoryID(),
 			AmountCents:       inst.InstallmentAmountCents(),
 			Description:       fmt.Sprintf("MSI installment %d/%d", inst.CurrentInstallment(), inst.TotalInstallments()),
 			IsShared:          true, // MSI root expense defines this, but for simplicity...
 			Currency:          "MXN",
 			PaymentMethod:     expense.PaymentMethodCard,
 			ExpenseType:       expense.ExpenseTypeMSI,
+			TotalInstallments: inst.TotalInstallments(),
 			CreatedAt:         now,
 			UpdatedAt:         now,
 		})
+		if err != nil {
+			return fmt.Errorf("failed to create MSI expense for installment: %w", err)
+		}
 		if err := u.expenseRepo.Save(ctx, e); err != nil {
 			return err
 		}

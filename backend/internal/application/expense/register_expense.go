@@ -12,6 +12,7 @@ import (
 	appshared "micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/installment"
+	"micha/backend/internal/domain/member"
 	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
@@ -100,11 +101,10 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: member does not belong to household")
 		}
 
-		// DEBUG OVERRIDE: Allow registering expenses even if member is pending.
 		// Requirement (Strict): Pending members cannot register expenses.
-		// if m.IsPending() {
-		// 	return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", shared.ErrForbidden)
-		// }
+		if m.IsPending() {
+			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", shared.ErrForbidden)
+		}
 	}
 
 	categoryID, err := u.resolveCategoryID(ctx, input.HouseholdID, input.CategoryID)
@@ -172,14 +172,26 @@ func (u RegisterExpenseUseCase) ensureActorCanRegisterFixed(ctx context.Context,
 		return shared.ErrForbidden
 	}
 
-	// DEBUG OVERRIDE: Trust the actor regardless of pending status.
-	return nil
+	members, err := u.memberRepo.ListAllByHousehold(ctx, householdID)
+	if err != nil {
+		return err
+	}
 
-	// Original logic:
-	/*
-		members, err := u.memberRepo.ListAllByHousehold(ctx, householdID)
-		...
-	*/
+	var actor member.Member
+	for _, m := range members {
+		if m.UserID() == currentUserID {
+			actor = m
+			break
+		}
+	}
+	if actor.ID() == "" {
+		return shared.ErrForbidden
+	}
+	if actor.IsPending() {
+		return shared.ErrForbidden
+	}
+
+	return nil
 }
 
 func (u RegisterExpenseUseCase) generateInstallments(root expense.Expense) []installment.Installment {
