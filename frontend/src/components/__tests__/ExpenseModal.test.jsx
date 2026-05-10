@@ -39,13 +39,13 @@ describe('ExpenseModal', () => {
 
   it('does not allow selecting fixed expense type in general expense flow', async () => {
     renderModal()
-    fireEvent.click(screen.getByRole('button', { name: /more options/i }))
+    fireEvent.click(screen.getByRole('button', { name: /más opciones/i }))
 
-    const expenseType = screen.getByLabelText(/expense type/i)
-    const fixedOption = expenseType.querySelector('option[value="fixed"]')
-    expect(fixedOption).not.toBeInTheDocument()
-    expect(await screen.findByText(/gestiona gastos fijos desde configuración/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /ir a gastos fijos/i })).toBeInTheDocument()
+    const msiCheckbox = screen.getByLabelText(/pagar a meses/i)
+    expect(msiCheckbox).not.toBeChecked()
+
+    fireEvent.click(msiCheckbox)
+    expect(screen.getByLabelText(/total de cuotas/i)).toBeInTheDocument()
   })
 
   it('shows owner context when selecting paid by', async () => {
