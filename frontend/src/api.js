@@ -244,6 +244,14 @@ export async function createCard({ householdId, bankName, cardName, cutoffDay })
     return parseResponse(response)
 }
 
+export async function deleteCard({ cardId, householdId }) {
+    const response = await fetch(`/v1/cards/${cardId}?household_id=${encodeURIComponent(householdId)}`, {
+        method: 'DELETE',
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
 export async function getRemainingSalary({ householdId, memberId, from, to }) {
     const params = new URLSearchParams()
     if (from) params.append('from', from)

@@ -2448,6 +2448,36 @@ html {
     color: var(--color-text-2);
 }
 
+/* ─── Card admin table (OnboardingCardsPage) ──────────────────────────────── */
+.cardAdminTable .fixedTableHeader,
+.cardAdminTable .fixedTableRow {
+    display: grid;
+    grid-template-columns: 1.5fr 1.5fr 70px 100px;
+    gap: 8px;
+    align-items: center;
+}
+
+.cardColBank,
+.cardColName {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-text-2);
+}
+
+.cardColCutoff {
+    text-align: center;
+    color: var(--color-text-2);
+    font-weight: var(--fw-semibold);
+    flex-shrink: 0;
+}
+
+.cardColActions {
+    text-align: center;
+    flex-shrink: 0;
+}
+
 .fixedCategoryLabel {
     font-weight: var(--fw-medium);
     color: var(--color-text-1);

@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createCard, listCards } from '../api'
+import { createCard, deleteCard, listCards } from '../api'
 import { MEXICAN_BANKS } from '../constants/mexicanBanks'
 import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
 import { FormField } from '../ui/FormField'
-
-function preferredCardStorageKey(householdId) {
-    return `micha_preferred_card_${householdId}`
-}
 
 export function OnboardingCardsPage() {
     const { handleProtectedError } = useAuth()
@@ -20,12 +16,11 @@ export function OnboardingCardsPage() {
     const [cardName, setCardName] = useState('')
     const [cutoffDay, setCutoffDay] = useState('15')
     const [cards, setCards] = useState([])
-    const [selectedCardId, setSelectedCardId] = useState('')
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [message, setMessage] = useState('')
-    const [showForm, setShowForm] = useState(true)
+    const [showForm, setShowForm] = useState(false)
 
     const hasCards = cards.length > 0
 
@@ -35,17 +30,7 @@ export function OnboardingCardsPage() {
         setLoading(true)
         try {
             const data = await listCards({ householdId })
-            const items = Array.isArray(data) ? data : []
-            setCards(items)
-
-            const preferredCardId = localStorage.getItem(preferredCardStorageKey(householdId)) ?? ''
-            if (preferredCardId && items.some((item) => item.id === preferredCardId)) {
-                setSelectedCardId(preferredCardId)
-            } else if (items.length > 0) {
-                setSelectedCardId(items[0].id)
-            } else {
-                setSelectedCardId('')
-            }
+            setCards(Array.isArray(data) ? data : [])
         } catch (err) {
             if (!handleProtectedError(err)) setError(err.message)
         } finally {
@@ -56,11 +41,6 @@ export function OnboardingCardsPage() {
     useEffect(() => {
         loadCards()
     }, [loadCards])
-
-    useEffect(() => {
-        if (!householdId || !selectedCardId) return
-        localStorage.setItem(preferredCardStorageKey(householdId), selectedCardId)
-    }, [householdId, selectedCardId])
 
     const canCreate = useMemo(() => {
         const day = Number(cutoffDay)
@@ -94,8 +74,29 @@ export function OnboardingCardsPage() {
         }
     }
 
+    async function handleDelete(cardId) {
+        if (!confirm('¿Eliminar esta tarjeta? Los gastos registrados con ella no se verán afectados.')) {
+            return
+        }
+
+        setError('')
+        setMessage('')
+        try {
+            await deleteCard({ cardId, householdId })
+            setMessage('Card deleted successfully.')
+            await loadCards()
+        } catch (err) {
+            if (!handleProtectedError(err)) setError(err.message)
+        }
+    }
+
     function handleContinue() {
         navigate('/onboarding/fixed-expenses', { replace: true })
+    }
+
+    function toggleForm() {
+        setShowForm((prev) => !prev)
+        if (!showForm) setMessage('')
     }
 
     if (!householdId) {
@@ -116,25 +117,11 @@ export function OnboardingCardsPage() {
             </div>
 
             {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
-            {message && !showForm ? <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner> : null}
+            {message ? <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner> : null}
 
-            {!showForm && hasCards && (
-                <div className="card mt-4 p-4 border border-dim rounded-md bg-secondary">
-                    <label className="sharedToggleLabel mb-0 flex items-center gap-2 cursor-pointer" htmlFor="addAnotherCard">
-                        <input
-                            id="addAnotherCard"
-                            type="checkbox"
-                            className="w-5 h-5 accent-primary"
-                            checked={showForm}
-                            onChange={(e) => {
-                                setShowForm(e.target.checked)
-                                if (e.target.checked) setMessage('')
-                            }}
-                        />
-                        <span className="font-medium text-primary">Add another card</span>
-                    </label>
-                </div>
-            )}
+            <button type="button" className="btn btnGhost btnSm mt-2" onClick={toggleForm}>
+                {showForm ? '− Cancelar' : '+ Agregar tarjeta'}
+            </button>
 
             {showForm && (
                 <form className="formStack mt-4" onSubmit={handleCreateCard}>
@@ -182,28 +169,36 @@ export function OnboardingCardsPage() {
             </form>
             )}
 
-            <div className="formSection mt-8">
+            <div className="formSection mt-6">
                 <h3 className="sectionTitle">Your cards</h3>
                 {loading ? (
                     <p className="text-sm text-dim">Loading cards...</p>
                 ) : !hasCards ? (
-                    <p className="text-sm text-dim">No cards yet. You can add one now or skip and do it later.</p>
+                    <p className="text-sm text-dim">No cards yet. Add one using the button above.</p>
                 ) : (
-                    <div className="formStack">
+                    <div className="fixedExpensesTable cardAdminTable">
+                        <div className="fixedTableHeader">
+                            <span className="cardColBank">Banco</span>
+                            <span className="cardColName">Tarjeta</span>
+                            <span className="cardColCutoff">Corte</span>
+                            <span className="cardColActions">Acción</span>
+                        </div>
                         {cards.map((item) => (
-                            <label key={item.id} className="sharedToggleLabel" htmlFor={`preferred-card-${item.id}`}>
-                                <input
-                                    id={`preferred-card-${item.id}`}
-                                    type="radio"
-                                    name="preferred-card"
-                                    value={item.id}
-                                    checked={selectedCardId === item.id}
-                                    onChange={() => setSelectedCardId(item.id)}
-                                />
-                                <span className="sharedToggleText">{item.bank_name} - {item.card_name} (cutoff {item.cutoff_day})</span>
-                            </label>
+                            <div key={item.id} className="fixedTableRow">
+                                <span className="cardColBank">{item.bank_name}</span>
+                                <span className="cardColName">{item.card_name}</span>
+                                <span className="cardColCutoff">{item.cutoff_day}</span>
+                                <span className="cardColActions">
+                                    <button
+                                        type="button"
+                                        className="btn btnSm btnGhostDanger"
+                                        onClick={() => handleDelete(item.id)}
+                                    >
+                                        Eliminar
+                                    </button>
+                                </span>
+                            </div>
                         ))}
-                        <p className="formHint">Selected card will be preselected when creating expenses.</p>
                     </div>
                 )}
             </div>
