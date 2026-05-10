@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { AppHeader } from '../AppHeader'
 import { PeriodStatusRibbon } from '../PeriodStatusRibbon'
+import { AuthProvider } from '../../context/AuthContext'
 import { buildRibbonState } from '../../hooks/useDashboardUxState'
 
 describe('PeriodStatusRibbon', () => {
@@ -26,19 +27,21 @@ describe('PeriodStatusRibbon', () => {
 describe('AppHeader mutation lock wiring', () => {
   it('marks invite member action as disabled while period is locked', () => {
     render(
-      <MemoryRouter>
-        <AppHeader
-          health="ok"
-          householdId="house-1"
-          households={[{ id: 'house-1', name: 'Home' }]}
-          onHouseholdChange={() => {}}
-          onReload={() => {}}
-          onLogout={() => {}}
-          isLoading={false}
-          periodStatus="closed"
-          isMutationLocked
-        />
-      </MemoryRouter>,
+      <AuthProvider>
+        <MemoryRouter>
+          <AppHeader
+            health="ok"
+            householdId="house-1"
+            households={[{ id: 'house-1', name: 'Home' }]}
+            onHouseholdChange={() => {}}
+            onReload={() => {}}
+            onLogout={() => {}}
+            isLoading={false}
+            periodStatus="closed"
+            isMutationLocked
+          />
+        </MemoryRouter>
+      </AuthProvider>,
     )
 
     const inviteLink = screen.getByRole('link', { name: /invitar nuevo miembro/i })
