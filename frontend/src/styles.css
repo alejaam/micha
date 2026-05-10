@@ -1852,6 +1852,42 @@ ul {
     gap: 8px;
 }
 
+/* ─── Onboarding header bar — minimal brand + logout ──────────────────────────── */
+.onboardingHeaderBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    margin-bottom: 16px;
+}
+
+.onboardingHeaderBar .brand {
+    gap: 10px;
+}
+
+.onboardingHeaderBar .brandIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+}
+
+.onboardingHeaderBar .brandName {
+    font-size: 1.1rem;
+}
+
+.onboardingHeaderBar .brandTagline {
+    display: none;
+}
+
+.onboardingHeaderBar .btnGhost {
+    color: var(--color-text-3);
+    font-size: 0.8rem;
+}
+
+.onboardingHeaderBar .btnGhost:hover {
+    color: var(--color-text-1);
+}
+
 /* ─── Advanced toggle ────────────────────────────────────────────────────────── */
 .advancedToggle {
     align-self: flex-start;
