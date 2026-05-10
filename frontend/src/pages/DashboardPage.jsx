@@ -98,16 +98,13 @@ export function DashboardPage() {
 
     const hasRecurringFixed = recurringItems.some((item) => item.expense_type === 'fixed')
     const hasExpenses = items.length > 0 || hasRecurringFixed
-    const transferCount = settlement?.transfers?.length ?? 0
-    const totalSharedCents = settlement?.total_shared_cents ?? 0
-    const openInstallmentsCount = items.filter((item) => Number(item.total_installments) > 1).length
 
     return (
         <>
             {error && <Banner type="error" onDismiss={() => setError('')}>{error}</Banner>}
             {message && <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner>}
 
-            {/* ─── Period Management (Always visible) ─── */}
+            {/* ─── (a) Period Management Banner (Always visible, topmost) ─── */}
             <PeriodManagementPanel
                 householdId={householdId}
                 period={currentPeriod}
@@ -132,50 +129,19 @@ export function DashboardPage() {
                 </section>
             ) : (
                 <>
-                    <section className="card dashboardPriorityStrip" aria-label="Prioridades financieras">
-                        <header className="dashboardPriorityHead">
-                            <p className="dashboardPriorityEyebrow">Resumen</p>
-                            <h2 className="dashboardPriorityTitle">Balances y conciliación primero</h2>
-                            <p className="authMeta">Sigue el flujo del hogar: registra, concilia y cierra el periodo.</p>
-                        </header>
-                        <div className="dashboardPriorityMetrics" role="list" aria-label="Métricas prioritarias">
-                            <article className="dashboardPriorityMetric" role="listitem">
-                                <span className="dashboardPriorityLabel">Transferencias pendientes</span>
-                                <strong className="dashboardPriorityValue">{transferCount}</strong>
-                            </article>
-                            <article className="dashboardPriorityMetric" role="listitem">
-                                <span className="dashboardPriorityLabel">Total compartido</span>
-                                <strong className="dashboardPriorityValue">
-                                    {new Intl.NumberFormat(undefined, { style: 'currency', currency: activeCurrency }).format(totalSharedCents / 100)}
-                                </strong>
-                            </article>
-                            <article className="dashboardPriorityMetric" role="listitem">
-                                <span className="dashboardPriorityLabel">Plazos abiertos</span>
-                                <strong className="dashboardPriorityValue">{openInstallmentsCount}</strong>
-                            </article>
-                        </div>
-                    </section>
-
-                    <motion.div
-                        className="pageGrid"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.25, ease: "easeOut", staggerChildren: 0.1 }}
-                    >
-                        <motion.div
-                            className="dashboardCol"
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.2, ease: "easeOut" }}
-                        >
-                            {currentMember && (
+                    {/* ─── (b) RemainingSalary + ExpenseSummary row ─── */}
+                    <div className="u-flex u-flex-wrap u-gap-4" aria-label="Resumen financiero">
+                        {currentMember && (
+                            <div className="u-flex-1" style={{ minWidth: 280 }}>
                                 <RemainingSalaryPanel
                                     householdId={householdId}
                                     memberId={currentMember.id}
                                     period={currentPeriod}
                                     currency={activeCurrency}
                                 />
-                            )}
+                            </div>
+                        )}
+                        <div className="u-flex-1" style={{ minWidth: 280 }}>
                             <section className="card dashboardSummaryCard" aria-label="Resumen del mes">
                                 <h2 className="sectionTitle">
                                     <span className="sectionTitleIcon" aria-hidden>📊</span>
@@ -183,63 +149,60 @@ export function DashboardPage() {
                                 </h2>
                                 <ExpenseSummary settlement={settlement} currency={activeCurrency} />
                             </section>
+                        </div>
+                    </div>
 
-                            <MembersPanel
-                                members={members}
-                                currency={activeCurrency}
-                            />
-
-                            <PeriodHistory householdId={householdId} />
-
-                            <button
-                                type="button"
-                                className="btn btnPrimary"
-                                onClick={() => navigate('/balances')}
-                                style={{ marginTop: '1rem' }}
-                            >
-                                Ver Balances →
-                            </button>
-                        </motion.div>
-
-                        <motion.div
-                            className="dashboardCol"
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.2, ease: "easeOut", delay: 0.05 }}
+                    {/* ─── (c) RecentExpenses ─── */}
+                    <section className="card" aria-label="Gastos recientes">
+                        <div className="listHeader">
+                            <h2 className="listTitle">Gastos recientes</h2>
+                            {items.length > 0 && (
+                                <span className="listCount">{items.length} total</span>
+                            )}
+                        </div>
+                        <RecentExpenses
+                            items={items}
+                            isLoading={loadingList}
+                            currency={activeCurrency}
+                            limit={5}
+                            onQuickAdd={handleOpenQuickAdd}
+                        />
+                        <button
+                            type="button"
+                            className="btn btnGhost"
+                            onClick={() => navigate('/expenses')}
+                            style={{ width: '100%', marginTop: '0.5rem' }}
                         >
-                            <DynamicChartsPanel
-                                categoryTotals={categoryTotals}
-                                memberActualVsExpected={memberActualVsExpected}
-                                msiProgress={msiProgress}
-                                spendingTrend={spendingTrend}
-                                currency={activeCurrency}
-                            />
+                            Ver todos los movimientos →
+                        </button>
+                    </section>
 
-                            <section className="card" aria-label="Gastos recientes">
-                                <div className="listHeader">
-                                    <h2 className="listTitle">Gastos recientes</h2>
-                                    {items.length > 0 && (
-                                        <span className="listCount">{items.length} total</span>
-                                    )}
-                                </div>
-                                <RecentExpenses
-                                    items={items}
-                                    isLoading={loadingList}
-                                    currency={activeCurrency}
-                                    limit={5}
-                                    onQuickAdd={handleOpenQuickAdd}
-                                />
-                                <button
-                                    type="button"
-                                    className="btn btnGhost"
-                                    onClick={() => navigate('/expenses')}
-                                    style={{ width: '100%', marginTop: '0.5rem' }}
-                                >
-                                    Ver todos los movimientos →
-                                </button>
-                            </section>
-                        </motion.div>
-                    </motion.div>
+                    {/* ─── (d) DynamicChartsPanel ─── */}
+                    <DynamicChartsPanel
+                        categoryTotals={categoryTotals}
+                        memberActualVsExpected={memberActualVsExpected}
+                        msiProgress={msiProgress}
+                        spendingTrend={spendingTrend}
+                        currency={activeCurrency}
+                    />
+
+                    {/* ─── (e) MembersPanel ─── */}
+                    <MembersPanel
+                        members={members}
+                        currency={activeCurrency}
+                    />
+
+                    {/* ─── (f) PeriodHistory ─── */}
+                    <PeriodHistory householdId={householdId} />
+
+                    <button
+                        type="button"
+                        className="btn btnPrimary"
+                        onClick={() => navigate('/balances')}
+                        style={{ marginTop: '1rem' }}
+                    >
+                        Ver Balances →
+                    </button>
                 </>
             )}
 

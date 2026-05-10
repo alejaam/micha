@@ -42,7 +42,7 @@ export function sanitizeAmountInput(value) {
 }
 
 /**
- * Format an ISO timestamp as a short relative date label.
+ * Format an ISO timestamp as a short relative date label in Spanish.
  * Falls back to a locale date string when the date is far in the past.
  */
 export function formatRelativeDate(isoString) {
@@ -54,9 +54,10 @@ export function formatRelativeDate(isoString) {
     const diffHr = Math.floor(diffMin / 60)
     const diffDay = Math.floor(diffHr / 24)
 
-    if (diffMin < 1) return 'just now'
-    if (diffMin < 60) return `${diffMin}m ago`
-    if (diffHr < 24) return `${diffHr}h ago`
-    if (diffDay < 7) return `${diffDay}d ago`
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    if (diffMin < 1) return 'ahora'
+    if (diffMin < 60) return `hace ${diffMin}m`
+    if (diffHr < 24) return `hace ${diffHr}h`
+    if (diffDay === 1) return 'ayer'
+    if (diffDay < 7) return `hace ${diffDay}d`
+    return date.toLocaleDateString('es-MX', { month: 'short', day: 'numeric' })
 }

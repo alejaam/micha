@@ -26,9 +26,13 @@ func NewExpenseRepository(db *pgxpool.Pool) ExpenseRepository {
 }
 
 // Save persists a new expense record.
+func (r ExpenseRepository) getQuerier(ctx context.Context) Querier {
+	return querierFromContext(ctx, r.db)
+}
+
 func (r ExpenseRepository) Save(ctx context.Context, e expense.Expense) error {
 	attrs := e.Attributes()
-	_, err := r.db.Exec(ctx,
+	_, err := r.getQuerier(ctx).Exec(ctx,
 		`INSERT INTO expenses (id, household_id, paid_by_member_id, period_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
 		string(attrs.ID), attrs.HouseholdID, nullIfEmpty(attrs.PaidByMemberID), nullIfEmpty(attrs.PeriodID), attrs.AmountCents,
@@ -46,7 +50,7 @@ func (r ExpenseRepository) Save(ctx context.Context, e expense.Expense) error {
 // FindByID retrieves an expense by ID. Returns shared.ErrNotFound when not found.
 // Note: soft-deleted rows are still returned so callers can inspect DeletedAt.
 func (r ExpenseRepository) FindByID(ctx context.Context, id string) (expense.Expense, error) {
-	row := r.db.QueryRow(ctx,
+	row := r.getQuerier(ctx).QueryRow(ctx,
 		`SELECT id, household_id, paid_by_member_id, period_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at, deleted_at
 			FROM expenses
 			WHERE id = $1`,
@@ -66,7 +70,7 @@ func (r ExpenseRepository) FindByID(ctx context.Context, id string) (expense.Exp
 
 // List returns non-deleted expenses for a household ordered by created_at DESC.
 func (r ExpenseRepository) List(ctx context.Context, householdID string, limit, offset int) ([]expense.Expense, error) {
-	rows, err := r.db.Query(ctx,
+	rows, err := r.getQuerier(ctx).Query(ctx,
 		`SELECT id, household_id, paid_by_member_id, period_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at, deleted_at
 			FROM expenses
 			WHERE household_id = $1 AND deleted_at IS NULL
@@ -97,7 +101,7 @@ func (r ExpenseRepository) List(ctx context.Context, householdID string, limit, 
 
 // ListByHouseholdAndPeriod returns non-deleted household expenses between [from, to).
 func (r ExpenseRepository) ListByHouseholdAndPeriod(ctx context.Context, householdID string, from, to time.Time) ([]expense.Expense, error) {
-	rows, err := r.db.Query(ctx,
+	rows, err := r.getQuerier(ctx).Query(ctx,
 		`SELECT id, household_id, paid_by_member_id, period_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at, deleted_at
 			FROM expenses
 			WHERE household_id = $1
@@ -129,7 +133,7 @@ func (r ExpenseRepository) ListByHouseholdAndPeriod(ctx context.Context, househo
 
 // ListByPeriod returns all non-deleted expenses for a specific period.
 func (r ExpenseRepository) ListByPeriod(ctx context.Context, periodID string) ([]expense.Expense, error) {
-	rows, err := r.db.Query(ctx,
+	rows, err := r.getQuerier(ctx).Query(ctx,
 		`SELECT id, household_id, paid_by_member_id, period_id, amount_cents, description, is_shared, currency, payment_method, expense_type, card_id, card_name, category_id, total_installments, created_at, updated_at, deleted_at
 			FROM expenses
 			WHERE period_id = $1 AND deleted_at IS NULL
@@ -159,7 +163,7 @@ func (r ExpenseRepository) ListByPeriod(ctx context.Context, periodID string) ([
 // Update persists changes to an existing, non-deleted expense.
 func (r ExpenseRepository) Update(ctx context.Context, e expense.Expense) error {
 	attrs := e.Attributes()
-	tag, err := r.db.Exec(ctx,
+	tag, err := r.getQuerier(ctx).Exec(ctx,
 		`UPDATE expenses
 		SET paid_by_member_id = $1,
 			period_id         = $2,
@@ -194,7 +198,7 @@ func (r ExpenseRepository) Update(ctx context.Context, e expense.Expense) error 
 // SumPersonalByMemberAndPeriod returns personal outflow for one member in [from, to).
 func (r ExpenseRepository) SumPersonalByMemberAndPeriod(ctx context.Context, householdID, memberID string, from, to time.Time) (int64, error) {
 	var total int64
-	err := r.db.QueryRow(ctx,
+	err := r.getQuerier(ctx).QueryRow(ctx,
 		`SELECT
 			COALESCE((
 				SELECT SUM(e.amount_cents)
@@ -300,7 +304,7 @@ func scanExpense(r row) (expense.Expense, error) {
 }
 
 func (r ExpenseRepository) AdoptOrphanExpenses(ctx context.Context, householdID, periodID string, from, to time.Time) error {
-	_, err := r.db.Exec(ctx,
+	_, err := r.getQuerier(ctx).Exec(ctx,
 		`UPDATE expenses
 		SET period_id = $1
 		WHERE household_id = $2

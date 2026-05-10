@@ -48,8 +48,12 @@
     /* Warning amber */
     --color-amber-50: #fffbeb;
     --color-amber-100: #fef3c7;
+    --color-amber-400: #fbbf24;
     --color-amber-500: #f59e0b;
     --color-amber-700: #b45309;
+
+    /* Aliases */
+    --color-text-heading: #0f172a;
 
     /* Radii — Nothing Design strictly <= 16px */
     --radius-xs: 0px;
@@ -60,14 +64,14 @@
     --radius-2xl: 16px;
     --radius-pill: 9999px;
 
-    /* Shadows — None or hard borders for Nothing */
-    --shadow-xs: none;
-    --shadow-sm: none;
-    --shadow-md: none;
-    --shadow-lg: none;
-    --shadow-xl: none;
-    --shadow-glow: none;
-    --shadow-inner: none;
+    /* Shadows — Subtle elevation for interactive surfaces */
+    --shadow-xs: 0 1px 2px rgba(15, 23, 42, .04);
+    --shadow-sm: 0 2px 4px rgba(15, 23, 42, .06);
+    --shadow-md: 0 4px 8px rgba(15, 23, 42, .08);
+    --shadow-lg: 0 8px 16px rgba(15, 23, 42, .10);
+    --shadow-xl: 0 12px 24px rgba(15, 23, 42, .12);
+    --shadow-glow: 0 0 12px rgba(59, 130, 246, .15);
+    --shadow-inner: inset 0 1px 2px rgba(15, 23, 42, .04);
 
     /* Motion — Smooth, responsive */
     --ease-out: cubic-bezier(.16, 1, .3, 1);
@@ -106,6 +110,33 @@
     /* Mobile bottom nav height */
     --nav-height: 72px;
 }
+
+/* ─── Utility classes ────────────────────────────────────────────────────────── */
+.u-flex { display: flex; }
+.u-flex-col { display: flex; flex-direction: column; }
+.u-flex-wrap { display: flex; flex-wrap: wrap; }
+.u-flex-1 { flex: 1 1 0%; }
+.u-items-center { align-items: center; }
+.u-justify-between { justify-content: space-between; }
+.u-gap-2 { gap: var(--sp-sm); }
+.u-gap-3 { gap: var(--sp-md); }
+.u-gap-4 { gap: var(--sp-lg); }
+.u-gap-6 { gap: var(--sp-xl); }
+.u-w-full { width: 100%; }
+.u-text-sm { font-size: 0.85rem; }
+.u-text-dim { color: var(--color-text-3); }
+.u-mb-0 { margin-bottom: 0; }
+.u-mb-2 { margin-bottom: var(--sp-sm); }
+.u-mb-3 { margin-bottom: var(--sp-md); }
+.u-mb-6 { margin-bottom: var(--sp-xl); }
+.u-mt-2 { margin-top: var(--sp-sm); }
+.u-mt-4 { margin-top: var(--sp-lg); }
+.u-mt-6 { margin-top: var(--sp-xl); }
+.u-mt-8 { margin-top: var(--sp-2xl); }
+.u-p-4 { padding: var(--sp-lg); }
+.u-border { border: 1px solid var(--color-border); }
+.u-rounded-md { border-radius: var(--radius-md); }
+.u-bg-surface { background: var(--color-surface); }
 
 /* ─── Reset ────────────────────────────────────────────────────────────────── */
 *,
@@ -782,6 +813,12 @@ ul {
     border-color: var(--color-red-100);
 }
 
+.bannerInfo {
+    color: var(--color-brand-700);
+    background: var(--color-brand-50);
+    border-color: var(--color-brand-100);
+}
+
 /* ─── Expense list card ─────────────────────────────────────────────────────── */
 .expenseListCard {
     padding-bottom: 18px;
@@ -1427,19 +1464,19 @@ ul {
 }
 
 .periodStatusRibbon-review {
-    border-color: #D4A843;
+    border-color: var(--color-amber-500);
 }
 
 .periodStatusRibbon-review .periodStatusRibbonState {
-    color: #D4A843;
+    color: var(--color-amber-500);
 }
 
 .periodStatusRibbon-closed {
-    border-color: #C14B45;
+    border-color: var(--color-red-500);
 }
 
 .periodStatusRibbon-closed .periodStatusRibbonState {
-    color: #C14B45;
+    color: var(--color-red-500);
 }
 
 /* Hide FAB on desktop where we have more space */
@@ -1547,9 +1584,9 @@ ul {
 }
 
 .chartPanelCard {
-    border: 1px solid #E8E8E8;
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    background: #FFFFFF;
+    background: var(--color-surface);
     padding: 12px;
     display: grid;
     gap: 10px;
@@ -1561,14 +1598,14 @@ ul {
     font-size: 11px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #666666;
+    color: var(--color-text-3);
 }
 
 .chartPanelTitle {
     margin: 0;
     font-size: 0.96rem;
     letter-spacing: -0.01em;
-    color: #000000;
+    color: var(--color-text-1);
 }
 
 .chartCanvas {
@@ -1595,18 +1632,18 @@ ul {
 }
 
 .chartLegendName {
-    color: #666666;
+    color: var(--color-text-3);
 }
 
 .chartLegendValue {
-    color: #000000;
+    color: var(--color-text-1);
     font-family: var(--font-mono);
 }
 
 .chartSummary {
     margin: 0;
     font-size: 0.8rem;
-    color: #666666;
+    color: var(--color-text-3);
 }
 
 .msiProgressList {
@@ -1630,20 +1667,20 @@ ul {
 
 .msiProgressName {
     font-size: 0.84rem;
-    color: #000000;
+    color: var(--color-text-1);
 }
 
 .msiProgressFraction {
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.06em;
-    color: #666666;
+    color: var(--color-text-3);
 }
 
 .msiProgressTrack {
     width: 100%;
     height: 8px;
-    background: #E8E8E8;
+    background: var(--color-border);
     border-radius: 8px;
     overflow: hidden;
 }
@@ -1651,7 +1688,7 @@ ul {
 .msiProgressFill {
     display: block;
     height: 100%;
-    background: #0A0A0A;
+    background: var(--color-text-1);
     border-radius: 8px;
     transition: width 180ms var(--ease-out);
 }
@@ -1659,28 +1696,28 @@ ul {
 .msiProgressMeta {
     margin: 0;
     font-size: 0.74rem;
-    color: #666666;
+    color: var(--color-text-3);
 }
 
 .dynamicChartsNarrative {
     display: grid;
     gap: 4px;
-    border-top: 1px solid #E8E8E8;
+    border-top: 1px solid var(--color-border);
     padding-top: 10px;
 }
 
 .dynamicChartsNarrative p {
     margin: 0;
     font-size: 0.84rem;
-    color: #1A1A1A;
+    color: var(--color-text-2);
 }
 
 .valueSemanticSuccess {
-    color: #4A9E5C;
+    color: var(--color-green-600);
 }
 
 .valueSemanticWarning {
-    color: #D4A843;
+    color: var(--color-amber-500);
 }
 
 /* ─── Onboarding ─────────────────────────────────────────────────────────────── */
@@ -2245,9 +2282,9 @@ html {
     gap: 10px;
     text-align: center;
     padding: 28px 16px;
-    border: 1px solid #E8E8E8;
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    background: #FFFFFF;
+    background: var(--color-surface);
 }
 
 .emptyStateBlockCompact {
@@ -2259,19 +2296,19 @@ html {
     font-family: var(--font-mono);
     font-size: 18px;
     letter-spacing: 0.08em;
-    color: #666666;
+    color: var(--color-text-3);
 }
 
 .emptyStateBlockTitle {
     margin: 0;
     font-size: 1rem;
-    color: #000000;
+    color: var(--color-text-1);
 }
 
 .emptyStateBlockDescription {
     margin: 0;
     font-size: 0.85rem;
-    color: #666666;
+    color: var(--color-text-3);
     max-width: 320px;
 }
 
@@ -2285,13 +2322,13 @@ html {
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.08em;
-    color: #D4A843;
+    color: var(--color-amber-500);
 }
 
 .historyProvisionalNote {
     margin: 0;
     font-size: 0.82rem;
-    color: #666666;
+    color: var(--color-text-3);
 }
 
 .historyGrid {
@@ -2301,12 +2338,12 @@ html {
 }
 
 .historyPanel {
-    border: 1px solid #E8E8E8;
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     padding: 12px;
     display: grid;
     gap: 10px;
-    background: #FFFFFF;
+    background: var(--color-surface);
 }
 
 .historyPanelLabel {
@@ -2314,7 +2351,7 @@ html {
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.08em;
-    color: #666666;
+    color: var(--color-text-3);
 }
 
 .historyPeriodList {
@@ -2324,10 +2361,10 @@ html {
 
 .historyPeriodButton {
     width: 100%;
-    border: 1px solid #E8E8E8;
+    border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    background: #FFFFFF;
-    color: #1A1A1A;
+    background: var(--color-surface);
+    color: var(--color-text-2);
     padding: 8px 10px;
     display: flex;
     justify-content: space-between;
@@ -2337,7 +2374,7 @@ html {
 }
 
 .historyPeriodButton.isSelected {
-    border-color: #0A0A0A;
+    border-color: var(--color-text-1);
 }
 
 .historyPeriodValue,
@@ -2346,7 +2383,7 @@ html {
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.06em;
-    color: #666666;
+    color: var(--color-text-3);
 }
 
 .historyChartCanvas {
@@ -2364,13 +2401,13 @@ html {
     justify-content: space-between;
     gap: 8px;
     font-size: 0.84rem;
-    color: #1A1A1A;
+    color: var(--color-text-2);
 }
 
 .historyPanelFootnote {
     margin: 0;
     font-size: 0.78rem;
-    color: #666666;
+    color: var(--color-text-3);
 }
 
 /* ─── Bottom sheet ───────────────────────────────────────────────────────────── */
@@ -2387,10 +2424,10 @@ html {
     width: 100%;
     max-height: 88dvh;
     overflow: auto;
-    background: #FFFFFF;
-    border-top: 1px solid #E8E8E8;
-    border-left: 1px solid #E8E8E8;
-    border-right: 1px solid #E8E8E8;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    border-left: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: 8px 14px 18px;
 }
@@ -2402,7 +2439,7 @@ html {
     margin: 2px auto 10px;
     border: 0;
     border-radius: var(--radius-pill);
-    background: #CCCCCC;
+    background: var(--color-text-4);
     cursor: pointer;
 }
 
@@ -2416,13 +2453,13 @@ html {
 .bottomSheetTitle {
     margin: 0;
     font-size: 1rem;
-    color: #000000;
+    color: var(--color-text-1);
 }
 
 .bottomSheetBody .card {
     border-radius: var(--radius-md);
-    border: 1px solid #E8E8E8;
-    background: #FFFFFF;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
     padding: 14px;
 }
 
@@ -2449,7 +2486,7 @@ html {
     font-family: var(--font-mono);
     font-size: 10px;
     letter-spacing: 0.08em;
-    color: #666666;
+    color: var(--color-text-3);
     text-transform: uppercase;
 }
 
@@ -2465,13 +2502,13 @@ html {
     position: absolute;
     font-family: var(--font-mono);
     font-size: 14px;
-    color: #0A0A0A;
+    color: var(--color-text-1);
 }
 
 .consensusRingMeta {
     margin: 0;
     font-size: 11px;
-    color: #666666;
+    color: var(--color-text-3);
     font-family: var(--font-mono);
     letter-spacing: 0.04em;
 }
@@ -2483,14 +2520,14 @@ html {
 }
 
 .expenseMsiChip {
-    border: 1px solid #0A0A0A;
+    border: 1px solid var(--color-text-1);
     border-radius: var(--radius-pill);
     padding: 1px 8px;
     font-family: var(--font-mono);
     font-size: 10px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #0A0A0A;
+    color: var(--color-text-1);
 }
 
 /* ─── CardExpensesPanel ──────────────────────────────────────────────────────── */
@@ -2658,7 +2695,7 @@ html {
 }
 
 .settlementBalanceRow:hover {
-    border-color: var(--color-border-visible, #cccccc);
+    border-color: var(--color-border);
 }
 
 .settlementBalanceRowHeader {
@@ -2678,7 +2715,7 @@ html {
     font-size: 11px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--color-text-secondary, #666666);
+    color: var(--color-text-3);
     border: 1px solid var(--color-border);
     padding: 2px 8px;
     border-radius: 999px;
@@ -2744,21 +2781,21 @@ html {
 }
 
 .semanticSettlementCard-owes {
-    border-color: #D4A843;
+    border-color: var(--color-amber-500);
 }
 
 .semanticSettlementCard-owes .semanticSettlementCardState,
 .semanticSettlementCard-owes .semanticSettlementCardAmount {
-    color: #D4A843;
+    color: var(--color-amber-500);
 }
 
 .semanticSettlementCard-receives {
-    border-color: #4A9E5C;
+    border-color: var(--color-green-600);
 }
 
 .semanticSettlementCard-receives .semanticSettlementCardState,
 .semanticSettlementCard-receives .semanticSettlementCardAmount {
-    color: #4A9E5C;
+    color: var(--color-green-600);
 }
 
 .semanticSettlementCard-settled {
@@ -2992,9 +3029,43 @@ html {
     color: var(--color-text-3);
 }
 
+/* Banner mode — prominent when period needs action */
+.periodActionCard--banner {
+    background: linear-gradient(135deg, var(--color-amber-50), var(--color-surface));
+    border: 2px solid var(--color-amber-500);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-md), 0 0 0 1px rgba(245, 158, 11, .08);
+    animation: slideDown var(--dur-base) var(--ease-out);
+}
+
+.periodActionCard--banner .periodActionContent {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 16px;
+}
+
+.periodActionCard--banner .sectionTitle {
+    font-size: 1.15rem;
+    margin-bottom: 4px;
+}
+
+.periodActionCard--banner .authMeta {
+    font-size: 0.95rem;
+    max-width: 480px;
+}
+
+.periodActionCard--banner .btnPrimary {
+    align-self: flex-start;
+    font-size: 1rem;
+    padding: 14px 28px;
+}
+
 /* ─── Salary Card ───────────────────────────────────────────────────────────── */
 .salaryCard {
-    background: linear-gradient(135deg, #FFFFFF, var(--color-brand-50));
+    background: linear-gradient(135deg, var(--color-surface), var(--color-brand-50));
     border: 1px solid var(--color-brand-100);
 }
 
