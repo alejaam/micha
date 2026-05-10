@@ -108,9 +108,10 @@ export function DashboardPage() {
             <PeriodManagementPanel
                 householdId={householdId}
                 period={currentPeriod}
-                onStatusChange={() => {
+                onStatusChange={({ message: statusMessage } = {}) => {
                     reloadPeriod()
                     reloadShell()
+                    if (statusMessage) setMessage(statusMessage)
                 }}
                 isOwner={isOwner}
                 members={members}

@@ -22,6 +22,7 @@ export function AppLayout() {
         loadingHouseholds,
         periodStatus,
         isMutationLocked,
+        currentPeriod,
     } = useAppShell()
 
     if (!isAuthenticated) {
@@ -46,6 +47,7 @@ export function AppLayout() {
                     isLoading={loadingHouseholds}
                     periodStatus={periodStatus}
                     isMutationLocked={isMutationLocked}
+                    currentPeriod={currentPeriod}
                 />
                 <Outlet />
                 <BottomNav />

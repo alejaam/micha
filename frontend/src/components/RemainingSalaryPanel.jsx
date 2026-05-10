@@ -37,7 +37,20 @@ export function RemainingSalaryPanel({ householdId, memberId, period, currency =
     if (error) return <div className="card salaryCard error">Error al cargar sueldo: {error}</div>
     if (!data) return null
 
-    const isNegative = data.remaining_salary_cents < 0
+    const safeData = {
+        remaining_salary_cents: data?.remaining_salary_cents ?? 0,
+        monthly_salary_cents: data?.monthly_salary_cents ?? 0,
+        total_shared_outflow_cents: data?.total_shared_outflow_cents ?? 0,
+        total_personal_outflow_cents: data?.total_personal_outflow_cents ?? 0,
+    }
+
+    const remainingCents = Number(safeData.remaining_salary_cents) || 0
+    const isNegative = remainingCents < 0
+
+    const hasMovements = (
+        (Number(safeData.total_shared_outflow_cents) || 0) > 0 ||
+        (Number(safeData.total_personal_outflow_cents) || 0) > 0
+    )
 
     return (
         <section className={`card salaryCard ${isNegative ? 'salaryNegative' : ''}`}>
@@ -47,23 +60,26 @@ export function RemainingSalaryPanel({ householdId, memberId, period, currency =
             </div>
 
             <div className="salaryMain">
-                <strong className="salaryRemaining">{formatCurrency(data.remaining_salary_cents, currency)}</strong>
+                <strong className="salaryRemaining">{formatCurrency(remainingCents, currency)}</strong>
                 <p className="salaryHint">Después de todos tus gastos</p>
             </div>
 
             <div className="salaryBreakdown">
                 <div className="salaryRow">
                     <span>Sueldo base</span>
-                    <span className="salaryVal">{formatCurrency(data.monthly_salary_cents, currency)}</span>
+                    <span className="salaryVal">{formatCurrency(safeData.monthly_salary_cents, currency)}</span>
                 </div>
                 <div className="salaryRow">
                     <span>Gastos compartidos (tu parte)</span>
-                    <span className="salaryVal negative">-{formatCurrency(data.total_shared_outflow_cents, currency)}</span>
+                    <span className="salaryVal negative">-{formatCurrency(safeData.total_shared_outflow_cents, currency)}</span>
                 </div>
                 <div className="salaryRow">
                     <span>Gastos personales</span>
-                    <span className="salaryVal negative">-{formatCurrency(data.total_personal_outflow_cents, currency)}</span>
+                    <span className="salaryVal negative">-{formatCurrency(safeData.total_personal_outflow_cents, currency)}</span>
                 </div>
+                {!hasMovements && (
+                    <p className="salaryHint">Sin movimientos este periodo.</p>
+                )}
             </div>
         </section>
     )
