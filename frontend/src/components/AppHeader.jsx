@@ -49,26 +49,28 @@ export function AppHeader({
 
       {/* Controls */}
       <div className="headerControls">
-        {/* Household selector */}
-        <div className="householdRow">
-          <label htmlFor="householdInput" className="householdLabel">
-            Hogar
-          </label>
-          <select
-            id="householdInput"
-            className="householdInput"
-            value={householdId}
-            onChange={(e) => onHouseholdChange(e.target.value)}
-            aria-label="Hogar"
-          >
-            <option value="">Seleccionar hogar</option>
-            {households.map((household) => (
-              <option key={household.id} value={household.id}>
-                {household.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Household selector — only show when households exist */}
+        {households.length > 0 && (
+          <div className="householdRow">
+            <label htmlFor="householdInput" className="householdLabel">
+              Hogar
+            </label>
+            <select
+              id="householdInput"
+              className="householdInput"
+              value={householdId}
+              onChange={(e) => onHouseholdChange(e.target.value)}
+              aria-label="Hogar"
+            >
+              <option value="">Seleccionar hogar</option>
+              {households.map((household) => (
+                <option key={household.id} value={household.id}>
+                  {household.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Invite member */}
         {householdId && (

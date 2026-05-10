@@ -97,6 +97,10 @@ export function OnboardingHouseholdPage() {
                 <p className="authMeta">Un hogar agrupa todos los gastos compartidos y los miembros.</p>
             </div>
 
+            <Banner type="info">
+                Bienvenido a micha. Para comenzar, necesitas crear tu primer hogar. Este paso es obligatorio.
+            </Banner>
+
             {error ? <Banner type="error">{error}</Banner> : null}
 
             <form className="formStack" onSubmit={handleSubmit}>

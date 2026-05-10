@@ -28,6 +28,11 @@ export function AppLayout() {
         return <Navigate to="/login" replace />
     }
 
+    // No households yet → redirect to onboarding
+    if (!loadingHouseholds && households.length === 0) {
+        return <Navigate to="/onboarding/household" replace />
+    }
+
     return (
         <HouseholdDataProvider>
             <div className="page">

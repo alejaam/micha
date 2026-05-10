@@ -7,12 +7,13 @@
  * @param {boolean} [floating] - Render as fixed toast overlay instead of inline banner
  */
 export function Banner({ type, children, onDismiss, floating = false }) {
+  const variantClass = type === 'ok' ? 'bannerOk' : type === 'info' ? 'bannerInfo' : 'bannerError'
   const cls = [
     'banner',
-    type === 'ok' ? 'bannerOk' : 'bannerError',
+    variantClass,
     floating ? 'bannerFloating' : '',
   ].filter(Boolean).join(' ')
-  const icon = type === 'ok' ? '✓' : '⚠'
+  const icon = type === 'ok' ? '✓' : type === 'info' ? 'ℹ' : '⚠'
 
   return (
     <div className={cls} role="alert" aria-live="polite">
