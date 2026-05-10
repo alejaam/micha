@@ -1841,15 +1841,79 @@ ul {
     padding: 20px 0;
 }
 
+.onboardingShell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 16px 48px;
+    background: var(--color-bg);
+}
+
 .onboardingCard {
-    width: min(480px, 100%);
+    width: 100%;
+    max-width: 560px;
+    margin-top: 16px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
     display: grid;
     gap: 16px;
+    padding: 20px;
 }
 
 .onboardingHeader {
     display: grid;
     gap: 8px;
+}
+
+/* ─── StepIndicator (onboarding wizard steps) ───────────────────────────────── */
+.pd-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.pd-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pd-stepDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-text-4);
+    transition: background 0.2s ease;
+}
+
+.pd-stepDotActive {
+    background: var(--color-brand-500);
+}
+
+.pd-stepDotCompleted {
+    background: var(--color-green-500);
+}
+
+.pd-stepLabel {
+    font-size: 0.8125rem;
+    color: var(--color-text-3);
+    white-space: nowrap;
+}
+
+.pd-stepActive .pd-stepLabel {
+    color: var(--color-text-1);
+    font-weight: 600;
+}
+
+@media (max-width: 639px) {
+    .pd-stepLabel {
+        display: none;
+    }
 }
 
 /* ─── Onboarding header bar — minimal brand + logout ──────────────────────────── */

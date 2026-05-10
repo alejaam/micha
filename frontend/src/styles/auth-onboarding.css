@@ -54,15 +54,6 @@
     padding: var(--pd-sp-lg);
 }
 
-/* ─── Onboarding Shell ────────────────────────────────────────────────── */
-
-.premiumDark.onboardingShell {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    padding: var(--pd-sp-xl);
-}
-
 /* ─── AuthCard ─────────────────────────────────────────────────────────── */
 
 .pd-card {
@@ -280,55 +271,6 @@
     line-height: 1.5;
 }
 
-/* ─── StepIndicator ────────────────────────────────────────────────────── */
-
-.pd-steps {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--pd-sp-md);
-    margin-bottom: var(--pd-sp-xl);
-}
-
-.pd-step {
-    display: flex;
-    align-items: center;
-    gap: var(--pd-sp-sm);
-}
-
-.pd-stepDot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--pd-text-muted);
-    transition: background 0.2s ease;
-}
-
-.pd-stepDotActive {
-    background: var(--pd-violet);
-}
-
-.pd-stepDotCompleted {
-    background: var(--pd-success);
-}
-
-.pd-stepLabel {
-    font-size: 0.8125rem;
-    color: var(--pd-text-muted);
-    white-space: nowrap;
-}
-
-.pd-stepActive .pd-stepLabel {
-    color: var(--pd-text-primary);
-    font-weight: 600;
-}
-
-@media (max-width: 639px) {
-    .pd-stepLabel {
-        display: none;
-    }
-}
-
 /* ─── Animations ───────────────────────────────────────────────────────── */
 
 @keyframes pdFadeIn {
@@ -342,8 +284,7 @@
     .pd-card,
     .pd-input,
     .pd-btn,
-    .pd-banner,
-    .pd-stepDot {
+    .pd-banner {
         transition-duration: 0.01ms !important;
     }
 }
