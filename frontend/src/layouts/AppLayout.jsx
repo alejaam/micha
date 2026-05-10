@@ -43,7 +43,7 @@ export function AppLayout() {
                     isMutationLocked={isMutationLocked}
                 />
                 <Outlet />
-                <BottomNav />
+                <BottomNav householdId={householdId} />
                 <TimeSimulator onAdvanced={handleReload} />
             </div>
         </HouseholdDataProvider>

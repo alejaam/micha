@@ -31,23 +31,25 @@ export function AppHeader({
           </div>
         </div>
 
-      <nav className="headerNav" aria-label="Primary sections">
-        <NavLink to="/" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
-          Resumen
-        </NavLink>
-        <NavLink to="/expenses" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
-          Movimientos
-        </NavLink>
-        <NavLink to="/balances" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
-          Balances
-        </NavLink>
-        <NavLink to="/installments" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
-          Plazos
-        </NavLink>
-        <NavLink to="/rules" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
-          Reglas
-        </NavLink>
-      </nav>
+      {householdId && (
+        <nav className="headerNav" aria-label="Primary sections">
+          <NavLink to="/" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+            Resumen
+          </NavLink>
+          <NavLink to="/expenses" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+            Movimientos
+          </NavLink>
+          <NavLink to="/balances" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+            Balances
+          </NavLink>
+          <NavLink to="/installments" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+            Plazos
+          </NavLink>
+          <NavLink to="/rules" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+            Reglas
+          </NavLink>
+        </nav>
+      )}
 
       {/* Controls */}
       <div className="headerControls">
