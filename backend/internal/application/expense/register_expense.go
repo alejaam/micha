@@ -25,6 +25,7 @@ type RegisterExpenseUseCase struct {
 	cardRepo           outbound.CardRepository
 	categoryRepo       outbound.CategoryRepository
 	installmentRepo    outbound.InstallmentRepository
+	txManager          outbound.TransactionManager
 	idGenerator        appshared.IDGenerator
 	now                func() time.Time
 	allowOwnerOnBehalf bool
@@ -37,6 +38,7 @@ func NewRegisterExpenseUseCase(
 	cardRepo outbound.CardRepository,
 	categoryRepo outbound.CategoryRepository,
 	installmentRepo outbound.InstallmentRepository,
+	txManager outbound.TransactionManager,
 	idGenerator appshared.IDGenerator,
 ) RegisterExpenseUseCase {
 	return NewRegisterExpenseUseCaseWithPolicy(
@@ -46,6 +48,7 @@ func NewRegisterExpenseUseCase(
 		cardRepo,
 		categoryRepo,
 		installmentRepo,
+		txManager,
 		idGenerator,
 		true,
 	)
@@ -58,6 +61,7 @@ func NewRegisterExpenseUseCaseWithPolicy(
 	cardRepo outbound.CardRepository,
 	categoryRepo outbound.CategoryRepository,
 	installmentRepo outbound.InstallmentRepository,
+	txManager outbound.TransactionManager,
 	idGenerator appshared.IDGenerator,
 	allowOwnerOnBehalf bool,
 ) RegisterExpenseUseCase {
@@ -68,6 +72,7 @@ func NewRegisterExpenseUseCaseWithPolicy(
 		cardRepo:           cardRepo,
 		categoryRepo:       categoryRepo,
 		installmentRepo:    installmentRepo,
+		txManager:          txManager,
 		idGenerator:        idGenerator,
 		now:                appshared.Now,
 		allowOwnerOnBehalf: allowOwnerOnBehalf,
@@ -151,15 +156,23 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
 	}
 
-	if err := u.repo.Save(ctx, e); err != nil {
-		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
-	}
-
-	// Requirement: Generate installments for MSI expenses.
+	// Requirement: Save expense and generate installments atomically for MSI expenses.
 	if e.ExpenseType() == expense.ExpenseTypeMSI {
-		installments := u.generateInstallments(e)
-		if err := u.installmentRepo.SaveAll(ctx, installments); err != nil {
-			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: save installments: %w", err)
+		if err := u.txManager.Run(ctx, func(txCtx context.Context) error {
+			if err := u.repo.Save(txCtx, e); err != nil {
+				return fmt.Errorf("save expense: %w", err)
+			}
+			installments := u.generateInstallments(e)
+			if err := u.installmentRepo.SaveAll(txCtx, installments); err != nil {
+				return fmt.Errorf("save installments: %w", err)
+			}
+			return nil
+		}); err != nil {
+			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
+		}
+	} else {
+		if err := u.repo.Save(ctx, e); err != nil {
+			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
 		}
 	}
 

@@ -87,6 +87,7 @@ func main() {
 	periodRepo := postgres.NewPeriodRepository(pool)
 	periodApprovalRepo := postgres.NewPeriodApprovalRepository(pool)
 	idGen := uuidGenerator{}
+	txManager := postgres.NewTransactionManager(pool)
 
 	hasher := infraauth.NewBcryptHasher()
 	inviteSender := infraauth.NewLogInviteCodeSender()
@@ -110,11 +111,11 @@ func main() {
 
 	// Expense use cases and handler dependencies.
 	expenseDeps := httpadapter.ExpenseHandlerDeps{
-		Register: expenseapp.NewRegisterExpenseUseCaseWithPolicy(expenseRepo, householdRepo, memberRepo, cardRepo, categoryRepo, installmentRepo, idGen, cfg.AllowOwnerOnBehalf),
+		Register: expenseapp.NewRegisterExpenseUseCaseWithPolicy(expenseRepo, householdRepo, memberRepo, cardRepo, categoryRepo, installmentRepo, txManager, idGen, cfg.AllowOwnerOnBehalf),
 		Get:      expenseapp.NewGetExpenseUseCase(expenseRepo),
 		List:     expenseapp.NewListExpensesUseCase(expenseRepo),
 		Patch:    expenseapp.NewPatchExpenseUseCase(expenseRepo),
-		Delete:   expenseapp.NewDeleteExpenseUseCase(expenseRepo),
+		Delete:   expenseapp.NewDeleteExpenseUseCase(expenseRepo, installmentRepo),
 	}
 
 	// Recurring expense use cases and handler dependencies.
@@ -166,7 +167,7 @@ func main() {
 	periodDeps := httpadapter.PeriodHandlerDeps{
 		TransitionToReview: periodapp.NewTransitionToReviewUseCase(periodRepo, memberRepo),
 		ApprovePeriod:      periodapp.NewApprovePeriodUseCase(periodApprovalRepo, periodRepo, memberRepo, idGen),
-		ClosePeriod:        periodapp.NewClosePeriodUseCase(periodRepo, periodApprovalRepo, householdRepo, memberRepo, expenseRepo, installmentRepo, idGen),
+		ClosePeriod:        periodapp.NewClosePeriodUseCase(periodRepo, periodApprovalRepo, householdRepo, memberRepo, expenseRepo, installmentRepo, txManager, idGen),
 		InitializePeriod:   periodapp.NewInitializePeriodUseCase(periodRepo, householdRepo, memberRepo, expenseRepo, idGen),
 		PeriodRepo:         periodRepo,
 	}

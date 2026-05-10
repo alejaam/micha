@@ -27,7 +27,8 @@ func TestRegisterExpense_Success(t *testing.T) {
 	catRepo := newMockCategoryRepo()
 	catRepo.seedCategory("cat-other", "hh-1", "other")
 	instRepo := newMockInstallmentRepo()
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"))
+	txManager := &mockTxManager{}
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, txManager, staticIDGen("exp-1"))
 
 	out, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
@@ -59,7 +60,8 @@ func TestRegisterExpense_FixedWithoutPaidByMember_Success(t *testing.T) {
 	catRepo := newMockCategoryRepo()
 	catRepo.seedCategory("cat-other", "hh-1", "other")
 	instRepo := newMockInstallmentRepo()
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-fixed-1"))
+	txManager := &mockTxManager{}
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, txManager, staticIDGen("exp-fixed-1"))
 
 	out, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
@@ -98,7 +100,8 @@ func TestRegisterExpense_InvalidMoney(t *testing.T) {
 	catRepo := newMockCategoryRepo()
 	catRepo.seedCategory("cat-other", "hh-1", "other")
 	instRepo := newMockInstallmentRepo()
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"))
+	txManager := &mockTxManager{}
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, txManager, staticIDGen("exp-1"))
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
@@ -125,7 +128,8 @@ func TestRegisterExpense_InvalidExpenseType(t *testing.T) {
 	catRepo := newMockCategoryRepo()
 	catRepo.seedCategory("cat-other", "hh-1", "other")
 	instRepo := newMockInstallmentRepo()
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"))
+	txManager := &mockTxManager{}
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, txManager, staticIDGen("exp-1"))
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
@@ -155,9 +159,10 @@ func TestRegisterExpense_MSI_GeneratesInstallments(t *testing.T) {
 	catRepo := newMockCategoryRepo()
 	catRepo.seedCategory("cat-other", "hh-1", "other")
 	instRepo := newMockInstallmentRepo()
+	txManager := &mockTxManager{}
 	// Use a sequential ID generator to avoid collisions between root expense and installments
 	seqIDGen := &sequentialIDGen{prefix: "exp-"}
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, seqIDGen)
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, txManager, seqIDGen)
 
 	out, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:       "hh-1",
@@ -219,7 +224,8 @@ func TestRegisterExpense_PendingMember_Rejected(t *testing.T) {
 	catRepo := newMockCategoryRepo()
 	catRepo.seedCategory("cat-other", "hh-1", "other")
 	instRepo := newMockInstallmentRepo()
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"))
+	txManager := &mockTxManager{}
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, txManager, staticIDGen("exp-1"))
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
@@ -244,7 +250,8 @@ func TestRegisterExpense_WithCardID_UsesRegisteredCardName(t *testing.T) {
 	catRepo := newMockCategoryRepo()
 	catRepo.seedCategory("cat-other", "hh-1", "other")
 	instRepo := newMockInstallmentRepo()
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"))
+	txManager := &mockTxManager{}
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, txManager, staticIDGen("exp-1"))
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
@@ -287,7 +294,8 @@ func TestRegisterExpense_OwnerCanCreateMSI(t *testing.T) {
 	catRepo := newMockCategoryRepo()
 	catRepo.seedCategory("cat-other", "hh-1", "other")
 	instRepo := newMockInstallmentRepo()
-	uc := expenseapp.NewRegisterExpenseUseCaseWithPolicy(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"), true)
+	txManager := &mockTxManager{}
+	uc := expenseapp.NewRegisterExpenseUseCaseWithPolicy(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, txManager, staticIDGen("exp-1"), true)
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:       "hh-1",
@@ -319,7 +327,8 @@ func TestRegisterExpense_WithOwnedCardFromAnotherMember_Forbidden(t *testing.T) 
 	catRepo := newMockCategoryRepo()
 	catRepo.seedCategory("cat-other", "hh-1", "other")
 	instRepo := newMockInstallmentRepo()
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"))
+	txManager := &mockTxManager{}
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, txManager, staticIDGen("exp-1"))
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
@@ -349,7 +358,8 @@ func TestRegisterExpense_PersonalCategoryForcesUnshared(t *testing.T) {
 	catRepo.seedCategory("cat-other", "hh-1", "other")
 	catRepo.seedCategory("cat-personal", "hh-1", "personal")
 	instRepo := newMockInstallmentRepo()
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"))
+	txManager := &mockTxManager{}
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, txManager, staticIDGen("exp-1"))
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
@@ -388,7 +398,8 @@ func TestRegisterExpense_MemberCanCreateFixed(t *testing.T) {
 	catRepo := newMockCategoryRepo()
 	catRepo.seedCategory("cat-other", "hh-1", "other")
 	instRepo := newMockInstallmentRepo()
-	uc := expenseapp.NewRegisterExpenseUseCaseWithPolicy(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"), true)
+	txManager := &mockTxManager{}
+	uc := expenseapp.NewRegisterExpenseUseCaseWithPolicy(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, txManager, staticIDGen("exp-1"), true)
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
@@ -418,7 +429,8 @@ func TestRegisterExpense_OwnerOnBehalfControlledByFlag(t *testing.T) {
 	catRepo := newMockCategoryRepo()
 	catRepo.seedCategory("cat-other", "hh-1", "other")
 	instRepo := newMockInstallmentRepo()
-	uc := expenseapp.NewRegisterExpenseUseCaseWithPolicy(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, staticIDGen("exp-1"), false)
+	txManager := &mockTxManager{}
+	uc := expenseapp.NewRegisterExpenseUseCaseWithPolicy(repo, hhRepo, mRepo, cardRepo, catRepo, instRepo, txManager, staticIDGen("exp-1"), false)
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
 		HouseholdID:    "hh-1",
@@ -601,8 +613,9 @@ func TestPatchExpense_InvalidAmount(t *testing.T) {
 func TestDeleteExpense_Success(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
+	instRepo := newMockInstallmentRepo()
 	seedExpense(t, repo, "exp-1", "hh-1", 1000)
-	uc := expenseapp.NewDeleteExpenseUseCase(repo)
+	uc := expenseapp.NewDeleteExpenseUseCase(repo, instRepo)
 
 	if err := uc.Execute(context.Background(), "exp-1"); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -617,7 +630,8 @@ func TestDeleteExpense_Success(t *testing.T) {
 func TestDeleteExpense_NotFound(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
-	uc := expenseapp.NewDeleteExpenseUseCase(repo)
+	instRepo := newMockInstallmentRepo()
+	uc := expenseapp.NewDeleteExpenseUseCase(repo, instRepo)
 
 	err := uc.Execute(context.Background(), "missing")
 	if !errors.Is(err, shared.ErrNotFound) {
@@ -628,11 +642,12 @@ func TestDeleteExpense_NotFound(t *testing.T) {
 func TestDeleteExpense_AlreadyDeleted(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
+	instRepo := newMockInstallmentRepo()
 	e := seedExpense(t, repo, "exp-1", "hh-1", 1000)
 	_ = e.SoftDelete()
 	_ = repo.Update(context.Background(), *e)
 
-	uc := expenseapp.NewDeleteExpenseUseCase(repo)
+	uc := expenseapp.NewDeleteExpenseUseCase(repo, instRepo)
 	err := uc.Execute(context.Background(), "exp-1")
 	if !errors.Is(err, shared.ErrAlreadyDeleted) {
 		t.Errorf("want ErrAlreadyDeleted, got %v", err)

@@ -20,6 +20,7 @@ type ClosePeriodUseCase struct {
 	memberRepo      outbound.MemberRepository
 	expenseRepo     outbound.ExpenseRepository
 	installmentRepo outbound.InstallmentRepository
+	txManager       outbound.TransactionManager
 	idGenerator     appshared.IDGenerator
 	now             func() time.Time
 }
@@ -31,6 +32,7 @@ func NewClosePeriodUseCase(
 	memberRepo outbound.MemberRepository,
 	expenseRepo outbound.ExpenseRepository,
 	installmentRepo outbound.InstallmentRepository,
+	txManager outbound.TransactionManager,
 	idGenerator appshared.IDGenerator,
 ) ClosePeriodUseCase {
 	return ClosePeriodUseCase{
@@ -40,6 +42,7 @@ func NewClosePeriodUseCase(
 		memberRepo:      memberRepo,
 		expenseRepo:     expenseRepo,
 		installmentRepo: installmentRepo,
+		txManager:       txManager,
 		idGenerator:     idGenerator,
 		now:             appshared.Now,
 	}
@@ -79,58 +82,64 @@ func (u ClosePeriodUseCase) Execute(ctx context.Context, input inbound.ClosePeri
 		}
 	}
 
-	// 4. Mark period as closed.
+	// 4-7. Execute transactional operations (close period, create next, rollovers).
 	now := u.now()
-	pAttrs := p.Attributes()
-	pAttrs.Status = period.StatusClosed
-	pAttrs.UpdatedAt = now
-	closedPeriod, _ := period.NewFromAttributes(pAttrs)
 
-	if err := u.periodRepo.Update(ctx, closedPeriod); err != nil {
-		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: failed to close: %w", err)
+	var nextPeriodID string
+	if err := u.txManager.Run(ctx, func(txCtx context.Context) error {
+		pAttrs := p.Attributes()
+		pAttrs.Status = period.StatusClosed
+		pAttrs.UpdatedAt = now
+		closedPeriod, _ := period.NewFromAttributes(pAttrs)
+
+		if err := u.periodRepo.Update(txCtx, closedPeriod); err != nil {
+			return fmt.Errorf("failed to close: %w", err)
+		}
+
+		// 5. Create Rollover (Next Period).
+		nextStart := p.EndDate().Add(24 * time.Hour)
+
+		var nextEnd time.Time
+		if h.Attributes().PeriodFrequency == "biweekly" {
+			nextEnd = nextStart.AddDate(0, 0, 14) // Sumar 14 días para que el total sean 15
+		} else {
+			// Mensual: misma fecha el próximo mes
+			nextEnd = nextStart.AddDate(0, 1, -1)
+		}
+
+		nextPeriod, err := period.New(
+			period.ID(u.idGenerator.NewID()),
+			input.HouseholdID,
+			nextStart,
+			nextEnd,
+			period.StatusOpen,
+			now,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create next: %w", err)
+		}
+
+		if err := u.periodRepo.Create(txCtx, nextPeriod); err != nil {
+			return fmt.Errorf("failed to persist next: %w", err)
+		}
+
+		// 6. Rollover Fixed Expenses.
+		if err := u.rolloverFixedExpenses(txCtx, input.PeriodID, string(nextPeriod.ID()), now); err != nil {
+			return fmt.Errorf("fixed rollover failed: %w", err)
+		}
+
+		// 7. Rollover Installments (MSI).
+		if err := u.rolloverInstallments(txCtx, nextPeriod, now); err != nil {
+			return fmt.Errorf("MSI rollover failed: %w", err)
+		}
+
+		nextPeriodID = string(nextPeriod.ID())
+		return nil
+	}); err != nil {
+		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: %w", err)
 	}
 
-	// 5. Create Rollover (Next Period).
-	nextStart := p.EndDate().Add(24 * time.Hour)
-	
-	var nextEnd time.Time
-	if h.Attributes().PeriodFrequency == "biweekly" {
-		nextEnd = nextStart.AddDate(0, 0, 14) // Sumar 14 días para que el total sean 15
-	} else {
-		// Mensual: misma fecha el próximo mes
-		nextEnd = nextStart.AddDate(0, 1, -1)
-	}
-
-	// Asegurar que el nextEnd respeta el closingDay si es posible (ajustar a fin de mes si el día no existe)
-	// Para mensual es fácil con AddDate(0, 1, -1) si nextStart es closingDay+1.
-	
-	nextPeriod, err := period.New(
-		period.ID(u.idGenerator.NewID()),
-		input.HouseholdID,
-		nextStart,
-		nextEnd,
-		period.StatusOpen,
-		now,
-	)
-	if err != nil {
-		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: failed to create next: %w", err)
-	}
-
-	if err := u.periodRepo.Create(ctx, nextPeriod); err != nil {
-		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: failed to persist next: %w", err)
-	}
-
-	// 6. Rollover Fixed Expenses.
-	if err := u.rolloverFixedExpenses(ctx, input.PeriodID, string(nextPeriod.ID()), now); err != nil {
-		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: fixed rollover failed: %w", err)
-	}
-
-	// 7. Rollover Installments (MSI).
-	if err := u.rolloverInstallments(ctx, nextPeriod, now); err != nil {
-		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: MSI rollover failed: %w", err)
-	}
-
-	return inbound.ClosePeriodOutput{NextPeriodID: string(nextPeriod.ID())}, nil
+	return inbound.ClosePeriodOutput{NextPeriodID: nextPeriodID}, nil
 }
 
 func (u ClosePeriodUseCase) validateConsensus(ctx context.Context, householdID, periodID string) error {
