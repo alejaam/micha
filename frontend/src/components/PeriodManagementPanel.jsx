@@ -79,12 +79,17 @@ export function PeriodManagementPanel({
         }
     }
 
+    const status = period?.Status || period?.status || 'open'
+
+    // ─── Banner mode: No active period OR review ───
+    const isBanner = !period || status === 'review'
+
     // ─── Render: No active period ───
     if (!period) {
         if (!isOwner) return null
 
         return (
-            <section className="card periodActionCard">
+            <section className={`card periodActionCard ${isBanner ? 'periodActionCard--banner' : ''}`}>
                 <div className="periodActionContent">
                     <div>
                         <h3 className="sectionTitle">Comenzar seguimiento</h3>
@@ -106,9 +111,7 @@ export function PeriodManagementPanel({
         )
     }
 
-    const status = period.Status || period.status || 'open'
-
-    // ─── Render: Open period ───
+    // ─── Render: Open period (compact card) ───
     if (status === 'open') {
         return (
             <section className="card periodActionCard">
@@ -133,10 +136,10 @@ export function PeriodManagementPanel({
         )
     }
 
-    // ─── Render: Review period ───
+    // ─── Render: Review period (banner mode) ───
     if (status === 'review') {
         return (
-            <section className="card periodActionCard reviewMode">
+            <section className={`card periodActionCard ${isBanner ? 'periodActionCard--banner' : ''}`}>
                 <div className="periodReviewGrid">
                     <div className="periodReviewInfo">
                         <h3 className="sectionTitle">Periodo en revisión</h3>

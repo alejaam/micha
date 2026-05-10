@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getRemainingSalary } from '../api'
+import { formatCurrency } from '../utils'
 
 /**
  * RemainingSalaryPanel — Displays how much money is left for the member
@@ -36,11 +37,6 @@ export function RemainingSalaryPanel({ householdId, memberId, period, currency =
     if (error) return <div className="card salaryCard error">Error al cargar sueldo: {error}</div>
     if (!data) return null
 
-    const format = (cents) => new Intl.NumberFormat(undefined, { 
-        style: 'currency', 
-        currency 
-    }).format(cents / 100)
-
     const isNegative = data.remaining_salary_cents < 0
 
     return (
@@ -51,22 +47,22 @@ export function RemainingSalaryPanel({ householdId, memberId, period, currency =
             </div>
 
             <div className="salaryMain">
-                <strong className="salaryRemaining">{format(data.remaining_salary_cents)}</strong>
+                <strong className="salaryRemaining">{formatCurrency(data.remaining_salary_cents, currency)}</strong>
                 <p className="salaryHint">Después de todos tus gastos</p>
             </div>
 
             <div className="salaryBreakdown">
                 <div className="salaryRow">
                     <span>Sueldo base</span>
-                    <span className="salaryVal">{format(data.monthly_salary_cents)}</span>
+                    <span className="salaryVal">{formatCurrency(data.monthly_salary_cents, currency)}</span>
                 </div>
                 <div className="salaryRow">
                     <span>Gastos compartidos (tu parte)</span>
-                    <span className="salaryVal negative">-{format(data.total_shared_outflow_cents)}</span>
+                    <span className="salaryVal negative">-{formatCurrency(data.total_shared_outflow_cents, currency)}</span>
                 </div>
                 <div className="salaryRow">
                     <span>Gastos personales</span>
-                    <span className="salaryVal negative">-{format(data.total_personal_outflow_cents)}</span>
+                    <span className="salaryVal negative">-{formatCurrency(data.total_personal_outflow_cents, currency)}</span>
                 </div>
             </div>
         </section>

@@ -9,11 +9,11 @@ export function BottomNav() {
     const currentPath = location.pathname
 
     const navItems = [
-        { path: '/', icon: 'O', label: 'Resumen', exact: true },
-        { path: '/expenses', icon: 'M', label: 'Movimientos' },
-        { path: '/balances', icon: 'B', label: 'Balances' },
-        { path: '/installments', icon: 'P', label: 'Plazos' },
-        { path: '/rules', icon: 'R', label: 'Reglas' },
+        { path: '/', icon: '📊', label: 'Resumen', exact: true },
+        { path: '/expenses', icon: '💸', label: 'Movimientos' },
+        { path: '/balances', icon: '⚖️', label: 'Balances' },
+        { path: '/installments', icon: '📅', label: 'Plazos' },
+        { path: '/rules', icon: '⚙️', label: 'Reglas' },
     ]
 
     const isActive = (item) => {

@@ -47,19 +47,19 @@ export function OnboardingMemberPage() {
     if (!householdId) {
         return (
             <div className="card">
-                <Banner type="error">No household selected. Go back to dashboard.</Banner>
-                <button className="btn mt-4" onClick={() => navigate('/')}>Back</button>
+                <Banner type="error">No hay hogar seleccionado. Regresa al inicio.</Banner>
+                <button className="btn u-mt-4" onClick={() => navigate('/')}>Volver</button>
             </div>
         )
     }
 
     return (
-        <section className="card" aria-label="Add a member">
-            <div className="listHeader mb-6">
+        <section className="card" aria-label="Añadir miembro">
+            <div className="listHeader u-mb-6">
                 <div>
-                    <h2 className="listTitle">Add a member</h2>
-                    <p className="text-sm text-dim mt-1">
-                        Add someone to your household to track their expenses.
+                    <h2 className="listTitle">Añadir miembro</h2>
+                    <p className="u-text-sm u-text-dim u-mt-1">
+                        Añade a alguien a tu hogar para registrar sus gastos.
                     </p>
                 </div>
             </div>
@@ -67,17 +67,17 @@ export function OnboardingMemberPage() {
             {error ? <Banner type="error">{error}</Banner> : null}
 
             <form className="formStack" onSubmit={handleSubmit}>
-                <FormField label="Name" htmlFor="memName">
+                <FormField label="Nombre" htmlFor="memName">
                     <input
                         id="memName"
                         className="input"
-                        placeholder="e.g. Maria"
+                        placeholder="Ej. María"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         disabled={busy}
                     />
                 </FormField>
-                <FormField label="Email" htmlFor="memEmail">
+                <FormField label="Correo electrónico" htmlFor="memEmail">
                     <input
                         id="memEmail"
                         className="input"
@@ -88,7 +88,7 @@ export function OnboardingMemberPage() {
                         disabled={busy}
                     />
                 </FormField>
-                <FormField label="Monthly salary (optional)" htmlFor="memSalary">
+                <FormField label="Salario mensual (opcional)" htmlFor="memSalary">
                     <div className="inputWrap">
                         <span className="inputPrefix" aria-hidden>$</span>
                         <input
@@ -97,28 +97,28 @@ export function OnboardingMemberPage() {
                             type="number"
                             min="0"
                             step="0.01"
-                            placeholder="e.g., 5000"
+                            placeholder="Ej. 5000"
                             value={salaryDollars}
                             onChange={(e) => setSalaryDollars(e.target.value)}
                             disabled={busy}
                         />
                     </div>
                 </FormField>
-                <div className="flex gap-4 mt-6">
+                <div className="u-flex u-gap-4 u-mt-6">
                     <button
                         type="button"
-                        className="btn flex-1"
+                        className="btn u-flex-1"
                         onClick={() => navigate('/')}
                         disabled={busy}
                     >
-                        Cancel
+                        Cancelar
                     </button>
                     <button
                         type="submit"
-                        className="btn btnPrimary flex-1"
+                        className="btn btnPrimary u-flex-1"
                         disabled={busy || !name.trim() || !email.trim()}
                     >
-                        {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Adding…</> : 'Add member'}
+                        {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Añadiendo…</> : 'Añadir miembro'}
                     </button>
                 </div>
             </form>

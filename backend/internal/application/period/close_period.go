@@ -199,7 +199,6 @@ func (u ClosePeriodUseCase) rolloverFixedExpenses(ctx context.Context, currentPe
 
 func (u ClosePeriodUseCase) rolloverInstallments(ctx context.Context, nextPeriod period.Period, now time.Time) error {
 	// Find installments whose StartDate falls within the next period.
-	// Since installments are created ahead of time, we just need to link them.
 	// BUT, our Expense entity now has period_id. For each installment due in the next period,
 	// we should probably create an Expense record of type 'msi' linked to that period.
 	
