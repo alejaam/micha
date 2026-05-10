@@ -2,6 +2,11 @@ import { useState } from 'react'
 import { transitionPeriodToReview, approvePeriod, closePeriod, initializePeriod } from '../api'
 import { ConsensusProgressRing } from './ConsensusProgressRing'
 
+const monthNames = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+]
+
 /**
  * PeriodManagementPanel — UI for managing the period lifecycle.
  *
@@ -71,7 +76,10 @@ export function PeriodManagementPanel({
             setSubmitting(true)
             setError('')
             await closePeriod({ householdId, periodId: period.id || period.ID, force })
-            onStatusChange()
+            const now = new Date()
+            const currentMonthName = monthNames[now.getMonth()]
+            const nextMonthName = monthNames[(now.getMonth() + 1) % 12]
+            onStatusChange({ message: `Periodo de ${currentMonthName} cerrado. Bienvenido a ${nextMonthName}.` })
         } catch (err) {
             setError(err.message)
         } finally {
