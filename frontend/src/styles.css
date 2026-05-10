@@ -334,6 +334,28 @@ ul {
     font-weight: var(--fw-medium);
 }
 
+.brandPeriod {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.brandPeriodLabel {
+    font-size: 0.65rem;
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-4);
+}
+
+.brandPeriodName {
+    font-size: 0.85rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-1);
+    text-transform: capitalize;
+}
+
 .headerControls {
     display: flex;
     align-items: center;
@@ -1207,6 +1229,16 @@ ul {
     to {
         transform: rotate(360deg);
     }
+}
+
+@keyframes periodFlash {
+    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    30% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); }
+    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+.appHeader--flash {
+    animation: periodFlash 800ms var(--ease-out);
 }
 
 @keyframes fadeIn {
