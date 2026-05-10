@@ -49,6 +49,7 @@
     --color-amber-50: #fffbeb;
     --color-amber-100: #fef3c7;
     --color-amber-500: #f59e0b;
+    --color-amber-600: #d97706;
     --color-amber-700: #b45309;
 
     /* Radii — Nothing Design strictly <= 16px */
@@ -286,6 +287,21 @@ ul {
 
 .brandIcon:hover {
     transform: scale(1.05) rotate(-3deg);
+}
+
+.brandIcon--open {
+    background: linear-gradient(135deg, var(--color-green-500), var(--color-green-600));
+    box-shadow: var(--shadow-md), 0 0 12px rgba(34, 197, 94, .25);
+}
+
+.brandIcon--review {
+    background: linear-gradient(135deg, var(--color-amber-500), #d97706);
+    box-shadow: var(--shadow-md), 0 0 12px rgba(245, 158, 11, .25);
+}
+
+.brandIcon--closed {
+    background: linear-gradient(135deg, var(--color-red-500), var(--color-red-600));
+    box-shadow: var(--shadow-md), 0 0 12px rgba(239, 68, 68, .25);
 }
 
 .brandName {
@@ -1511,25 +1527,38 @@ ul {
     flex-wrap: wrap;
     gap: 10px;
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
     background: var(--color-surface);
-}
-
-.periodStatusRibbonLabel,
-.periodStatusRibbonState {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    font-weight: var(--fw-medium);
 }
 
 .periodStatusRibbonLabel {
-    color: var(--color-text-3);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-4);
 }
 
 .periodStatusRibbonState {
-    color: var(--color-text-1);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.periodStatusRibbonState::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
 }
 
 .periodStatusRibbonText {
@@ -1538,27 +1567,30 @@ ul {
 }
 
 .periodStatusRibbon-open {
-    border-color: var(--color-border);
+    border-color: var(--color-green-500);
+    background: var(--color-green-50);
 }
 
 .periodStatusRibbon-open .periodStatusRibbonState {
-    color: var(--color-text-1);
+    color: var(--color-green-700);
 }
 
 .periodStatusRibbon-review {
-    border-color: #D4A843;
+    border-color: var(--color-amber-500);
+    background: var(--color-amber-50);
 }
 
 .periodStatusRibbon-review .periodStatusRibbonState {
-    color: #D4A843;
+    color: var(--color-amber-700);
 }
 
 .periodStatusRibbon-closed {
-    border-color: #C14B45;
+    border-color: var(--color-red-500);
+    background: var(--color-red-50);
 }
 
 .periodStatusRibbon-closed .periodStatusRibbonState {
-    color: #C14B45;
+    color: var(--color-red-700);
 }
 
 /* Hide FAB on desktop where we have more space */
