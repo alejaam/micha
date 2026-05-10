@@ -1,7 +1,7 @@
 /**
  * Banner — dismissible feedback strip shown above the content area.
  *
- * @param {'ok'|'error'} type - Visual variant
+ * @param {'ok'|'error'|'info'} type - Visual variant
  * @param {React.ReactNode} children - Message text
  * @param {()=>void} [onDismiss] - Optional dismiss callback
  * @param {boolean} [floating] - Render as fixed toast overlay instead of inline banner

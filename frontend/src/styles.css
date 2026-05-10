@@ -813,6 +813,12 @@ ul {
     border-color: var(--color-red-100);
 }
 
+.bannerInfo {
+    color: var(--color-brand-700);
+    background: var(--color-brand-50);
+    border-color: var(--color-brand-100);
+}
+
 /* ─── Expense list card ─────────────────────────────────────────────────────── */
 .expenseListCard {
     padding-bottom: 18px;
