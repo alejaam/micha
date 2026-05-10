@@ -115,8 +115,8 @@ export function OnboardingCardsPage() {
                 <p className="authMeta">Create at least one card so it is ready when you register your first expense.</p>
             </div>
 
-            {error ? <Banner type="error">{error}</Banner> : null}
-            {message && !showForm ? <Banner type="ok">{message}</Banner> : null}
+            {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
+            {message && !showForm ? <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner> : null}
 
             {!showForm && hasCards && (
                 <div className="card mt-4 p-4 border border-dim rounded-md bg-secondary">

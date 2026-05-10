@@ -64,7 +64,7 @@ export function OnboardingMemberPage() {
                 </div>
             </div>
 
-            {error ? <Banner type="error">{error}</Banner> : null}
+            {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
 
             <form className="formStack" onSubmit={handleSubmit}>
                 <FormField label="Name" htmlFor="memName">

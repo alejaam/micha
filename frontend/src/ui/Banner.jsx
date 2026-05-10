@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+
 /**
  * Banner — dismissible feedback strip shown above the content area.
  *
@@ -7,6 +9,11 @@
  * @param {boolean} [floating] - Render as fixed toast overlay instead of inline banner
  */
 export function Banner({ type, children, onDismiss, floating = false }) {
+  useEffect(() => {
+    if (!floating || !onDismiss) return
+    const timer = setTimeout(() => onDismiss(), 4000)
+    return () => clearTimeout(timer)
+  }, [floating, onDismiss, children])
   const cls = [
     'banner',
     type === 'ok' ? 'bannerOk' : 'bannerError',

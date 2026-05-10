@@ -109,8 +109,8 @@ export function OnboardingFixedExpensesPage() {
                 </p>
             </div>
 
-            {error ? <Banner type="error">{error}</Banner> : null}
-            {message ? <Banner type="ok">{message}</Banner> : null}
+            {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
+            {message ? <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner> : null}
 
             <div className="formStack mt-4">
                 {FIXED_EXPENSE_OPTIONS.map((item) => {

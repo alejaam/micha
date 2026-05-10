@@ -104,7 +104,7 @@ export function DashboardPage() {
 
     return (
         <>
-            {error && <Banner type="error" onDismiss={() => setError('')}>{error}</Banner>}
+            {error && <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner>}
             {message && <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner>}
 
             {/* ─── Period Management (Always visible) ─── */}

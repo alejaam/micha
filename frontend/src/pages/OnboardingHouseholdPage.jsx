@@ -97,7 +97,7 @@ export function OnboardingHouseholdPage() {
                 <p className="authMeta">A household groups all shared expenses and members.</p>
             </div>
 
-            {error ? <Banner type="error">{error}</Banner> : null}
+            {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
 
             <form className="formStack" onSubmit={handleSubmit}>
                 <div className="formSection">
