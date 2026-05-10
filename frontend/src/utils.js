@@ -3,11 +3,12 @@
  * e.g. 4250, MXN -> "$42.50"
  */
 export function formatCurrency(amountCents, currency = 'MXN') {
+    const safeCents = Number(amountCents) || 0
     return new Intl.NumberFormat(undefined, {
         style: 'currency',
         currency,
         minimumFractionDigits: 2,
-    }).format(amountCents / 100)
+    }).format(safeCents / 100)
 }
 
 /**
