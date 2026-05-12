@@ -48,7 +48,7 @@ export function BalancesPage() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
         >
-            {error && <Banner type="error" onDismiss={() => setError('')}>{error}</Banner>}
+            {error && <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner>}
             {message && <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner>}
 
             <div className="dashboardCol">

@@ -50,7 +50,7 @@ export function AppLayout() {
                     currentPeriod={currentPeriod}
                 />
                 <Outlet />
-                <BottomNav />
+                <BottomNav householdId={householdId} />
                 <TimeSimulator onAdvanced={handleReload} />
             </div>
         </HouseholdDataProvider>

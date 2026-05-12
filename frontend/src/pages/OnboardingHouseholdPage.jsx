@@ -101,7 +101,7 @@ export function OnboardingHouseholdPage() {
                 Bienvenido a micha. Para comenzar, necesitas crear tu primer hogar. Este paso es obligatorio.
             </Banner>
 
-            {error ? <Banner type="error">{error}</Banner> : null}
+            {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
 
             <form className="formStack" onSubmit={handleSubmit}>
                 <div className="formSection">
