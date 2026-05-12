@@ -52,7 +52,7 @@ export function AppHeader({
     <header className={`appHeader${isFlashing ? ' appHeader--flash' : ''}`}>
       {/* Brand */}
         <div className="brand">
-          <div className="brandIcon" aria-hidden>💸</div>
+          <div className={`brandIcon brandIcon--${periodStatus}`} aria-hidden>💸</div>
           <div>
             <div className="brandName">micha</div>
             <div className="brandTagline">Claridad financiera para pareja y roomies</div>
