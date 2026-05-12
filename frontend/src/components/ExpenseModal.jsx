@@ -18,11 +18,6 @@ import { getCategoryIcon } from '../utils/categoryIcons'
  * Categories are fetched dynamically from the backend per-household.
  */
 
-const EXPENSE_TYPE_HINTS = {
-    variable: 'Gasto único para este periodo.',
-    msi: 'Compra a meses sin intereses; se generan cuotas para los meses siguientes.',
-}
-
 function preferredCardStorageKey(householdId) {
     return `micha_preferred_card_${householdId}`
 }
@@ -367,38 +362,19 @@ export function ExpenseModal({
                             </FormField>
                         )}
 
-                        <FormField
-                            label={(
-                                <>
-                                    Expense type
-                                    <Tooltip text="Variable es único del periodo. MSI genera cuotas para meses futuros." position="right" />
-                                </>
-                            )}
-                            htmlFor="modalExpenseType"
-                        >
-                            <select
-                                id="modalExpenseType"
-                                className="input"
-                                value={expenseType}
-                                onChange={(e) => setExpenseType(e.target.value)}
-                                disabled={isSubmitting}
-                            >
-                                <option value="variable">📝 Variable</option>
-                                <option value="msi">🔒 MSI (meses sin intereses)</option>
-                            </select>
-                            <p className="formHint">{EXPENSE_TYPE_HINTS[expenseType]}</p>
-                            <p className="formHint formHintWarning">Gestiona gastos fijos desde configuración.</p>
-                            <button
-                                type="button"
-                                className="btn btnGhost btnSm"
-                                onClick={() => {
-                                    onClose()
-                                    navigate('/onboarding/fixed-expenses')
-                                }}
-                            >
-                                Ir a gastos fijos
-                            </button>
-                        </FormField>
+                        <div className="sharedToggle">
+                            <label className="sharedToggleLabel" htmlFor="modalIsMsi">
+                                <input
+                                    id="modalIsMsi"
+                                    type="checkbox"
+                                    checked={isMSI}
+                                    onChange={(e) => setExpenseType(e.target.checked ? 'msi' : 'variable')}
+                                    disabled={isSubmitting}
+                                />
+                                <span className="sharedToggleText">Pagar a meses (MSI)</span>
+                                <Tooltip text="Compra a meses sin intereses; se generan cuotas para los meses siguientes." position="right" />
+                            </label>
+                        </div>
 
                         {isMSI && (
                             <FormField label="Total de cuotas" htmlFor="modalTotalInstallments">
