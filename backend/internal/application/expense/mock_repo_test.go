@@ -437,7 +437,9 @@ type mockPeriodRepo struct {
 }
 
 func newMockPeriodRepo() *mockPeriodRepo {
-	return &mockPeriodRepo{periods: make(map[string]period.Period)}
+	r := &mockPeriodRepo{periods: make(map[string]period.Period)}
+	r.seedPeriod("period-default", "hh-1", time.Now().AddDate(0, -1, 0), time.Now().AddDate(0, 1, 0))
+	return r
 }
 
 func (r *mockPeriodRepo) seedPeriod(id, householdID string, startDate, endDate time.Time) {

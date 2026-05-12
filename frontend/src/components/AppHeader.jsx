@@ -30,7 +30,6 @@ export function AppHeader({
   currentPeriod = null,
 }) {
   const { user } = useAuth()
-  const isLive = health === 'ok'
   const periodName = formatPeriodName(currentPeriod)
 
   // Flash animation when period ID changes

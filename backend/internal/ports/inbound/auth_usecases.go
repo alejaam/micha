@@ -19,9 +19,10 @@ type LoginInput struct {
 	Password string
 }
 
-// LoginOutput contains the signed JWT access token.
+// LoginOutput contains the signed JWT access token and user ID.
 type LoginOutput struct {
-	Token string
+	Token  string
+	UserID string
 }
 
 // RegisterUserUseCase creates a new user account.

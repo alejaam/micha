@@ -1,14 +1,22 @@
 import { motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ExpenseModal } from '../components/ExpenseModal'
 import { FAB } from '../components/FAB'
 import { IncomesPanel } from '../components/IncomesPanel'
 import { MembersPanel } from '../components/MembersPanel'
+import { PeriodManagementPanel } from '../components/PeriodManagementPanel'
 import { SettlementPanel } from '../components/SettlementPanel'
+import { useAppShell } from '../context/AppShellContext'
 import { useHouseholdData } from '../hooks/useHouseholdData'
 import { Banner } from '../ui/Banner'
 
 export function BalancesPage() {
+    const {
+        currentPeriod,
+        reloadPeriod,
+        handleReload: reloadShell,
+    } = useAppShell()
+
     const {
         members,
         loadingMembers,
@@ -35,6 +43,17 @@ export function BalancesPage() {
         submittingCreate,
     } = useHouseholdData()
 
+    const currentUserId = useMemo(() => {
+        const token = localStorage.getItem('micha_token')
+        if (!token) return ''
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]))
+            return payload.user_id || payload.sub || ''
+        } catch { return '' }
+    }, [])
+
+    const isOwner = !selectedHousehold?.owner_id || selectedHousehold?.owner_id === currentUserId
+
     const [modalOpen, setModalOpen] = useState(false)
 
     useEffect(() => {
@@ -50,6 +69,19 @@ export function BalancesPage() {
         >
             {error && <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner>}
             {message && <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner>}
+
+            <PeriodManagementPanel
+                householdId={householdId}
+                period={currentPeriod}
+                onStatusChange={({ message: statusMessage } = {}) => {
+                    reloadPeriod()
+                    reloadShell()
+                    if (statusMessage) setMessage(statusMessage)
+                }}
+                isOwner={isOwner}
+                members={members}
+                currentUserMemberId={currentMember?.id}
+            />
 
             <div className="dashboardCol">
                 <SettlementPanel

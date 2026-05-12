@@ -121,6 +121,8 @@ export function PeriodManagementPanel({
 
     // ─── Render: Open period (compact card) ───
     if (status === 'open') {
+        if (!isOwner) return null
+
         return (
             <section className="card periodActionCard">
                 <div className="periodActionContent">

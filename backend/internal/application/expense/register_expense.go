@@ -139,11 +139,17 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		isShared = false
 	}
 
+	currentPeriod, err := u.periodRepo.GetCurrentOpen(ctx, input.HouseholdID)
+	if err != nil {
+		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: no open period found: %w", err)
+	}
+
 	now := u.now()
 	e, err := expense.NewFromAttributes(expense.ExpenseAttributes{
 		ID:                expense.ID(u.idGenerator.NewID()),
 		HouseholdID:       input.HouseholdID,
 		PaidByMemberID:    paidByMemberID,
+		PeriodID:          string(currentPeriod.ID()),
 		AmountCents:       input.AmountCents,
 		Description:       input.Description,
 		IsShared:          isShared,
@@ -163,11 +169,6 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 
 	// Requirement: Save expense and generate installments atomically for MSI expenses.
 	if e.ExpenseType() == expense.ExpenseTypeMSI {
-		currentPeriod, err := u.periodRepo.GetCurrentOpen(ctx, input.HouseholdID)
-		if err != nil {
-			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
-		}
-
 		totalCents := input.AmountCents
 		count := input.TotalInstallments
 		base := totalCents / int64(count)
@@ -178,7 +179,6 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		}
 
 		attrs := e.Attributes()
-		attrs.PeriodID = string(currentPeriod.ID())
 		attrs.AmountCents = firstInstallmentAmount
 		attrs.Description = fmt.Sprintf("%s — MSI 1/%d", attrs.Description, count)
 		eModified, err := expense.NewFromAttributes(attrs)

@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { listCards, listCategories } from '../api'
-import { MEXICAN_BANKS } from '../constants/mexicanBanks'
 import { FormField } from '../ui/FormField'
 import { Modal } from '../ui/Modal'
 import { Tooltip } from '../ui/Tooltip'
@@ -32,7 +30,6 @@ export function ExpenseModal({
     defaultPaidByMemberId = '',
     householdId = '',
 }) {
-    const navigate = useNavigate()
     const [amount, setAmount] = useState('')
     const [description, setDescription] = useState('')
     const [paidByMemberId, setPaidByMemberId] = useState(defaultPaidByMemberId.trim() || '')
@@ -170,9 +167,10 @@ export function ExpenseModal({
             const basic = hasMembers && description.trim() !== '' && paidByMemberId.trim() !== '' && dollarsToCents(amount) !== null
             if (!basic) return false
             if (isMSI && (isNaN(totalInstallments) || totalInstallments <= 0)) return false
+            if (isCardPayment && (!hasRegisteredCards || !cardId)) return false
             return true
         },
-        [amount, description, paidByMemberId, hasMembers, isMSI, totalInstallments],
+        [amount, description, paidByMemberId, hasMembers, isMSI, totalInstallments, isCardPayment, hasRegisteredCards, cardId],
     )
 
     async function handleSubmit(e) {
@@ -326,36 +324,30 @@ export function ExpenseModal({
                         </FormField>
 
                         {isCardPayment && (
-                            <FormField label="Tarjeta" htmlFor="modalCardName">
-                                <select
-                                    id="modalCardName"
-                                    className="input"
-                                    value={hasRegisteredCards ? cardId : cardName}
-                                    onChange={(e) => {
-                                        const selectedValue = e.target.value
-                                        if (hasRegisteredCards) {
+                            <FormField label="Tarjeta" htmlFor="modalCardId">
+                                {hasRegisteredCards ? (
+                                    <select
+                                        id="modalCardId"
+                                        className="input"
+                                        value={cardId}
+                                        onChange={(e) => {
+                                            const selectedValue = e.target.value
                                             setCardId(selectedValue)
                                             const selectedCard = cards.find((item) => item.id === selectedValue)
                                             setCardName(selectedCard?.card_name || '')
-                                            return
-                                        }
-                                        setCardName(selectedValue)
-                                    }}
-                                    disabled={isSubmitting || loadingCards}
-                                >
-                                    <option value="" disabled>Selecciona tarjeta...</option>
-                                    {hasRegisteredCards ? (
-                                        cards.map((item) => (
+                                        }}
+                                        disabled={isSubmitting || loadingCards}
+                                    >
+                                        <option value="" disabled>Selecciona tarjeta...</option>
+                                        {cards.map((item) => (
                                             <option key={item.id} value={item.id}>
-                                                {item.bank_name} - {item.card_name}
+                                                {item.card_name}
                                             </option>
-                                        ))
-                                    ) : (
-                                        MEXICAN_BANKS.map((bank) => (
-                                            <option key={bank.value} value={bank.value}>{bank.label}</option>
-                                        ))
-                                    )}
-                                </select>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <p className="formHint formHintError">No tienes tarjetas registradas. Agrégalas en la sección de administración.</p>
+                                )}
                                 {hasRegisteredCards && (
                                     <p className="formHint">Usando tarjetas registradas en este hogar.</p>
                                 )}

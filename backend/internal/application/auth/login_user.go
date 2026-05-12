@@ -43,7 +43,10 @@ func (u LoginUseCase) Execute(ctx context.Context, input inbound.LoginInput) (in
 	}
 
 	slog.InfoContext(ctx, "user logged in", "user_id", foundUser.ID())
-	return inbound.LoginOutput{Token: token}, nil
+	return inbound.LoginOutput{
+		Token:  token,
+		UserID: foundUser.ID(),
+	}, nil
 }
 
 var _ inbound.LoginUseCase = LoginUseCase{}

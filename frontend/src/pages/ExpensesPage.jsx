@@ -14,6 +14,7 @@ export function ExpensesPage() {
     const {
         members,
         loadingMembers,
+        cards,
         items,
         loadingList,
         settlement,
@@ -143,6 +144,7 @@ export function ExpensesPage() {
                     isSubmitting={submittingCreate}
                     isLoadingMembers={loadingMembers}
                     members={members}
+                    cards={cards}
                     defaultPaidByMemberId={currentMember?.id ?? ''}
                 />
             </BottomSheet>

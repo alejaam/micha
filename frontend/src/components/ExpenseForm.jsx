@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { MEXICAN_BANKS } from '../constants/mexicanBanks'
 import { FormField } from '../ui/FormField'
 import { dollarsToCents, sanitizeAmountInput } from '../utils'
 
@@ -10,14 +9,14 @@ import { dollarsToCents, sanitizeAmountInput } from '../utils'
  * @param {(data:{amountCents:number,description:string})=>Promise<void>} onSubmit
  * @param {boolean} isSubmitting - Disables the form while a request is in-flight
  */
-export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMembers = false, defaultPaidByMemberId = '' }) {
+export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], isLoadingMembers = false, defaultPaidByMemberId = '' }) {
   const [amount, setAmount]                 = useState('')
   const [description, setDescription]       = useState('')
   const [isShared, setIsShared]             = useState(true)
   const [paymentMethod, setPaymentMethod]   = useState('cash')
   const [expenseType, setExpenseType]       = useState('variable')
   const [totalInstallments, setTotalInstallments] = useState(3)
-  const [cardName, setCardName]             = useState('')
+  const [cardId, setCardId]                 = useState('')
   const [category, setCategory]             = useState('other')
 
   const hasMembers = Array.isArray(members) && members.length > 0
@@ -37,9 +36,11 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
       const basic = hasMembers && description.trim() !== '' && paidByMemberId !== '' && dollarsToCents(amount) !== null
       if (!basic) return false
       if (isMSI && (isNaN(totalInstallments) || totalInstallments <= 0)) return false
+      if (isCardPayment && cards.length === 0) return false
+      if (isCardPayment && cardId === '') return false
       return true
     },
-    [amount, description, paidByMemberId, hasMembers, isMSI, totalInstallments],
+    [amount, description, paidByMemberId, hasMembers, isMSI, totalInstallments, isCardPayment, cards.length, cardId],
   )
 
   async function handleSubmit(event) {
@@ -55,7 +56,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
       isShared,
       paymentMethod,
       expenseType,
-      cardName: isCardPayment ? cardName.trim() : '',
+      cardId: isCardPayment ? cardId : '',
       category,
       totalInstallments: isMSI ? Number(totalInstallments) : 0,
     })
@@ -67,7 +68,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
     setPaymentMethod('cash')
     setExpenseType('variable')
     setTotalInstallments(3)
-    setCardName('')
+    setCardId('')
     setCategory('other')
   }
 
@@ -150,19 +151,23 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], isLoadingMem
         </FormField>
 
         {isCardPayment && (
-          <FormField label="Card name" htmlFor="newCardName">
-            <select
-              id="newCardName"
-              className="input"
-              value={cardName}
-              onChange={(e) => setCardName(e.target.value)}
-              disabled={isSubmitting}
-            >
-              <option value="" disabled>Select card...</option>
-              {MEXICAN_BANKS.map((bank) => (
-                <option key={bank.value} value={bank.value}>{bank.label}</option>
-              ))}
-            </select>
+          <FormField label="Card" htmlFor="newCardId">
+            {cards.length > 0 ? (
+              <select
+                id="newCardId"
+                className="input"
+                value={cardId}
+                onChange={(e) => setCardId(e.target.value)}
+                disabled={isSubmitting}
+              >
+                <option value="" disabled>Select card...</option>
+                {cards.map((card) => (
+                  <option key={card.id} value={card.id}>{card.card_name}</option>
+                ))}
+              </select>
+            ) : (
+              <p className="formHint formHintError">No tienes tarjetas registradas. Agrégalas en la sección de administración.</p>
+            )}
           </FormField>
         )}
 

@@ -45,6 +45,12 @@ func (h authHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if h.deps.Members != nil {
+		if err := h.deps.Members.LinkByEmail(r.Context(), body.Email, out.UserID); err != nil {
+			slog.WarnContext(r.Context(), "failed to link member on register", "email", body.Email, "error", err)
+		}
+	}
+
 	writeJSON(w, http.StatusCreated, map[string]any{"data": map[string]string{"user_id": out.UserID}})
 }
 
@@ -65,6 +71,12 @@ func (h authHandler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeAuthError(w, err)
 		return
+	}
+
+	if h.deps.Members != nil {
+		if err := h.deps.Members.LinkByEmail(r.Context(), body.Email, out.UserID); err != nil {
+			slog.WarnContext(r.Context(), "failed to link member on login", "email", body.Email, "error", err)
+		}
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{"data": map[string]string{"token": out.Token}})

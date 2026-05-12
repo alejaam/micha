@@ -13,6 +13,7 @@ import { useDashboardDerivedData } from './useDashboardDerivedData'
 import { useExpenses } from './useExpenses'
 import { useHistoricalPeriods } from './useHistoricalPeriods'
 import { useMembers } from './useMembers'
+import { useCards } from './useCards'
 import { useSettlement } from './useSettlement'
 
 const HouseholdDataContext = createContext(null)
@@ -55,6 +56,12 @@ function useHouseholdDataInternal() {
     const onUnexpectedError = useCallback((err) => setError(err.message), [])
 
     const { members, loadingMembers } = useMembers({
+        isAuthenticated,
+        householdId,
+        handleProtectedError,
+    })
+
+    const { cards, loadingCards } = useCards({
         isAuthenticated,
         householdId,
         handleProtectedError,
@@ -237,6 +244,8 @@ function useHouseholdDataInternal() {
         // Data
         members,
         loadingMembers,
+        cards,
+        loadingCards,
         items,
         loadingList,
         recurringItems,
