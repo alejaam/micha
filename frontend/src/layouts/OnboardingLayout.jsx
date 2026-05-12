@@ -13,7 +13,7 @@ export const ONBOARDING_STEPS = [
 const STEP_PATHS = ONBOARDING_STEPS.map((s) => s.path)
 
 /**
- * OnboardingLayout — dark theme, step indicator, minimal header, AnimatePresence wrapper.
+ * OnboardingLayout — step indicator, minimal header, AnimatePresence wrapper.
  */
 export function OnboardingLayout() {
     const { pathname } = useLocation()
@@ -27,7 +27,7 @@ export function OnboardingLayout() {
     }
 
     return (
-        <main className="premiumDark onboardingShell">
+        <main className="onboardingShell">
             <div className="onboardingHeaderBar">
                 <div className="brand">
                     <div className="brandIcon" aria-hidden>💸</div>
