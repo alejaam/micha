@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createCard, listCards } from '../api'
+import { createCard, deleteCard, listCards } from '../api'
 import { MEXICAN_BANKS } from '../constants/mexicanBanks'
 import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
 import { FormField } from '../ui/FormField'
+
+const SETTLEMENT_HINTS = {
+    equal: 'Cada miembro paga la misma parte, sin importar ingresos.',
+    proportional: 'Los miembros que ganan más contribuyen con una mayor parte de los gastos.',
+}
 
 function preferredCardStorageKey(householdId) {
     return `micha_preferred_card_${householdId}`
@@ -25,7 +30,7 @@ export function OnboardingCardsPage() {
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [message, setMessage] = useState('')
-    const [showForm, setShowForm] = useState(true)
+    const [showForm, setShowForm] = useState(false)
 
     const hasCards = cards.length > 0
 
@@ -94,8 +99,29 @@ export function OnboardingCardsPage() {
         }
     }
 
+    async function handleDelete(cardId) {
+        if (!confirm('¿Eliminar esta tarjeta? Los gastos registrados con ella no se verán afectados.')) {
+            return
+        }
+
+        setError('')
+        setMessage('')
+        try {
+            await deleteCard({ cardId, householdId })
+            setMessage('Card deleted successfully.')
+            await loadCards()
+        } catch (err) {
+            if (!handleProtectedError(err)) setError(err.message)
+        }
+    }
+
     function handleContinue() {
         navigate('/onboarding/fixed-expenses', { replace: true })
+    }
+
+    function toggleForm() {
+        setShowForm((prev) => !prev)
+        if (!showForm) setMessage('')
     }
 
     if (!householdId) {
@@ -116,25 +142,11 @@ export function OnboardingCardsPage() {
             </div>
 
             {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
-            {message && !showForm ? <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner> : null}
+            {message ? <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner> : null}
 
-            {!showForm && hasCards && (
-                <div className="card u-p-4 u-border u-rounded-md u-bg-surface">
-                    <label className="sharedToggleLabel u-mb-0 u-flex u-items-center u-gap-2" htmlFor="addAnotherCard">
-                        <input
-                            id="addAnotherCard"
-                            type="checkbox"
-                            className="u-w-full"
-                            checked={showForm}
-                            onChange={(e) => {
-                                setShowForm(e.target.checked)
-                                if (e.target.checked) setMessage('')
-                            }}
-                        />
-                        <span className="u-text-sm u-text-dim">Añadir otra tarjeta</span>
-                    </label>
-                </div>
-            )}
+            <button type="button" className="btn btnGhost btnSm u-mt-2" onClick={toggleForm}>
+                {showForm ? '− Cancelar' : '+ Agregar tarjeta'}
+            </button>
 
             {showForm && (
                 <form className="formStack u-mt-4" onSubmit={handleCreateCard}>
@@ -191,17 +203,27 @@ export function OnboardingCardsPage() {
                 ) : (
                     <div className="formStack">
                         {cards.map((item) => (
-                            <label key={item.id} className="sharedToggleLabel" htmlFor={`preferred-card-${item.id}`}>
-                                <input
-                                    id={`preferred-card-${item.id}`}
-                                    type="radio"
-                                    name="preferred-card"
-                                    value={item.id}
-                                    checked={selectedCardId === item.id}
-                                    onChange={() => setSelectedCardId(item.id)}
-                                />
-                                <span className="sharedToggleText">{item.bank_name} - {item.card_name} (corte {item.cutoff_day})</span>
-                            </label>
+                            <div key={item.id} className="u-flex u-items-center u-gap-2">
+                                <label className="sharedToggleLabel u-flex-1" htmlFor={`preferred-card-${item.id}`}>
+                                    <input
+                                        id={`preferred-card-${item.id}`}
+                                        type="radio"
+                                        name="preferred-card"
+                                        value={item.id}
+                                        checked={selectedCardId === item.id}
+                                        onChange={() => setSelectedCardId(item.id)}
+                                    />
+                                    <span className="sharedToggleText">{item.bank_name} - {item.card_name} (corte {item.cutoff_day})</span>
+                                </label>
+                                <button
+                                    type="button"
+                                    className="btn btnSm btnGhostDanger"
+                                    onClick={() => handleDelete(item.id)}
+                                    title="Eliminar tarjeta"
+                                >
+                                    ✕
+                                </button>
+                            </div>
                         ))}
                         <p className="formHint">La tarjeta seleccionada será la predeterminada al crear gastos.</p>
                     </div>
