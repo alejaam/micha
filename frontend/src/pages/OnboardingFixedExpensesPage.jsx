@@ -19,12 +19,12 @@ const CATEGORY_OPTIONS = [
 const CATEGORY_LABEL_MAP = Object.fromEntries(CATEGORY_OPTIONS.map((c) => [c.value, c.label]))
 
 const FIXED_EXPENSE_OPTIONS = [
-    { key: 'rent', label: 'Rent', category: 'rent' },
+    { key: 'rent', label: 'Renta', category: 'rent' },
     { key: 'internet', label: 'Internet', category: 'other' },
-    { key: 'subscriptions', label: 'Subscriptions', category: 'streaming' },
+    { key: 'subscriptions', label: 'Suscripciones', category: 'streaming' },
     { key: 'auto', label: 'Auto', category: 'auto' },
-    { key: 'mortgage', label: 'Mortgage', category: 'rent' },
-    { key: 'other', label: 'Other', category: 'other' },
+    { key: 'mortgage', label: 'Hipoteca', category: 'rent' },
+    { key: 'other', label: 'Otro', category: 'other' },
 ]
 
 function todayDateOnly() {
@@ -219,26 +219,26 @@ export function OnboardingFixedExpensesPage() {
     if (!householdId) {
         return (
             <section className="card onboardingCard" aria-label="Fixed expense setup">
-                <Banner type="error">No household selected. Complete household setup first.</Banner>
+                <Banner type="error">No hay hogar seleccionado. Completa la configuración del hogar primero.</Banner>
                 <button
                     type="button"
-                    className="btn mt-4"
+                    className="btn u-mt-4"
                     onClick={() => navigate('/onboarding/household', { replace: true })}
                 >
-                    Go to household setup
+                    Ir a configuración del hogar
                 </button>
             </section>
         )
     }
 
     return (
-        <section className="card onboardingCard" aria-label="Fixed expenses setup">
+        <section className="card onboardingCard" aria-label="Configuración de gastos fijos">
             <div className="onboardingHeader">
-                <p className="authEyebrow">{isOnboarding ? 'Optional setup' : 'Administración'}</p>
-                <h2 className="authTitle">{isOnboarding ? 'Add household fixed expenses' : 'Gastos fijos'}</h2>
+                <p className="authEyebrow">{isOnboarding ? 'Configuración opcional' : 'Administración'}</p>
+                <h2 className="authTitle">{isOnboarding ? 'Añade gastos fijos del hogar' : 'Gastos fijos'}</h2>
                 <p className="authMeta">
                     {isOnboarding
-                        ? 'Choose the fixed expenses you want to track monthly. These are shared, household-level templates.'
+                        ? 'Elige los gastos fijos que quieras registrar mensualmente. Son plantillas compartidas a nivel del hogar.'
                         : 'Administra tus gastos fijos recurrentes: edita montos, categorías o elimina gastos existentes.'}
                 </p>
             </div>
@@ -257,12 +257,12 @@ export function OnboardingFixedExpensesPage() {
 
             {/* ── Loading state ───────────────────────────────────────────── */}
             {loading && (
-                <p className="text-sm text-dim mt-4">Cargando gastos fijos...</p>
+                <p className="u-text-sm u-text-dim u-mt-4">Cargando gastos fijos...</p>
             )}
 
             {/* ── Table of existing items ─────────────────────────────────── */}
             {!loading && recurringItems.length > 0 && (
-                <div className="fixedExpensesTable fixedAdminTable mt-4">
+                <div className="fixedExpensesTable fixedAdminTable u-mt-4">
                     <div className="fixedTableHeader">
                         <span className="fixedColDesc">Descripción</span>
                         <span className="fixedColCategory">Categoría</span>
@@ -354,16 +354,16 @@ export function OnboardingFixedExpensesPage() {
 
             {/* ── Empty state ─────────────────────────────────────────────── */}
             {!loading && recurringItems.length === 0 && (
-                <div className="emptyState mt-4">
+                <div className="emptyState u-mt-4">
                     <p className="emptyTitle">Sin gastos fijos aún</p>
                     <p className="emptyHint">Agrega gastos fijos usando el formulario de abajo.</p>
                 </div>
             )}
 
             {/* ── Quick-add form ──────────────────────────────────────────── */}
-            <div className="mt-6">
+            <div className="u-mt-6">
                 <h3 className="sectionTitle">Agregar nuevo gasto fijo</h3>
-                <div className="formStack mt-2">
+                <div className="formStack u-mt-2">
                     {FIXED_EXPENSE_OPTIONS.map((item) => {
                         const isChecked = !!selected[item.key]
                         return (
@@ -380,7 +380,7 @@ export function OnboardingFixedExpensesPage() {
                                 </label>
 
                                 {isChecked && (
-                                    <div className="inputWrap mt-2">
+                                    <div className="inputWrap u-mt-2">
                                         <span className="inputPrefix" aria-hidden>$</span>
                                         <input
                                             className="input inputWithPrefix"
@@ -399,24 +399,24 @@ export function OnboardingFixedExpensesPage() {
             </div>
 
             {/* ── Actions ────────────────────────────────────────────────── */}
-            <div className="flex gap-4 mt-6">
+            <div className="u-flex u-gap-4 u-mt-6">
                 {isOnboarding ? (
                     <>
                         <button
                             type="button"
-                            className="btn flex-1"
+                            className="btn u-flex-1"
                             onClick={() => navigate('/', { replace: true })}
                             disabled={saving}
                         >
-                            Skip for now
+                            Saltar por ahora
                         </button>
                         <button
                             type="button"
-                            className="btn btnPrimary flex-1"
+                            className="btn btnPrimary u-flex-1"
                             onClick={handleSave}
                             disabled={saving || !hasValidSelection}
                         >
-                            {saving ? 'Saving...' : 'Save and continue'}
+                            {saving ? 'Guardando...' : 'Guardar y continuar'}
                         </button>
                     </>
                 ) : (

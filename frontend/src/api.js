@@ -366,7 +366,7 @@ export async function approvePeriod({ householdId, periodId, status, comment = '
     return parseResponse(response)
 }
 
-export async function closePeriod({ householdId, periodId, force = false }) {
+export async function closePeriod({ householdId, periodId, force = true }) {
     const response = await fetch(`/v1/households/${householdId}/periods/${periodId}/close`, {
         method: 'POST',
         headers: buildProtectedHeaders(),

@@ -20,6 +20,7 @@ type ClosePeriodUseCase struct {
 	memberRepo      outbound.MemberRepository
 	expenseRepo     outbound.ExpenseRepository
 	installmentRepo outbound.InstallmentRepository
+	txManager       outbound.TransactionManager
 	idGenerator     appshared.IDGenerator
 	now             func() time.Time
 }
@@ -31,6 +32,7 @@ func NewClosePeriodUseCase(
 	memberRepo outbound.MemberRepository,
 	expenseRepo outbound.ExpenseRepository,
 	installmentRepo outbound.InstallmentRepository,
+	txManager outbound.TransactionManager,
 	idGenerator appshared.IDGenerator,
 ) ClosePeriodUseCase {
 	return ClosePeriodUseCase{
@@ -40,6 +42,7 @@ func NewClosePeriodUseCase(
 		memberRepo:      memberRepo,
 		expenseRepo:     expenseRepo,
 		installmentRepo: installmentRepo,
+		txManager:       txManager,
 		idGenerator:     idGenerator,
 		now:             appshared.Now,
 	}
@@ -79,58 +82,64 @@ func (u ClosePeriodUseCase) Execute(ctx context.Context, input inbound.ClosePeri
 		}
 	}
 
-	// 4. Mark period as closed.
+	// 4-7. Execute transactional operations (close period, create next, rollovers).
 	now := u.now()
-	pAttrs := p.Attributes()
-	pAttrs.Status = period.StatusClosed
-	pAttrs.UpdatedAt = now
-	closedPeriod, _ := period.NewFromAttributes(pAttrs)
 
-	if err := u.periodRepo.Update(ctx, closedPeriod); err != nil {
-		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: failed to close: %w", err)
+	var nextPeriodID string
+	if err := u.txManager.Run(ctx, func(txCtx context.Context) error {
+		pAttrs := p.Attributes()
+		pAttrs.Status = period.StatusClosed
+		pAttrs.UpdatedAt = now
+		closedPeriod, _ := period.NewFromAttributes(pAttrs)
+
+		if err := u.periodRepo.Update(txCtx, closedPeriod); err != nil {
+			return fmt.Errorf("failed to close: %w", err)
+		}
+
+		// 5. Create Rollover (Next Period).
+		nextStart := p.EndDate().Add(24 * time.Hour)
+
+		var nextEnd time.Time
+		if h.Attributes().PeriodFrequency == "biweekly" {
+			nextEnd = nextStart.AddDate(0, 0, 14) // Sumar 14 días para que el total sean 15
+		} else {
+			// Mensual: misma fecha el próximo mes
+			nextEnd = nextStart.AddDate(0, 1, -1)
+		}
+
+		nextPeriod, err := period.New(
+			period.ID(u.idGenerator.NewID()),
+			input.HouseholdID,
+			nextStart,
+			nextEnd,
+			period.StatusOpen,
+			now,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create next: %w", err)
+		}
+
+		if err := u.periodRepo.Create(txCtx, nextPeriod); err != nil {
+			return fmt.Errorf("failed to persist next: %w", err)
+		}
+
+		// 6. Rollover Fixed Expenses.
+		if err := u.rolloverFixedExpenses(txCtx, input.PeriodID, string(nextPeriod.ID()), now); err != nil {
+			return fmt.Errorf("fixed rollover failed: %w", err)
+		}
+
+		// 7. Rollover Installments (MSI).
+		if err := u.rolloverInstallments(txCtx, nextPeriod, now); err != nil {
+			return fmt.Errorf("MSI rollover failed: %w", err)
+		}
+
+		nextPeriodID = string(nextPeriod.ID())
+		return nil
+	}); err != nil {
+		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: %w", err)
 	}
 
-	// 5. Create Rollover (Next Period).
-	nextStart := p.EndDate().Add(24 * time.Hour)
-	
-	var nextEnd time.Time
-	if h.Attributes().PeriodFrequency == "biweekly" {
-		nextEnd = nextStart.AddDate(0, 0, 14) // Sumar 14 días para que el total sean 15
-	} else {
-		// Mensual: misma fecha el próximo mes
-		nextEnd = nextStart.AddDate(0, 1, -1)
-	}
-
-	// Asegurar que el nextEnd respeta el closingDay si es posible (ajustar a fin de mes si el día no existe)
-	// Para mensual es fácil con AddDate(0, 1, -1) si nextStart es closingDay+1.
-	
-	nextPeriod, err := period.New(
-		period.ID(u.idGenerator.NewID()),
-		input.HouseholdID,
-		nextStart,
-		nextEnd,
-		period.StatusOpen,
-		now,
-	)
-	if err != nil {
-		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: failed to create next: %w", err)
-	}
-
-	if err := u.periodRepo.Create(ctx, nextPeriod); err != nil {
-		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: failed to persist next: %w", err)
-	}
-
-	// 6. Rollover Fixed Expenses.
-	if err := u.rolloverFixedExpenses(ctx, input.PeriodID, string(nextPeriod.ID()), now); err != nil {
-		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: fixed rollover failed: %w", err)
-	}
-
-	// 7. Rollover Installments (MSI).
-	if err := u.rolloverInstallments(ctx, nextPeriod, now); err != nil {
-		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: MSI rollover failed: %w", err)
-	}
-
-	return inbound.ClosePeriodOutput{NextPeriodID: string(nextPeriod.ID())}, nil
+	return inbound.ClosePeriodOutput{NextPeriodID: nextPeriodID}, nil
 }
 
 func (u ClosePeriodUseCase) validateConsensus(ctx context.Context, householdID, periodID string) error {
@@ -151,7 +160,7 @@ func (u ClosePeriodUseCase) validateConsensus(ctx context.Context, householdID, 
 
 	for _, m := range members {
 		status, exists := approvalMap[string(m.ID())]
-		if exists {
+		if !exists {
 			return fmt.Errorf("member %s has not voted", m.ID())
 		}
 		if status == periodapproval.ApprovalStatusObjected {
@@ -176,7 +185,10 @@ func (u ClosePeriodUseCase) rolloverFixedExpenses(ctx context.Context, currentPe
 			attrs.CreatedAt = now
 			attrs.UpdatedAt = now
 			
-			cloned, _ := expense.NewFromAttributes(attrs)
+			cloned, err := expense.NewFromAttributes(attrs)
+			if err != nil {
+				return fmt.Errorf("failed to clone fixed expense: %w", err)
+			}
 			if err := u.expenseRepo.Save(ctx, cloned); err != nil {
 				return err
 			}
@@ -187,7 +199,6 @@ func (u ClosePeriodUseCase) rolloverFixedExpenses(ctx context.Context, currentPe
 
 func (u ClosePeriodUseCase) rolloverInstallments(ctx context.Context, nextPeriod period.Period, now time.Time) error {
 	// Find installments whose StartDate falls within the next period.
-	// Since installments are created ahead of time, we just need to link them.
 	// BUT, our Expense entity now has period_id. For each installment due in the next period,
 	// we should probably create an Expense record of type 'msi' linked to that period.
 	
@@ -199,20 +210,31 @@ func (u ClosePeriodUseCase) rolloverInstallments(ctx context.Context, nextPeriod
 	for _, inst := range installments {
 		// Create a virtual expense for this installment in the new period.
 		// This makes the installment visible in the expense list for the month.
-		e, _ := expense.NewFromAttributes(expense.ExpenseAttributes{
+		// We need the parent expense's category_id to satisfy the NOT NULL FK constraint.
+		parentExpense, err := u.expenseRepo.FindByID(ctx, inst.ExpenseID())
+		if err != nil {
+			return fmt.Errorf("failed to find parent expense for installment %s: %w", inst.ExpenseID(), err)
+		}
+
+		e, err := expense.NewFromAttributes(expense.ExpenseAttributes{
 			ID:                expense.ID(u.idGenerator.NewID()),
 			HouseholdID:       nextPeriod.HouseholdID(),
 			PaidByMemberID:    inst.PaidByMemberID(),
 			PeriodID:          string(nextPeriod.ID()),
+			CategoryID:        parentExpense.CategoryID(),
 			AmountCents:       inst.InstallmentAmountCents(),
 			Description:       fmt.Sprintf("MSI installment %d/%d", inst.CurrentInstallment(), inst.TotalInstallments()),
 			IsShared:          true, // MSI root expense defines this, but for simplicity...
 			Currency:          "MXN",
 			PaymentMethod:     expense.PaymentMethodCard,
 			ExpenseType:       expense.ExpenseTypeMSI,
+			TotalInstallments: inst.TotalInstallments(),
 			CreatedAt:         now,
 			UpdatedAt:         now,
 		})
+		if err != nil {
+			return fmt.Errorf("failed to create MSI expense for installment: %w", err)
+		}
 		if err := u.expenseRepo.Save(ctx, e); err != nil {
 			return err
 		}
