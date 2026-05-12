@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { PeriodStatusRibbon } from './PeriodStatusRibbon'
+import { useAuth } from '../context/AuthContext'
+import { UserMenu } from './UserMenu'
 
 function formatPeriodName(period) {
   if (!period) return 'Sin periodo activo'
@@ -27,6 +29,7 @@ export function AppHeader({
   isMutationLocked = false,
   currentPeriod = null,
 }) {
+  const { user } = useAuth()
   const isLive = health === 'ok'
   const periodName = formatPeriodName(currentPeriod)
 
@@ -82,29 +85,6 @@ export function AppHeader({
 
       {/* Controls */}
       <div className="headerControls">
-        {/* Household selector — only show when households exist */}
-        {households.length > 0 && (
-          <div className="householdRow">
-            <label htmlFor="householdInput" className="householdLabel">
-              Hogar
-            </label>
-            <select
-              id="householdInput"
-              className="householdInput"
-              value={householdId}
-              onChange={(e) => onHouseholdChange(e.target.value)}
-              aria-label="Hogar"
-            >
-              <option value="">Seleccionar hogar</option>
-              {households.map((household) => (
-                <option key={household.id} value={household.id}>
-                  {household.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
         {/* Invite member */}
         {householdId && (
           <Link
@@ -135,20 +115,7 @@ export function AppHeader({
           {isLoading ? 'Cargando…' : 'Actualizar'}
         </button>
 
-        <button
-          type="button"
-          className="btn btnGhostDanger btnSm"
-          onClick={() => onLogout()}
-          disabled={isLoading}
-          aria-label="Cerrar sesión"
-        >
-          Cerrar sesión
-        </button>
-
-        {/* Health */}
-        <span className={isLive ? 'pill pillOk' : 'pill pillOff'} aria-label={`Backend status: ${health}`}>
-          {isLive ? 'live' : health}
-        </span>
+        <UserMenu user={user} households={households} householdId={householdId} onHouseholdChange={onHouseholdChange} onLogout={onLogout} health={health} />
       </div>
 
       <PeriodStatusRibbon status={periodStatus} />
