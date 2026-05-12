@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createRecurringExpense } from '../api'
+import { createRecurringExpense, initializePeriod } from '../api'
 import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
@@ -75,7 +75,18 @@ export function OnboardingFixedExpensesPage() {
                 })
             }
 
-            setMessage('Gastos fijos guardados.')
+            try {
+                await initializePeriod({ householdId })
+                const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+                const currentMonth = monthNames[new Date().getMonth()]
+                setMessage(`Tu período de ${currentMonth} ha comenzado automáticamente. ¡Bienvenido a micha!`)
+            } catch (initErr) {
+                if (initErr.message?.includes('already has periods')) {
+                    // Period already exists — not an error, just proceed
+                } else {
+                    setError(initErr.message)
+                }
+            }
             navigate('/', { replace: true })
         } catch (err) {
             if (!handleProtectedError(err)) setError(err.message)
