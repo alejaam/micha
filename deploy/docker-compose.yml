@@ -1,7 +1,7 @@
+# docker-compose.yml - Desarrollo local
+# Incluye PostgreSQL local
+
 services:
-  # PostgreSQL database
-  # NOTA: Si usás la base de datos de Dokploy (recomendado en producción),
-  # eliminá este servicio 'db' y apuntá DATABASE_URL a tu DB externa.
   db:
     image: postgres:16-alpine
     container_name: micha-db
@@ -25,11 +25,10 @@ services:
     container_name: micha-api
     environment:
       HTTP_PORT: "8080"
-      # Si usás la DB de Dokploy, cambiá esto por tu DATABASE_URL externa
       DATABASE_URL: ${DATABASE_URL:-postgres://micha:micha_dev_password@db:5432/micha?sslmode=disable}
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-change-in-production}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
-      ENVIRONMENT: ${ENVIRONMENT:-production}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
     ports:
       - "8080:8080"
     depends_on:
