@@ -49,9 +49,9 @@ describe('OnboardingFixedExpensesPage', () => {
             </MemoryRouter>,
         )
 
-        fireEvent.click(screen.getByLabelText('Rent'))
+        fireEvent.click(screen.getByLabelText('Renta'))
         fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '1250.50' } })
-        fireEvent.click(screen.getByRole('button', { name: 'Save and continue' }))
+        fireEvent.click(screen.getByRole('button', { name: 'Guardar y continuar' }))
 
         await waitFor(() => expect(mockCreateRecurringExpense).toHaveBeenCalledTimes(1))
         expect(mockCreateRecurringExpense).toHaveBeenCalledWith(expect.objectContaining({

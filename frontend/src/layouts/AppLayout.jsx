@@ -22,10 +22,16 @@ export function AppLayout() {
         loadingHouseholds,
         periodStatus,
         isMutationLocked,
+        currentPeriod,
     } = useAppShell()
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />
+    }
+
+    // No households yet → redirect to onboarding
+    if (!loadingHouseholds && households.length === 0) {
+        return <Navigate to="/onboarding/household" replace />
     }
 
     return (
@@ -41,6 +47,7 @@ export function AppLayout() {
                     isLoading={loadingHouseholds}
                     periodStatus={periodStatus}
                     isMutationLocked={isMutationLocked}
+                    currentPeriod={currentPeriod}
                 />
                 <Outlet />
                 <BottomNav />
