@@ -39,10 +39,10 @@ export function RulesPage() {
                     <div className="listHeader">
                         <h2 className="listTitle">Tarjetas</h2>
                     </div>
-                    <p className="text-sm text-dim mb-3">
+                    <p className="u-text-sm u-text-dim u-mb-3">
                         Agrega una nueva tarjeta o cambia tu tarjeta preferida para nuevos gastos.
                     </p>
-                    <div className="flex flex-col gap-3">
+                    <div className="u-flex u-flex-col u-gap-3">
                         <button
                             type="button"
                             className="btn btnPrimary"
@@ -58,10 +58,10 @@ export function RulesPage() {
                     <div className="listHeader">
                         <h2 className="listTitle">Gastos Fijos</h2>
                     </div>
-                    <p className="text-sm text-dim mb-3">
+                    <p className="u-text-sm u-text-dim u-mb-3">
                         Configura gastos mensuales recurrentes como renta, servicios o suscripciones.
                     </p>
-                    <div className="flex flex-col gap-3">
+                    <div className="u-flex u-flex-col u-gap-3">
                         <button
                             type="button"
                             className="btn"
@@ -79,10 +79,10 @@ export function RulesPage() {
                     <div className="listHeader">
                         <h2 className="listTitle">Hogar</h2>
                     </div>
-                    <p className="text-sm text-dim mb-3">
+                    <p className="u-text-sm u-text-dim u-mb-3">
                         Gestiona el nombre de tu hogar, moneda y miembros.
                     </p>
-                    <div className="flex flex-col gap-3">
+                    <div className="u-flex u-flex-col u-gap-3">
                         <button
                             type="button"
                             className="btn"

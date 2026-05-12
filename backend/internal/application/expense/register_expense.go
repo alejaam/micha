@@ -12,6 +12,7 @@ import (
 	appshared "micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/installment"
+	"micha/backend/internal/domain/member"
 	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
@@ -24,6 +25,7 @@ type RegisterExpenseUseCase struct {
 	cardRepo           outbound.CardRepository
 	categoryRepo       outbound.CategoryRepository
 	installmentRepo    outbound.InstallmentRepository
+	txManager          outbound.TransactionManager
 	idGenerator        appshared.IDGenerator
 	now                func() time.Time
 	allowOwnerOnBehalf bool
@@ -36,6 +38,7 @@ func NewRegisterExpenseUseCase(
 	cardRepo outbound.CardRepository,
 	categoryRepo outbound.CategoryRepository,
 	installmentRepo outbound.InstallmentRepository,
+	txManager outbound.TransactionManager,
 	idGenerator appshared.IDGenerator,
 ) RegisterExpenseUseCase {
 	return NewRegisterExpenseUseCaseWithPolicy(
@@ -45,6 +48,7 @@ func NewRegisterExpenseUseCase(
 		cardRepo,
 		categoryRepo,
 		installmentRepo,
+		txManager,
 		idGenerator,
 		true,
 	)
@@ -57,6 +61,7 @@ func NewRegisterExpenseUseCaseWithPolicy(
 	cardRepo outbound.CardRepository,
 	categoryRepo outbound.CategoryRepository,
 	installmentRepo outbound.InstallmentRepository,
+	txManager outbound.TransactionManager,
 	idGenerator appshared.IDGenerator,
 	allowOwnerOnBehalf bool,
 ) RegisterExpenseUseCase {
@@ -67,6 +72,7 @@ func NewRegisterExpenseUseCaseWithPolicy(
 		cardRepo:           cardRepo,
 		categoryRepo:       categoryRepo,
 		installmentRepo:    installmentRepo,
+		txManager:          txManager,
 		idGenerator:        idGenerator,
 		now:                appshared.Now,
 		allowOwnerOnBehalf: allowOwnerOnBehalf,
@@ -100,11 +106,10 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: member does not belong to household")
 		}
 
-		// DEBUG OVERRIDE: Allow registering expenses even if member is pending.
 		// Requirement (Strict): Pending members cannot register expenses.
-		// if m.IsPending() {
-		// 	return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", shared.ErrForbidden)
-		// }
+		if m.IsPending() {
+			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", shared.ErrForbidden)
+		}
 	}
 
 	categoryID, err := u.resolveCategoryID(ctx, input.HouseholdID, input.CategoryID)
@@ -151,15 +156,23 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
 	}
 
-	if err := u.repo.Save(ctx, e); err != nil {
-		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
-	}
-
-	// Requirement: Generate installments for MSI expenses.
+	// Requirement: Save expense and generate installments atomically for MSI expenses.
 	if e.ExpenseType() == expense.ExpenseTypeMSI {
-		installments := u.generateInstallments(e)
-		if err := u.installmentRepo.SaveAll(ctx, installments); err != nil {
-			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: save installments: %w", err)
+		if err := u.txManager.Run(ctx, func(txCtx context.Context) error {
+			if err := u.repo.Save(txCtx, e); err != nil {
+				return fmt.Errorf("save expense: %w", err)
+			}
+			installments := u.generateInstallments(e)
+			if err := u.installmentRepo.SaveAll(txCtx, installments); err != nil {
+				return fmt.Errorf("save installments: %w", err)
+			}
+			return nil
+		}); err != nil {
+			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
+		}
+	} else {
+		if err := u.repo.Save(ctx, e); err != nil {
+			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
 		}
 	}
 
@@ -172,14 +185,26 @@ func (u RegisterExpenseUseCase) ensureActorCanRegisterFixed(ctx context.Context,
 		return shared.ErrForbidden
 	}
 
-	// DEBUG OVERRIDE: Trust the actor regardless of pending status.
-	return nil
+	members, err := u.memberRepo.ListAllByHousehold(ctx, householdID)
+	if err != nil {
+		return err
+	}
 
-	// Original logic:
-	/*
-		members, err := u.memberRepo.ListAllByHousehold(ctx, householdID)
-		...
-	*/
+	var actor member.Member
+	for _, m := range members {
+		if m.UserID() == currentUserID {
+			actor = m
+			break
+		}
+	}
+	if actor.ID() == "" {
+		return shared.ErrForbidden
+	}
+	if actor.IsPending() {
+		return shared.ErrForbidden
+	}
+
+	return nil
 }
 
 func (u RegisterExpenseUseCase) generateInstallments(root expense.Expense) []installment.Installment {
