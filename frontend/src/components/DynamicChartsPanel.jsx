@@ -16,9 +16,9 @@ import {
 import { formatCurrency } from '../utils'
 
 // Brand Blue Palette (matching CSS tokens)
-const COLOR_BRAND_600 = '#2563eb'
-const COLOR_BRAND_400 = '#60a5fa'
-const COLOR_BRAND_200 = '#bfdbfe'
+const COLOR_BRAND_600 = 'var(--color-brand-600)'
+const COLOR_BRAND_400 = 'var(--color-brand-400)'
+const COLOR_BRAND_200 = 'var(--color-brand-200)'
 
 const DONUT_COLORS = [
     COLOR_BRAND_600,
@@ -26,10 +26,10 @@ const DONUT_COLORS = [
     '#6366f1', // Indigo accent
     '#0ea5e9', // Sky accent
     COLOR_BRAND_200,
-    '#94a3b8', // Slate muted
+    'var(--color-text-4)', // Slate muted
 ]
-const CHART_GRID = '#e2e8f0' // Matching --color-border
-const CHART_TEXT = '#64748b' // Matching --color-text-3
+const CHART_GRID = 'var(--color-border)' // Matching --color-border
+const CHART_TEXT = 'var(--color-text-3)' // Matching --color-text-3
 
 function moneyTick(value, currency) {
   return formatCurrency(value ?? 0, currency)

@@ -3,7 +3,7 @@ import { useEffect } from 'react'
 /**
  * Banner — dismissible feedback strip shown above the content area.
  *
- * @param {'ok'|'error'} type - Visual variant
+ * @param {'ok'|'error'|'info'} type - Visual variant
  * @param {React.ReactNode} children - Message text
  * @param {()=>void} [onDismiss] - Optional dismiss callback
  * @param {boolean} [floating] - Render as fixed toast overlay instead of inline banner
@@ -14,12 +14,14 @@ export function Banner({ type, children, onDismiss, floating = false }) {
     const timer = setTimeout(() => onDismiss(), 4000)
     return () => clearTimeout(timer)
   }, [floating, onDismiss, children])
+
+  const variantClass = type === 'ok' ? 'bannerOk' : type === 'info' ? 'bannerInfo' : 'bannerError'
   const cls = [
     'banner',
-    type === 'ok' ? 'bannerOk' : 'bannerError',
+    variantClass,
     floating ? 'bannerFloating' : '',
   ].filter(Boolean).join(' ')
-  const icon = type === 'ok' ? '✓' : '⚠'
+  const icon = type === 'ok' ? '✓' : type === 'info' ? 'ℹ' : '⚠'
 
   return (
     <div className={cls} role="alert" aria-live="polite">

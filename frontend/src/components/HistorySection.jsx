@@ -81,10 +81,10 @@ export function HistorySection({
           <div className="historyChartCanvas">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={safeComparisonSeries}>
-                <XAxis dataKey="label" tick={{ fill: '#666666', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={(value) => moneyTick(value, currency)} tick={{ fill: '#666666', fontSize: 11 }} width={80} axisLine={false} tickLine={false} />
+                <XAxis dataKey="label" tick={{ fill: 'var(--color-text-3)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={(value) => moneyTick(value, currency)} tick={{ fill: 'var(--color-text-3)', fontSize: 11 }} width={80} axisLine={false} tickLine={false} />
                 <Tooltip formatter={(value) => moneyTick(value, currency)} />
-                <Line type="monotone" dataKey="totalCents" stroke="#0A0A0A" strokeWidth={2} dot={{ r: 2 }} />
+                <Line type="monotone" dataKey="totalCents" stroke="var(--color-text-1)" strokeWidth={2} dot={{ r: 2 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -95,8 +95,8 @@ export function HistorySection({
           <div className="historyChartCanvas">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={safeMemberBalanceTrend}>
-                <XAxis dataKey="label" tick={{ fill: '#666666', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={(value) => moneyTick(value, currency)} tick={{ fill: '#666666', fontSize: 11 }} width={80} axisLine={false} tickLine={false} />
+                <XAxis dataKey="label" tick={{ fill: 'var(--color-text-3)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={(value) => moneyTick(value, currency)} tick={{ fill: 'var(--color-text-3)', fontSize: 11 }} width={80} axisLine={false} tickLine={false} />
                 <Tooltip formatter={(value) => moneyTick(value, currency)} />
                 {Object.keys(safeMemberBalanceTrend[0] || {})
                   .filter((key) => !['key', 'label', 'source'].includes(key))
@@ -106,7 +106,7 @@ export function HistorySection({
                       key={memberName}
                       type="monotone"
                       dataKey={memberName}
-                      stroke={['#0A0A0A', '#4A4A4A', '#8A8A8A'][index % 3]}
+                      stroke={['var(--color-text-1)', 'var(--color-text-2)', 'var(--color-text-3)'][index % 3]}
                       strokeWidth={2}
                       dot={{ r: 2 }}
                     />

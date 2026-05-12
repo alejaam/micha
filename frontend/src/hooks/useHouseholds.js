@@ -4,7 +4,7 @@ import { listHouseholds } from '../api'
 export function useHouseholds({ isAuthenticated, handleProtectedError }) {
     const [householdId, setHouseholdId] = useState('')
     const [households, setHouseholds] = useState([])
-    const [loadingHouseholds, setLoadingHouseholds] = useState(false)
+    const [loadingHouseholds, setLoadingHouseholds] = useState(true)
 
     const householdIdRef = useRef(householdId)
     useEffect(() => {
