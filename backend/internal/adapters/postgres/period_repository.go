@@ -22,9 +22,13 @@ func NewPeriodRepository(db *pgxpool.Pool) PeriodRepository {
 	return PeriodRepository{db: db}
 }
 
+func (r PeriodRepository) getQuerier(ctx context.Context) Querier {
+	return querierFromContext(ctx, r.db)
+}
+
 func (r PeriodRepository) Create(ctx context.Context, p period.Period) error {
 	attrs := p.Attributes()
-	_, err := r.db.Exec(ctx,
+	_, err := r.getQuerier(ctx).Exec(ctx,
 		`INSERT INTO periods (id, household_id, start_date, end_date, status, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
 		string(attrs.ID), attrs.HouseholdID, attrs.StartDate, attrs.EndDate, string(attrs.Status), attrs.CreatedAt, attrs.UpdatedAt,
@@ -37,7 +41,7 @@ func (r PeriodRepository) Create(ctx context.Context, p period.Period) error {
 
 func (r PeriodRepository) Update(ctx context.Context, p period.Period) error {
 	attrs := p.Attributes()
-	tag, err := r.db.Exec(ctx,
+	tag, err := r.getQuerier(ctx).Exec(ctx,
 		`UPDATE periods
 			SET status = $1, updated_at = $2
 			WHERE id = $3`,
@@ -53,7 +57,7 @@ func (r PeriodRepository) Update(ctx context.Context, p period.Period) error {
 }
 
 func (r PeriodRepository) GetByID(ctx context.Context, id period.ID) (period.Period, error) {
-	row := r.db.QueryRow(ctx,
+	row := r.getQuerier(ctx).QueryRow(ctx,
 		`SELECT id, household_id, start_date, end_date, status, created_at, updated_at
 			FROM periods
 			WHERE id = $1`,
@@ -70,7 +74,7 @@ func (r PeriodRepository) GetByID(ctx context.Context, id period.ID) (period.Per
 }
 
 func (r PeriodRepository) GetCurrentOpen(ctx context.Context, householdID string) (period.Period, error) {
-	row := r.db.QueryRow(ctx,
+	row := r.getQuerier(ctx).QueryRow(ctx,
 		`SELECT id, household_id, start_date, end_date, status, created_at, updated_at
 			FROM periods
 			WHERE household_id = $1 AND status = 'open'
@@ -89,7 +93,7 @@ func (r PeriodRepository) GetCurrentOpen(ctx context.Context, householdID string
 }
 
 func (r PeriodRepository) GetLatestByHousehold(ctx context.Context, householdID string) (period.Period, error) {
-	row := r.db.QueryRow(ctx,
+	row := r.getQuerier(ctx).QueryRow(ctx,
 		`SELECT id, household_id, start_date, end_date, status, created_at, updated_at
 			FROM periods
 			WHERE household_id = $1
@@ -108,7 +112,7 @@ func (r PeriodRepository) GetLatestByHousehold(ctx context.Context, householdID 
 }
 
 func (r PeriodRepository) ListByHousehold(ctx context.Context, householdID string, limit, offset int) ([]period.Period, error) {
-	rows, err := r.db.Query(ctx,
+	rows, err := r.getQuerier(ctx).Query(ctx,
 		`SELECT id, household_id, start_date, end_date, status, created_at, updated_at
 			FROM periods
 			WHERE household_id = $1

@@ -7,12 +7,12 @@ import { Banner } from '../ui/Banner'
 import { dollarsToCents, sanitizeAmountInput } from '../utils'
 
 const FIXED_EXPENSE_OPTIONS = [
-    { key: 'rent', label: 'Rent', category: 'rent' },
+    { key: 'rent', label: 'Renta', category: 'rent' },
     { key: 'internet', label: 'Internet', category: 'other' },
-    { key: 'subscriptions', label: 'Subscriptions', category: 'streaming' },
+    { key: 'subscriptions', label: 'Suscripciones', category: 'streaming' },
     { key: 'auto', label: 'Auto', category: 'auto' },
-    { key: 'mortgage', label: 'Mortgage', category: 'rent' },
-    { key: 'other', label: 'Other', category: 'other' },
+    { key: 'mortgage', label: 'Hipoteca', category: 'rent' },
+    { key: 'other', label: 'Otro', category: 'other' },
 ]
 
 function todayDateOnly() {
@@ -87,7 +87,6 @@ export function OnboardingFixedExpensesPage() {
                     setError(initErr.message)
                 }
             }
-
             navigate('/', { replace: true })
         } catch (err) {
             if (!handleProtectedError(err)) setError(err.message)
@@ -99,32 +98,32 @@ export function OnboardingFixedExpensesPage() {
     if (!householdId) {
         return (
             <section className="card onboardingCard" aria-label="Fixed expense setup">
-                <Banner type="error">No household selected. Complete household setup first.</Banner>
+                <Banner type="error">No hay hogar seleccionado. Completa la configuración del hogar primero.</Banner>
                 <button
                     type="button"
-                    className="btn mt-4"
+                    className="btn u-mt-4"
                     onClick={() => navigate('/onboarding/household', { replace: true })}
                 >
-                    Go to household setup
+                    Ir a configuración del hogar
                 </button>
             </section>
         )
     }
 
     return (
-        <section className="card onboardingCard" aria-label="Fixed expenses setup">
+        <section className="card onboardingCard" aria-label="Configuración de gastos fijos">
             <div className="onboardingHeader">
-                <p className="authEyebrow">Optional setup</p>
-                <h2 className="authTitle">Add household fixed expenses</h2>
+                <p className="authEyebrow">Configuración opcional</p>
+                <h2 className="authTitle">Añade gastos fijos del hogar</h2>
                 <p className="authMeta">
-                    Choose the fixed expenses you want to track monthly. These are shared, household-level templates.
+                    Elige los gastos fijos que quieras registrar mensualmente. Son plantillas compartidas a nivel del hogar.
                 </p>
             </div>
 
             {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
             {message ? <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner> : null}
 
-            <div className="formStack mt-4">
+            <div className="formStack u-mt-4">
                 {FIXED_EXPENSE_OPTIONS.map((item) => {
                     const isChecked = !!selected[item.key]
                     return (
@@ -141,7 +140,7 @@ export function OnboardingFixedExpensesPage() {
                             </label>
 
                             {isChecked && (
-                                <div className="inputWrap mt-2">
+                                <div className="inputWrap u-mt-2">
                                     <span className="inputPrefix" aria-hidden>$</span>
                                     <input
                                         className="input inputWithPrefix"
@@ -158,22 +157,22 @@ export function OnboardingFixedExpensesPage() {
                 })}
             </div>
 
-            <div className="flex gap-4 mt-6">
+            <div className="u-flex u-gap-4 u-mt-6">
                 <button
                     type="button"
-                    className="btn flex-1"
+                    className="btn u-flex-1"
                     onClick={() => navigate('/', { replace: true })}
                     disabled={saving}
                 >
-                    Skip for now
+                    Saltar por ahora
                 </button>
                 <button
                     type="button"
-                    className="btn btnPrimary flex-1"
+                    className="btn btnPrimary u-flex-1"
                     onClick={handleSave}
                     disabled={saving || !hasValidSelection}
                 >
-                    {saving ? 'Saving...' : 'Save and continue'}
+                    {saving ? 'Guardando...' : 'Guardar y continuar'}
                 </button>
             </div>
         </section>

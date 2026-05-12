@@ -84,7 +84,7 @@ export function OnboardingCardsPage() {
             setBankName(MEXICAN_BANKS[0].value)
             setCardName('')
             setCutoffDay('15')
-            setMessage('Card added successfully.')
+            setMessage('Tarjeta añadida correctamente.')
             setShowForm(false)
             await loadCards()
         } catch (err) {
@@ -101,44 +101,44 @@ export function OnboardingCardsPage() {
     if (!householdId) {
         return (
             <div className="card">
-                <Banner type="error">No household selected. Create your household first.</Banner>
-                <button className="btn mt-4" onClick={() => navigate('/onboarding/household', { replace: true })}>Go to household setup</button>
+                <Banner type="error">No hay hogar seleccionado. Crea tu hogar primero.</Banner>
+                <button className="btn u-mt-4" onClick={() => navigate('/onboarding/household', { replace: true })}>Ir a configuración del hogar</button>
             </div>
         )
     }
 
     return (
-        <section className="card onboardingCard" aria-label="Set up your cards">
+        <section className="card onboardingCard" aria-label="Configura tus tarjetas">
             <div className="onboardingHeader">
-                <p className="authEyebrow">Setup step</p>
-                <h2 className="authTitle">Add your cards</h2>
-                <p className="authMeta">Create at least one card so it is ready when you register your first expense.</p>
+                <p className="authEyebrow">Paso de configuración</p>
+                <h2 className="authTitle">Añade tus tarjetas</h2>
+                <p className="authMeta">Crea al menos una tarjeta para tenerla lista cuando registres tu primer gasto.</p>
             </div>
 
             {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
             {message && !showForm ? <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner> : null}
 
             {!showForm && hasCards && (
-                <div className="card mt-4 p-4 border border-dim rounded-md bg-secondary">
-                    <label className="sharedToggleLabel mb-0 flex items-center gap-2 cursor-pointer" htmlFor="addAnotherCard">
+                <div className="card u-p-4 u-border u-rounded-md u-bg-surface">
+                    <label className="sharedToggleLabel u-mb-0 u-flex u-items-center u-gap-2" htmlFor="addAnotherCard">
                         <input
                             id="addAnotherCard"
                             type="checkbox"
-                            className="w-5 h-5 accent-primary"
+                            className="u-w-full"
                             checked={showForm}
                             onChange={(e) => {
                                 setShowForm(e.target.checked)
                                 if (e.target.checked) setMessage('')
                             }}
                         />
-                        <span className="font-medium text-primary">Add another card</span>
+                        <span className="u-text-sm u-text-dim">Añadir otra tarjeta</span>
                     </label>
                 </div>
             )}
 
             {showForm && (
-                <form className="formStack mt-4" onSubmit={handleCreateCard}>
-                    <FormField label="Bank" htmlFor="onboardingBankName">
+                <form className="formStack u-mt-4" onSubmit={handleCreateCard}>
+                    <FormField label="Banco" htmlFor="onboardingBankName">
                     <select
                         id="onboardingBankName"
                         className="input"
@@ -152,18 +152,18 @@ export function OnboardingCardsPage() {
                     </select>
                 </FormField>
 
-                <FormField label="Card name" htmlFor="onboardingCardName">
+                <FormField label="Nombre de la tarjeta" htmlFor="onboardingCardName">
                     <input
                         id="onboardingCardName"
                         className="input"
                         value={cardName}
                         onChange={(e) => setCardName(e.target.value)}
-                        placeholder="e.g. Platinum"
+                        placeholder="Ej. Platino"
                         disabled={saving}
                     />
                 </FormField>
 
-                <FormField label="Cutoff day" htmlFor="onboardingCutoffDay">
+                <FormField label="Día de corte" htmlFor="onboardingCutoffDay">
                     <input
                         id="onboardingCutoffDay"
                         className="input"
@@ -176,18 +176,18 @@ export function OnboardingCardsPage() {
                     />
                 </FormField>
 
-                <button type="submit" className="btn btnPrimary w-full" disabled={!canCreate || saving}>
-                    {saving ? 'Adding...' : 'Save card'}
+                <button type="submit" className="btn btnPrimary u-w-full" disabled={!canCreate || saving}>
+                    {saving ? 'Guardando...' : 'Guardar tarjeta'}
                 </button>
             </form>
             )}
 
-            <div className="formSection mt-8">
-                <h3 className="sectionTitle">Your cards</h3>
+            <div className="formSection u-mt-8">
+                <h3 className="sectionTitle">Tus tarjetas</h3>
                 {loading ? (
-                    <p className="text-sm text-dim">Loading cards...</p>
+                    <p className="u-text-sm u-text-dim">Cargando tarjetas...</p>
                 ) : !hasCards ? (
-                    <p className="text-sm text-dim">No cards yet. You can add one now or skip and do it later.</p>
+                    <p className="u-text-sm u-text-dim">Aún no hay tarjetas. Puedes añadir una ahora o saltar este paso.</p>
                 ) : (
                     <div className="formStack">
                         {cards.map((item) => (
@@ -200,16 +200,16 @@ export function OnboardingCardsPage() {
                                     checked={selectedCardId === item.id}
                                     onChange={() => setSelectedCardId(item.id)}
                                 />
-                                <span className="sharedToggleText">{item.bank_name} - {item.card_name} (cutoff {item.cutoff_day})</span>
+                                <span className="sharedToggleText">{item.bank_name} - {item.card_name} (corte {item.cutoff_day})</span>
                             </label>
                         ))}
-                        <p className="formHint">Selected card will be preselected when creating expenses.</p>
+                        <p className="formHint">La tarjeta seleccionada será la predeterminada al crear gastos.</p>
                     </div>
                 )}
             </div>
 
-            <div className="flex gap-4 mt-4">
-                <button type="button" className="btn btnPrimary flex-1" onClick={handleContinue} disabled={!hasCards}>Continue to fixed expenses</button>
+            <div className="u-flex u-gap-4 u-mt-4">
+                <button type="button" className="btn btnPrimary u-flex-1" onClick={handleContinue} disabled={!hasCards}>Continuar a gastos fijos</button>
             </div>
         </section>
     )
