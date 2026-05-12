@@ -31,6 +31,7 @@ type RegisterExpenseOutput struct {
 // ListExpensesQuery holds the parameters for listing expenses.
 type ListExpensesQuery struct {
 	HouseholdID string
+	PeriodID    string
 	Limit       int
 	Offset      int
 }

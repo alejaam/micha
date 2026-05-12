@@ -30,13 +30,7 @@ export function buildDashboardDerivedData({ expenses = [], members = [], settlem
     .reduce((sum, item) => sum + (item?.amount_cents ?? 0), 0)
 
   const totalSpentCents = settlement?.total_shared_cents ?? (
-    safeExpenses.reduce((sum, item) => {
-      let amountToAdd = item?.amount_cents ?? 0
-      if (item?.expense_type === 'msi' && Number(item?.total_installments) > 0) {
-        amountToAdd = Math.round(amountToAdd / Number(item.total_installments))
-      }
-      return sum + amountToAdd
-    }, 0) + fixedTotalCents
+    safeExpenses.reduce((sum, item) => sum + (item?.amount_cents ?? 0), 0) + fixedTotalCents
   )
 
   const categoryMap = new Map()
@@ -59,10 +53,7 @@ export function buildDashboardDerivedData({ expenses = [], members = [], settlem
     const label = item?.category_name || key
     const current = categoryMap.get(key)
     
-    let amountToAdd = item?.amount_cents ?? 0
-    if (item?.expense_type === 'msi' && Number(item?.total_installments) > 0) {
-      amountToAdd = Math.round(amountToAdd / Number(item.total_installments))
-    }
+    const amountToAdd = item?.amount_cents ?? 0
     
     const nextTotal = (current?.totalCents ?? 0) + amountToAdd
 
@@ -125,9 +116,19 @@ export function buildDashboardDerivedData({ expenses = [], members = [], settlem
   const msiProgress = safeExpenses
     .filter((item) => item?.expense_type === 'msi' && Number(item?.total_installments) > 0)
     .map((item) => {
-      const startDate = toSafeDate(item?.created_at) ?? now
       const totalInstallments = Number(item?.total_installments) || 1
-      const currentInstallment = Math.max(1, Math.min(totalInstallments, monthDiffInclusive(startDate, now)))
+      
+      // Virtual expenses created by period rollover have description "MSI installment X/Y"
+      // Root expenses have description "Purchase — MSI 1/Y"
+      const virtualMatch = String(item?.description || '').match(/MSI installment\s+(\d+)\/(\d+)/)
+      let currentInstallment
+      if (virtualMatch) {
+        currentInstallment = Number(virtualMatch[1])
+      } else {
+        const startDate = toSafeDate(item?.created_at) ?? now
+        currentInstallment = Math.max(1, Math.min(totalInstallments, monthDiffInclusive(startDate, now)))
+      }
+      
       const progressPercent = Math.round((currentInstallment / totalInstallments) * 100)
 
       return {

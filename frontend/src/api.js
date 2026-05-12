@@ -49,12 +49,15 @@ export async function getHealth() {
     return response.text()
 }
 
-export async function listExpenses({ householdId, limit = 20, offset = 0 }) {
+export async function listExpenses({ householdId, periodId, limit = 20, offset = 0 }) {
     const params = new URLSearchParams({
         household_id: householdId,
         limit: String(limit),
         offset: String(offset),
     })
+    if (periodId) {
+        params.append('period_id', periodId)
+    }
 
     const response = await fetch(`/v1/expenses?${params.toString()}`, {
         headers: buildProtectedHeaders(),

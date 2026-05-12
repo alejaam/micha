@@ -121,9 +121,11 @@ func (h expenseHandler) handleList(w http.ResponseWriter, r *http.Request) {
 
 	limit := queryInt(r, "limit", 20)
 	offset := queryInt(r, "offset", 0)
+	periodID := r.URL.Query().Get("period_id")
 
 	expenses, err := h.deps.List.Execute(r.Context(), inbound.ListExpensesQuery{
 		HouseholdID: householdID,
+		PeriodID:    periodID,
 		Limit:       limit,
 		Offset:      offset,
 	})
@@ -199,6 +201,7 @@ func expenseJSON(e expense.Expense) map[string]any {
 		"card_name":          attrs.CardName,
 		"category_id":        attrs.CategoryID,
 		"total_installments": attrs.TotalInstallments,
+		"period_id":          attrs.PeriodID,
 		"created_at":         attrs.CreatedAt,
 		"updated_at":         attrs.UpdatedAt,
 	}

@@ -39,12 +39,18 @@ func (u ListExpensesUseCase) Execute(ctx context.Context, query inbound.ListExpe
 		offset = 0
 	}
 
-	expenses, err := u.repo.List(ctx, query.HouseholdID, limit, offset)
+	var expenses []expense.Expense
+	var err error
+	if query.PeriodID != "" {
+		expenses, err = u.repo.ListByPeriod(ctx, query.PeriodID)
+	} else {
+		expenses, err = u.repo.List(ctx, query.HouseholdID, limit, offset)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("list expenses: %w", err)
 	}
 
-	slog.InfoContext(ctx, "list expenses", "household_id", query.HouseholdID, "limit", limit, "offset", offset, "count", len(expenses))
+	slog.InfoContext(ctx, "list expenses", "household_id", query.HouseholdID, "period_id", query.PeriodID, "limit", limit, "offset", offset, "count", len(expenses))
 	return expenses, nil
 }
 

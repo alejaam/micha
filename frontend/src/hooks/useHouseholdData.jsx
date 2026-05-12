@@ -41,6 +41,7 @@ function useHouseholdDataInternal() {
         selectedHousehold,
         setPeriodStatus,
         isMutationLocked,
+        currentPeriod,
     } = useAppShell()
 
     const [message, setMessage] = useState('')
@@ -62,6 +63,7 @@ function useHouseholdDataInternal() {
     const { items, loadingList, loadExpenses } = useExpenses({
         isAuthenticated,
         householdId,
+        periodId: currentPeriod?.id,
         handleProtectedError,
         onErrorClear,
     })

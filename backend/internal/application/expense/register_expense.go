@@ -25,6 +25,7 @@ type RegisterExpenseUseCase struct {
 	cardRepo           outbound.CardRepository
 	categoryRepo       outbound.CategoryRepository
 	installmentRepo    outbound.InstallmentRepository
+	periodRepo         outbound.PeriodRepository
 	txManager          outbound.TransactionManager
 	idGenerator        appshared.IDGenerator
 	now                func() time.Time
@@ -38,6 +39,7 @@ func NewRegisterExpenseUseCase(
 	cardRepo outbound.CardRepository,
 	categoryRepo outbound.CategoryRepository,
 	installmentRepo outbound.InstallmentRepository,
+	periodRepo outbound.PeriodRepository,
 	txManager outbound.TransactionManager,
 	idGenerator appshared.IDGenerator,
 ) RegisterExpenseUseCase {
@@ -48,6 +50,7 @@ func NewRegisterExpenseUseCase(
 		cardRepo,
 		categoryRepo,
 		installmentRepo,
+		periodRepo,
 		txManager,
 		idGenerator,
 		true,
@@ -61,6 +64,7 @@ func NewRegisterExpenseUseCaseWithPolicy(
 	cardRepo outbound.CardRepository,
 	categoryRepo outbound.CategoryRepository,
 	installmentRepo outbound.InstallmentRepository,
+	periodRepo outbound.PeriodRepository,
 	txManager outbound.TransactionManager,
 	idGenerator appshared.IDGenerator,
 	allowOwnerOnBehalf bool,
@@ -72,6 +76,7 @@ func NewRegisterExpenseUseCaseWithPolicy(
 		cardRepo:           cardRepo,
 		categoryRepo:       categoryRepo,
 		installmentRepo:    installmentRepo,
+		periodRepo:         periodRepo,
 		txManager:          txManager,
 		idGenerator:        idGenerator,
 		now:                appshared.Now,
@@ -158,11 +163,34 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 
 	// Requirement: Save expense and generate installments atomically for MSI expenses.
 	if e.ExpenseType() == expense.ExpenseTypeMSI {
+		currentPeriod, err := u.periodRepo.GetCurrentOpen(ctx, input.HouseholdID)
+		if err != nil {
+			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
+		}
+
+		totalCents := input.AmountCents
+		count := input.TotalInstallments
+		base := totalCents / int64(count)
+		remainder := totalCents % int64(count)
+		firstInstallmentAmount := base
+		if remainder > 0 {
+			firstInstallmentAmount++
+		}
+
+		attrs := e.Attributes()
+		attrs.PeriodID = string(currentPeriod.ID())
+		attrs.AmountCents = firstInstallmentAmount
+		attrs.Description = fmt.Sprintf("%s — MSI 1/%d", attrs.Description, count)
+		eModified, err := expense.NewFromAttributes(attrs)
+		if err != nil {
+			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
+		}
+
 		if err := u.txManager.Run(ctx, func(txCtx context.Context) error {
-			if err := u.repo.Save(txCtx, e); err != nil {
+			if err := u.repo.Save(txCtx, eModified); err != nil {
 				return fmt.Errorf("save expense: %w", err)
 			}
-			installments := u.generateInstallments(e)
+			installments := u.generateInstallments(e, totalCents)
 			if err := u.installmentRepo.SaveAll(txCtx, installments); err != nil {
 				return fmt.Errorf("save installments: %w", err)
 			}
@@ -170,10 +198,13 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		}); err != nil {
 			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
 		}
-	} else {
-		if err := u.repo.Save(ctx, e); err != nil {
-			return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
-		}
+
+		slog.InfoContext(ctx, "register expense", "expense_id", string(eModified.ID()))
+		return inbound.RegisterExpenseOutput{ExpenseID: string(eModified.ID())}, nil
+	}
+
+	if err := u.repo.Save(ctx, e); err != nil {
+		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: %w", err)
 	}
 
 	slog.InfoContext(ctx, "register expense", "expense_id", string(e.ID()))
@@ -207,10 +238,10 @@ func (u RegisterExpenseUseCase) ensureActorCanRegisterFixed(ctx context.Context,
 	return nil
 }
 
-func (u RegisterExpenseUseCase) generateInstallments(root expense.Expense) []installment.Installment {
+func (u RegisterExpenseUseCase) generateInstallments(root expense.Expense, totalAmountCents int64) []installment.Installment {
 	attrs := root.Attributes()
 	count := attrs.TotalInstallments
-	total := attrs.AmountCents
+	total := totalAmountCents
 
 	base := total / int64(count)
 	remainder := total % int64(count)

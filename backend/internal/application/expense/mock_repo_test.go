@@ -11,6 +11,7 @@ import (
 	"micha/backend/internal/domain/household"
 	"micha/backend/internal/domain/installment"
 	"micha/backend/internal/domain/member"
+	"micha/backend/internal/domain/period"
 	"micha/backend/internal/domain/shared"
 )
 
@@ -428,4 +429,49 @@ func (r *mockCategoryRepoActual) seedCategory(id, householdID, slug string) {
 		CreatedAt:   time.Now(),
 	})
 	_ = r.Save(context.Background(), c)
+}
+
+type mockPeriodRepo struct {
+	periods map[string]period.Period
+	findErr error
+}
+
+func newMockPeriodRepo() *mockPeriodRepo {
+	return &mockPeriodRepo{periods: make(map[string]period.Period)}
+}
+
+func (r *mockPeriodRepo) seedPeriod(id, householdID string, startDate, endDate time.Time) {
+	p, _ := period.NewFromAttributes(period.PeriodAttributes{
+		ID:          period.ID(id),
+		HouseholdID: householdID,
+		StartDate:   startDate,
+		EndDate:     endDate,
+		Status:      period.StatusOpen,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	})
+	r.periods[id] = p
+}
+
+func (r *mockPeriodRepo) Create(_ context.Context, _ period.Period) error   { return nil }
+func (r *mockPeriodRepo) Update(_ context.Context, _ period.Period) error   { return nil }
+func (r *mockPeriodRepo) GetByID(_ context.Context, _ period.ID) (period.Period, error) {
+	return period.Period{}, nil
+}
+func (r *mockPeriodRepo) GetCurrentOpen(_ context.Context, householdID string) (period.Period, error) {
+	if r.findErr != nil {
+		return period.Period{}, r.findErr
+	}
+	for _, p := range r.periods {
+		if p.HouseholdID() == householdID && p.Status() == period.StatusOpen {
+			return p, nil
+		}
+	}
+	return period.Period{}, shared.ErrNotFound
+}
+func (r *mockPeriodRepo) GetLatestByHousehold(_ context.Context, _ string) (period.Period, error) {
+	return period.Period{}, nil
+}
+func (r *mockPeriodRepo) ListByHousehold(_ context.Context, _ string, _, _ int) ([]period.Period, error) {
+	return nil, nil
 }

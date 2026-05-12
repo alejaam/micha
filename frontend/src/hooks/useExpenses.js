@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { listExpenses } from '../api'
 
-export function useExpenses({ isAuthenticated, householdId, handleProtectedError, onErrorClear }) {
+export function useExpenses({ isAuthenticated, householdId, periodId, handleProtectedError, onErrorClear }) {
     const [items, setItems] = useState([])
     const [loadingList, setLoadingList] = useState(false)
 
@@ -14,14 +14,14 @@ export function useExpenses({ isAuthenticated, householdId, handleProtectedError
         setLoadingList(true)
         onErrorClear()
         try {
-            const data = await listExpenses({ householdId: householdId.trim(), limit: 50, offset: 0 })
+            const data = await listExpenses({ householdId: householdId.trim(), periodId, limit: 50, offset: 0 })
             setItems(Array.isArray(data) ? data : [])
         } catch (err) {
             handleProtectedError(err)
         } finally {
             setLoadingList(false)
         }
-    }, [handleProtectedError, householdId, isAuthenticated, onErrorClear])
+    }, [handleProtectedError, householdId, periodId, isAuthenticated, onErrorClear])
 
     useEffect(() => {
         if (!isAuthenticated) {

@@ -279,6 +279,8 @@ ul {
     box-shadow: var(--shadow-sm);
     width: 100%;
     box-sizing: border-box;
+    position: relative;
+    z-index: var(--z-sticky);
 }
 
 @media (min-width: 880px) {
@@ -377,6 +379,8 @@ ul {
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
+    position: relative;
+    z-index: var(--z-dropdown);
 }
 
 .headerNav {
@@ -485,7 +489,7 @@ ul {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
     padding: 8px 0;
-    z-index: 100;
+    z-index: var(--z-dropdown);
     animation: menuIn var(--dur-fast) var(--ease-out);
 }
 
@@ -1600,6 +1604,8 @@ ul {
     padding: 10px 14px;
     background: var(--color-surface);
     font-weight: var(--fw-medium);
+    position: relative;
+    z-index: var(--z-base);
 }
 
 .periodStatusRibbonLabel {
