@@ -14,6 +14,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
   const [description, setDescription]       = useState('')
   const [isShared, setIsShared]             = useState(true)
   const [paymentMethod, setPaymentMethod]   = useState('cash')
+
   const [expenseType, setExpenseType]       = useState('variable')
   const [totalInstallments, setTotalInstallments] = useState(3)
   const [cardId, setCardId]                 = useState('')

@@ -93,7 +93,7 @@ export function PeriodManagementPanel({
     const isBanner = !period || status === 'review'
 
     // ─── Render: No active period ───
-    if (!period) {
+    if (!period || status === 'closed') {
         if (!isOwner) return null
 
         return (

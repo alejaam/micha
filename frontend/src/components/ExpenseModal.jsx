@@ -34,7 +34,7 @@ export function ExpenseModal({
     const [description, setDescription] = useState('')
     const [paidByMemberId, setPaidByMemberId] = useState(defaultPaidByMemberId.trim() || '')
     const [isShared, setIsShared] = useState(true)
-    const [paymentMethod, setPaymentMethod] = useState('card')
+    const [paymentMethod, setPaymentMethod] = useState('cash')
     const [expenseType, setExpenseType] = useState('variable')
     const [totalInstallments, setTotalInstallments] = useState(3)
     const [cardId, setCardId] = useState('')
