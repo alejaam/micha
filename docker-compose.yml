@@ -1,26 +1,26 @@
-# docker-compose.yml - Producción (Dokploy)
-# Usa la base de datos externa de Dokploy
-
 services:
-  api:
+  backend:
     build:
-      context: .
-      dockerfile: deploy/Dockerfile
-    container_name: micha-api
+      context: ./backend
+      dockerfile: Dockerfile
     environment:
       HTTP_PORT: "8080"
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
-      ENVIRONMENT: ${ENVIRONMENT:-production}
-    # No exponemos puertos - solo accesible dentro de la red interna via nginx
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+    ports:
+      - "8080:8080"
     restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: micha-frontend
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    ports:
+      - "5173:80"
     depends_on:
-      - api
+      - backend
     restart: unless-stopped

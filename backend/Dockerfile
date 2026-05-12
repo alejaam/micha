@@ -1,16 +1,31 @@
-FROM golang:1.24
+# Stage 1: Build
+FROM golang:1.24-alpine AS builder
 
-# Install PostgreSQL client for migrations
-RUN apt-get update && \
-    apt-get install -y postgresql-client && \
-    rm -rf /var/lib/apt/lists/*
+# Instalamos certificados para llamadas HTTPS si fueran necesarias
+RUN apk add --no-cache ca-certificates
 
 WORKDIR /app
 
-# Copy application code
+# Aprovechamos el cache de Docker para las dependencias
+COPY go.mod go.sum ./
+RUN go mod download
+
 COPY . .
 
-# Make start script executable
-RUN chmod +x /app/start.sh
+# Build estático para Alpine
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/micha-api ./cmd/api/main.go
 
-CMD ["/app/start.sh"]
+# Stage 2: Runtime
+FROM alpine:latest
+
+WORKDIR /app
+
+# Copiamos solo lo necesario desde el builder
+COPY --from=builder /app/micha-api .
+COPY --from=builder /app/migrations ./migrations
+
+# Exponemos el puerto estándar de la API
+EXPOSE 8080
+
+# Ejecutamos el binario directamente (sin go run para producción)
+CMD ["./micha-api"]
