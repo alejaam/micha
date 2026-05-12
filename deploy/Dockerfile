@@ -21,13 +21,14 @@ RUN if [ ! -f go.mod ]; then \
     fi
 
 RUN go mod tidy
-RUN go build -o /app/micha-api ./cmd/api/main.go
+RUN CGO_ENABLED=0 go build -o /app/micha-api ./cmd/api/main.go
 
 FROM alpine:latest
 
 WORKDIR /app
 
 COPY --from=builder /app/micha-api .
+COPY --from=builder /app/migrations ./migrations
 
 # Ensure the binary is executable
 RUN chmod +x micha-api

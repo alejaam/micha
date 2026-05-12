@@ -1,0 +1,33 @@
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# IDE
+.vscode/
+.idea/
+
+# Frontend (not needed for backend build via deploy/Dockerfile)
+frontend/
+frontend/node_modules/
+frontend/dist/
+
+# Backend build artifacts
+backend/api
+backend/coverage/
+
+# Local env files
+.env
+.env.local
+backend/.env
+
+# OS
+.DS_Store
+
+# Docker itself
+deploy/
+Dockerfile
+docker-compose.yml

@@ -1,13 +1,14 @@
 services:
+  # PostgreSQL database
+  # NOTA: Si usás la base de datos de Dokploy (recomendado en producción),
+  # eliminá este servicio 'db' y apuntá DATABASE_URL a tu DB externa.
   db:
-    image: postgres:16
+    image: postgres:16-alpine
     container_name: micha-db
     environment:
       POSTGRES_DB: micha
       POSTGRES_USER: micha
-      POSTGRES_PASSWORD: micha_dev_password
-    ports:
-      - "5432:5432"
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-micha_dev_password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -15,23 +16,37 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   api:
     build:
-      context: ../backend
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: deploy/Dockerfile
     container_name: micha-api
-    working_dir: /app
     environment:
       HTTP_PORT: "8080"
-      DATABASE_URL: "postgres://micha:micha_dev_password@db:5432/micha?sslmode=disable"
-      JWT_SECRET: "dev-secret-key-change-in-production"
-      ALLOWED_ORIGINS: "*"
+      # Si usás la DB de Dokploy, cambiá esto por tu DATABASE_URL externa
+      DATABASE_URL: ${DATABASE_URL:-postgres://micha:micha_dev_password@db:5432/micha?sslmode=disable}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
     ports:
       - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: micha-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    restart: unless-stopped
 
 volumes:
   postgres_data:
