@@ -1,3 +1,5 @@
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '')
+
 const JSON_HEADERS = {
     'Content-Type': 'application/json',
 }
@@ -40,7 +42,7 @@ async function parseResponse(response) {
 }
 
 export async function getHealth() {
-    const response = await fetch('/health')
+    const response = await fetch(`${API_BASE_URL}/health`)
 
     if (!response.ok) {
         throw new Error('backend unavailable')
@@ -59,7 +61,7 @@ export async function listExpenses({ householdId, periodId, limit = 20, offset =
         params.append('period_id', periodId)
     }
 
-    const response = await fetch(`/v1/expenses?${params.toString()}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/expenses?${params.toString()}`, {
         headers: buildProtectedHeaders(),
     })
     return parseResponse(response)
@@ -71,14 +73,14 @@ export async function listHouseholds({ limit = 100, offset = 0 } = {}) {
         offset: String(offset),
     })
 
-    const response = await fetch(`/v1/households?${params.toString()}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/households?${params.toString()}`, {
         headers: buildProtectedHeaders(),
     })
     return parseResponse(response)
 }
 
 export async function registerUser({ email, password }) {
-    const response = await fetch('/v1/auth/register', {
+    const response = await fetch(`${API_BASE_URL}/v1/auth/register`, {
         method: 'POST',
         headers: JSON_HEADERS,
         body: JSON.stringify({ email, password }),
@@ -88,7 +90,7 @@ export async function registerUser({ email, password }) {
 }
 
 export async function loginUser({ email, password }) {
-    const response = await fetch('/v1/auth/login', {
+    const response = await fetch(`${API_BASE_URL}/v1/auth/login`, {
         method: 'POST',
         headers: JSON_HEADERS,
         body: JSON.stringify({ email, password }),
@@ -98,7 +100,7 @@ export async function loginUser({ email, password }) {
 }
 
 export async function createHousehold({ name, settlementMode = 'equal', currency = 'MXN', closingDay = 15, periodFrequency = 'monthly' }) {
-    const response = await fetch('/v1/households', {
+    const response = await fetch(`${API_BASE_URL}/v1/households`, {
         method: 'POST',
         headers: buildProtectedHeaders(),
         body: JSON.stringify({
@@ -114,7 +116,7 @@ export async function createHousehold({ name, settlementMode = 'equal', currency
 }
 
 export async function createMember({ householdId, name, email, monthlySalaryCents = 0 }) {
-    const response = await fetch(`/v1/households/${householdId}/members`, {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/members`, {
         method: 'POST',
         headers: buildProtectedHeaders(),
         body: JSON.stringify({
@@ -128,7 +130,7 @@ export async function createMember({ householdId, name, email, monthlySalaryCent
 }
 
 export async function createExpense({ householdId, paidByMemberId, amountCents, description, isShared = true, currency = 'MXN', paymentMethod = 'cash', expenseType = 'variable', cardId = '', cardName = '', category = 'other', totalInstallments = 0 }) {
-    const response = await fetch('/v1/expenses', {
+    const response = await fetch(`${API_BASE_URL}/v1/expenses`, {
         method: 'POST',
         headers: buildProtectedHeaders(),
         body: JSON.stringify({
@@ -175,7 +177,7 @@ export async function createRecurringExpense({
     }
     if (endDate) body.end_date = endDate
 
-    const response = await fetch('/v1/recurring-expenses', {
+    const response = await fetch(`${API_BASE_URL}/v1/recurring-expenses`, {
         method: 'POST',
         headers: buildProtectedHeaders(),
         body: JSON.stringify(body),
@@ -189,7 +191,7 @@ export async function listRecurringExpenses({ householdId, limit = 100, offset =
         limit: String(limit),
         offset: String(offset),
     })
-    const response = await fetch(`/v1/recurring-expenses?${params.toString()}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/recurring-expenses?${params.toString()}`, {
         headers: buildProtectedHeaders(),
     })
     return parseResponse(response)
@@ -212,7 +214,7 @@ export async function updateRecurringExpense({
     if (startDate !== undefined) body.start_date = startDate
     if (endDate !== undefined) body.end_date = endDate
 
-    const response = await fetch(`/v1/recurring-expenses/${recurringExpenseId}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/recurring-expenses/${recurringExpenseId}`, {
         method: 'PATCH',
         headers: buildProtectedHeaders(),
         body: JSON.stringify(body),
@@ -221,7 +223,7 @@ export async function updateRecurringExpense({
 }
 
 export async function deleteRecurringExpense({ recurringExpenseId }) {
-    const response = await fetch(`/v1/recurring-expenses/${recurringExpenseId}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/recurring-expenses/${recurringExpenseId}`, {
         method: 'DELETE',
         headers: buildProtectedHeaders(),
     })
@@ -234,7 +236,7 @@ export async function getSettlement({ householdId, year, month }) {
         month: String(month),
     })
 
-    const response = await fetch(`/v1/households/${householdId}/settlement?${params.toString()}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/settlement?${params.toString()}`, {
         headers: buildProtectedHeaders(),
     })
     return parseResponse(response)
@@ -246,28 +248,28 @@ export async function listMembers({ householdId, limit = 100, offset = 0 }) {
         offset: String(offset),
     })
 
-    const response = await fetch(`/v1/households/${householdId}/members?${params.toString()}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/members?${params.toString()}`, {
         headers: buildProtectedHeaders(),
     })
     return parseResponse(response)
 }
 
 export async function listCategories({ householdId }) {
-    const response = await fetch(`/v1/households/${householdId}/categories`, {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/categories`, {
         headers: buildProtectedHeaders(),
     })
     return parseResponse(response)
 }
 
 export async function listCards({ householdId }) {
-    const response = await fetch(`/v1/households/${householdId}/cards`, {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/cards`, {
         headers: buildProtectedHeaders(),
     })
     return parseResponse(response)
 }
 
 export async function createCard({ householdId, bankName, cardName, cutoffDay }) {
-    const response = await fetch(`/v1/households/${householdId}/cards`, {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/cards`, {
         method: 'POST',
         headers: buildProtectedHeaders(),
         body: JSON.stringify({
@@ -281,7 +283,7 @@ export async function createCard({ householdId, bankName, cardName, cutoffDay })
 }
 
 export async function deleteCard({ cardId, householdId }) {
-    const response = await fetch(`/v1/cards/${cardId}?household_id=${encodeURIComponent(householdId)}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/cards/${cardId}?household_id=${encodeURIComponent(householdId)}`, {
         method: 'DELETE',
         headers: buildProtectedHeaders(),
     })
@@ -293,7 +295,7 @@ export async function getRemainingSalary({ householdId, memberId, from, to }) {
     if (from) params.append('from', from)
     if (to) params.append('to', to)
 
-    const response = await fetch(`/v1/households/${householdId}/members/${memberId}/remaining-salary?${params.toString()}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/members/${memberId}/remaining-salary?${params.toString()}`, {
         headers: buildProtectedHeaders(),
     })
     return parseResponse(response)
@@ -310,7 +312,7 @@ export async function patchExpense({ id, amountCents, description }) {
         body.description = description
     }
 
-    const response = await fetch(`/v1/expenses/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/expenses/${id}`, {
         method: 'PATCH',
         headers: buildProtectedHeaders(),
         body: JSON.stringify(body),
@@ -320,7 +322,7 @@ export async function patchExpense({ id, amountCents, description }) {
 }
 
 export async function deleteExpense(id) {
-    const response = await fetch(`/v1/expenses/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/expenses/${id}`, {
         method: 'DELETE',
         headers: buildProtectedHeaders(),
     })
@@ -329,7 +331,7 @@ export async function deleteExpense(id) {
 }
 
 export async function getMe() {
-    const response = await fetch('/v1/auth/me', {
+    const response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
         headers: buildProtectedHeaders(),
     })
     return parseResponse(response)
@@ -338,14 +340,14 @@ export async function getMe() {
 // ─── Period Management ────────────────────────────────────────────────────────
 
 export async function getCurrentPeriod({ householdId }) {
-    const response = await fetch(`/v1/households/${householdId}/periods/current`, {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/periods/current`, {
         headers: buildProtectedHeaders(),
     })
     return parseResponse(response)
 }
 
 export async function initializePeriod({ householdId }) {
-    const response = await fetch(`/v1/households/${householdId}/periods/initialize`, {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/periods/initialize`, {
         method: 'POST',
         headers: buildProtectedHeaders(),
     })
@@ -353,7 +355,7 @@ export async function initializePeriod({ householdId }) {
 }
 
 export async function transitionPeriodToReview({ householdId, periodId }) {
-    const response = await fetch(`/v1/households/${householdId}/periods/${periodId}/review`, {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/periods/${periodId}/review`, {
         method: 'POST',
         headers: buildProtectedHeaders(),
     })
@@ -361,7 +363,7 @@ export async function transitionPeriodToReview({ householdId, periodId }) {
 }
 
 export async function approvePeriod({ householdId, periodId, status, comment = '' }) {
-    const response = await fetch(`/v1/households/${householdId}/periods/${periodId}/approve`, {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/periods/${periodId}/approve`, {
         method: 'POST',
         headers: buildProtectedHeaders(),
         body: JSON.stringify({ status, comment }),
@@ -370,7 +372,7 @@ export async function approvePeriod({ householdId, periodId, status, comment = '
 }
 
 export async function closePeriod({ householdId, periodId, force = true }) {
-    const response = await fetch(`/v1/households/${householdId}/periods/${periodId}/close`, {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/periods/${periodId}/close`, {
         method: 'POST',
         headers: buildProtectedHeaders(),
         body: JSON.stringify({ force }),
@@ -379,7 +381,7 @@ export async function closePeriod({ householdId, periodId, force = true }) {
 }
 
 export async function advanceTime(days) {
-    const response = await fetch(`/v1/dev/time-offset?days=${days}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/dev/time-offset?days=${days}`, {
         method: 'POST',
         headers: buildProtectedHeaders(),
     })
@@ -391,8 +393,9 @@ export async function listPeriods({ householdId, limit = 20, offset = 0 }) {
         limit: String(limit),
         offset: String(offset),
     })
-    const response = await fetch(`/v1/households/${householdId}/periods?${params.toString()}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/periods?${params.toString()}`, {
         headers: buildProtectedHeaders(),
     })
     return parseResponse(response)
 }
+
