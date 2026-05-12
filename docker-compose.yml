@@ -21,8 +21,6 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: micha-frontend
-    ports:
-      - "80:80"
     depends_on:
       - api
     restart: unless-stopped
