@@ -1,7 +1,17 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { PeriodStatusRibbon } from './PeriodStatusRibbon'
 import { useAuth } from '../context/AuthContext'
 import { UserMenu } from './UserMenu'
+
+function formatPeriodName(period) {
+  if (!period) return 'Sin periodo activo'
+  const raw = period.start_date || period.startDate || period.StartDate
+  if (!raw) return 'Periodo actual'
+  const start = new Date(raw)
+  if (isNaN(start.getTime())) return 'Periodo actual'
+  return new Intl.DateTimeFormat('es-MX', { month: 'long', year: 'numeric' }).format(start)
+}
 
 /**
  * AppHeader — top bar with brand identity, household selector, reload
@@ -17,17 +27,41 @@ export function AppHeader({
   households = [],
   periodStatus = 'open',
   isMutationLocked = false,
+  currentPeriod = null,
 }) {
   const { user } = useAuth()
+  const isLive = health === 'ok'
+  const periodName = formatPeriodName(currentPeriod)
+
+  // Flash animation when period ID changes
+  const prevPeriodIdRef = useRef(currentPeriod?.id)
+  const [isFlashing, setIsFlashing] = useState(false)
+
+  useEffect(() => {
+    const currentId = currentPeriod?.id
+    const prevId = prevPeriodIdRef.current
+    if (prevId && currentId && prevId !== currentId) {
+      setIsFlashing(true)
+      const timer = setTimeout(() => setIsFlashing(false), 800)
+      return () => clearTimeout(timer)
+    }
+    prevPeriodIdRef.current = currentId
+  }, [currentPeriod?.id])
 
   return (
-    <header className="appHeader">
+    <header className={`appHeader${isFlashing ? ' appHeader--flash' : ''}`}>
       {/* Brand */}
         <div className="brand">
           <div className={`brandIcon brandIcon--${periodStatus}`} aria-hidden>💸</div>
           <div>
             <div className="brandName">micha</div>
             <div className="brandTagline">Claridad financiera para pareja y roomies</div>
+            {currentPeriod && (
+              <div className="brandPeriod">
+                <span className="brandPeriodLabel">Periodo</span>
+                <span className="brandPeriodName">{periodName}</span>
+              </div>
+            )}
           </div>
         </div>
 

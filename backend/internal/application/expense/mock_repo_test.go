@@ -14,6 +14,13 @@ import (
 	"micha/backend/internal/domain/shared"
 )
 
+// mockTxManager is a pass-through transaction manager for tests.
+type mockTxManager struct{}
+
+func (m *mockTxManager) Run(ctx context.Context, fn func(ctx context.Context) error) error {
+	return fn(ctx)
+}
+
 type mockInstallmentRepo struct {
 	mu           sync.RWMutex
 	installments map[string]installment.Installment

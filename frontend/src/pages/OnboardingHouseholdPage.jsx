@@ -19,8 +19,8 @@ const CURRENCIES = [
 ]
 
 const SETTLEMENT_HINTS = {
-    equal: 'Each member pays the same share regardless of income.',
-    proportional: 'Members who earn more contribute a larger share of expenses.',
+    equal: 'Cada miembro paga la misma parte, sin importar ingresos.',
+    proportional: 'Los miembros que ganan más contribuyen con una mayor parte de los gastos.',
 }
 
 export function OnboardingHouseholdPage() {
@@ -90,30 +90,34 @@ export function OnboardingHouseholdPage() {
     }
 
     return (
-        <section className="card onboardingCard" aria-label="Create your household">
+        <section className="card onboardingCard" aria-label="Crea tu hogar">
             <div className="onboardingHeader">
-                <p className="authEyebrow">Getting started</p>
-                <h2 className="authTitle">Set up your household</h2>
-                <p className="authMeta">A household groups all shared expenses and members.</p>
+                <p className="authEyebrow">Primeros pasos</p>
+                <h2 className="authTitle">Configura tu hogar</h2>
+                <p className="authMeta">Un hogar agrupa todos los gastos compartidos y los miembros.</p>
             </div>
+
+            <Banner type="info">
+                Bienvenido a micha. Para comenzar, necesitas crear tu primer hogar. Este paso es obligatorio.
+            </Banner>
 
             {error ? <Banner type="error">{error}</Banner> : null}
 
             <form className="formStack" onSubmit={handleSubmit}>
                 <div className="formSection">
-                    <h3 className="sectionTitle">Household Details</h3>
-                    <FormField label="Household name" htmlFor="hhName">
+                    <h3 className="sectionTitle">Detalles del hogar</h3>
+                    <FormField label="Nombre del hogar" htmlFor="hhName">
                         <input
                             id="hhName"
                             className="input"
-                            placeholder="e.g. Casa Familia"
+                            placeholder="Ej. Casa Familia"
                             value={hhName}
                             onChange={(e) => setHhName(e.target.value)}
                             disabled={busy}
                             autoFocus
                         />
                     </FormField>
-                    <FormField label="Settlement mode" htmlFor="hhMode">
+                    <FormField label="Modo de liquidación" htmlFor="hhMode">
                         <select
                             id="hhMode"
                             className="input"
@@ -121,12 +125,12 @@ export function OnboardingHouseholdPage() {
                             onChange={(e) => setSettlementMode(e.target.value)}
                             disabled={busy}
                         >
-                            <option value="equal">Equal split</option>
-                            <option value="proportional">Proportional to salary</option>
+                            <option value="equal">Dividir equitativamente</option>
+                            <option value="proportional">Proporcional al salario</option>
                         </select>
                         <p className="formHint">{SETTLEMENT_HINTS[settlementMode]}</p>
                     </FormField>
-                    <FormField label="Currency" htmlFor="hhCurrency">
+                    <FormField label="Moneda" htmlFor="hhCurrency">
                         <select
                             id="hhCurrency"
                             className="input"
@@ -168,22 +172,22 @@ export function OnboardingHouseholdPage() {
                     </FormField>
                 </div>
 
-                <div className="formSection mt-4">
-                    <h3 className="sectionTitle">Your Profile</h3>
-                    <p className="text-sm text-dim mb-2">
-                        You&apos;ll be added as the first member. Your email ({user?.email}) is linked automatically.
+                <div className="formSection u-mt-4">
+                    <h3 className="sectionTitle">Tu perfil</h3>
+                    <p className="u-text-sm u-text-dim u-mb-2">
+                        Serás añadido como el primer miembro. Tu correo ({user?.email}) se vincula automáticamente.
                     </p>
-                    <FormField label="Your name" htmlFor="memName">
+                    <FormField label="Tu nombre" htmlFor="memName">
                         <input
                             id="memName"
                             className="input"
-                            placeholder="e.g. Alex"
+                            placeholder="Ej. Alex"
                             value={memberName}
                             onChange={(e) => setMemberName(e.target.value)}
                             disabled={busy}
                         />
                     </FormField>
-                    <FormField label="Monthly salary (optional)" htmlFor="memSalary">
+                    <FormField label="Salario mensual (opcional)" htmlFor="memSalary">
                         <div className="inputWrap">
                             <span className="inputPrefix" aria-hidden>$</span>
                             <input
@@ -192,22 +196,22 @@ export function OnboardingHouseholdPage() {
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                placeholder="e.g. 30000"
+                                placeholder="Ej. 30000"
                                 value={salaryDollars}
                                 onChange={(e) => setSalaryDollars(e.target.value)}
                                 disabled={busy}
                             />
                         </div>
-                        <p className="formHint">Used to calculate proportional splits. You can update this later.</p>
+                        <p className="formHint">Se usa para calcular la división proporcional. Puedes actualizarlo después.</p>
                     </FormField>
                 </div>
 
                 <button
                     type="submit"
-                    className="btn btnPrimary btnFull mt-6"
+                    className="btn btnPrimary btnFull u-mt-6"
                     disabled={busy || !hhName.trim() || !memberName.trim()}
                 >
-                    {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Creating…</> : 'Finish setup →'}
+                    {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Creando…</> : 'Finalizar configuración →'}
                 </button>
             </form>
         </section>
