@@ -192,6 +192,39 @@ export async function listRecurringExpenses({ householdId, limit = 100, offset =
     return parseResponse(response)
 }
 
+export async function updateRecurringExpense({
+    recurringExpenseId,
+    amountCents,
+    description,
+    category,
+    recurrencePattern,
+    startDate,
+    endDate,
+}) {
+    const body = {}
+    if (amountCents !== undefined) body.amount_cents = amountCents
+    if (description !== undefined) body.description = description
+    if (category !== undefined) body.category_id = category
+    if (recurrencePattern !== undefined) body.recurrence_pattern = recurrencePattern
+    if (startDate !== undefined) body.start_date = startDate
+    if (endDate !== undefined) body.end_date = endDate
+
+    const response = await fetch(`/v1/recurring-expenses/${recurringExpenseId}`, {
+        method: 'PATCH',
+        headers: buildProtectedHeaders(),
+        body: JSON.stringify(body),
+    })
+    return parseResponse(response)
+}
+
+export async function deleteRecurringExpense({ recurringExpenseId }) {
+    const response = await fetch(`/v1/recurring-expenses/${recurringExpenseId}`, {
+        method: 'DELETE',
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
 export async function getSettlement({ householdId, year, month }) {
     const params = new URLSearchParams({
         year: String(year),

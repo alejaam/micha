@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { OnboardingFixedExpensesPage } from '../OnboardingFixedExpensesPage'
 
 const mockCreateRecurringExpense = vi.fn()
+const mockListRecurringExpenses = vi.fn()
+const mockUpdateRecurringExpense = vi.fn()
+const mockDeleteRecurringExpense = vi.fn()
 const mockNavigate = vi.fn()
 const mockUseAppShell = vi.fn()
 const mockUseAuth = vi.fn()
@@ -13,6 +16,9 @@ vi.mock('../../api', async () => {
     return {
         ...actual,
         createRecurringExpense: (...args) => mockCreateRecurringExpense(...args),
+        listRecurringExpenses: (...args) => mockListRecurringExpenses(...args),
+        updateRecurringExpense: (...args) => mockUpdateRecurringExpense(...args),
+        deleteRecurringExpense: (...args) => mockDeleteRecurringExpense(...args),
     }
 })
 
@@ -35,16 +41,20 @@ vi.mock('react-router-dom', async () => {
 describe('OnboardingFixedExpensesPage', () => {
     beforeEach(() => {
         mockCreateRecurringExpense.mockReset()
+        mockListRecurringExpenses.mockReset()
+        mockUpdateRecurringExpense.mockReset()
+        mockDeleteRecurringExpense.mockReset()
         mockNavigate.mockReset()
         mockUseAppShell.mockReturnValue({ householdId: 'hh-1' })
         mockUseAuth.mockReturnValue({ handleProtectedError: () => false })
+        mockListRecurringExpenses.mockResolvedValue([])
     })
 
     it('creates agnostic recurring fixed expenses for selected options', async () => {
         mockCreateRecurringExpense.mockResolvedValue({})
 
         render(
-            <MemoryRouter>
+            <MemoryRouter initialEntries={['/onboarding/fixed-expenses']}>
                 <OnboardingFixedExpensesPage />
             </MemoryRouter>,
         )
