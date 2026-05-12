@@ -7,6 +7,15 @@ import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
 import { FormField } from '../ui/FormField'
 
+const SETTLEMENT_HINTS = {
+    equal: 'Cada miembro paga la misma parte, sin importar ingresos.',
+    proportional: 'Los miembros que ganan más contribuyen con una mayor parte de los gastos.',
+}
+
+function preferredCardStorageKey(householdId) {
+    return `micha_preferred_card_${householdId}`
+}
+
 export function OnboardingCardsPage() {
     const { handleProtectedError } = useAuth()
     const { householdId } = useAppShell()
@@ -16,6 +25,7 @@ export function OnboardingCardsPage() {
     const [cardName, setCardName] = useState('')
     const [cutoffDay, setCutoffDay] = useState('15')
     const [cards, setCards] = useState([])
+    const [selectedCardId, setSelectedCardId] = useState('')
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
@@ -30,7 +40,17 @@ export function OnboardingCardsPage() {
         setLoading(true)
         try {
             const data = await listCards({ householdId })
-            setCards(Array.isArray(data) ? data : [])
+            const items = Array.isArray(data) ? data : []
+            setCards(items)
+
+            const preferredCardId = localStorage.getItem(preferredCardStorageKey(householdId)) ?? ''
+            if (preferredCardId && items.some((item) => item.id === preferredCardId)) {
+                setSelectedCardId(preferredCardId)
+            } else if (items.length > 0) {
+                setSelectedCardId(items[0].id)
+            } else {
+                setSelectedCardId('')
+            }
         } catch (err) {
             if (!handleProtectedError(err)) setError(err.message)
         } finally {
@@ -41,6 +61,11 @@ export function OnboardingCardsPage() {
     useEffect(() => {
         loadCards()
     }, [loadCards])
+
+    useEffect(() => {
+        if (!householdId || !selectedCardId) return
+        localStorage.setItem(preferredCardStorageKey(householdId), selectedCardId)
+    }, [householdId, selectedCardId])
 
     const canCreate = useMemo(() => {
         const day = Number(cutoffDay)
@@ -64,7 +89,7 @@ export function OnboardingCardsPage() {
             setBankName(MEXICAN_BANKS[0].value)
             setCardName('')
             setCutoffDay('15')
-            setMessage('Card added successfully.')
+            setMessage('Tarjeta añadida correctamente.')
             setShowForm(false)
             await loadCards()
         } catch (err) {
@@ -102,30 +127,30 @@ export function OnboardingCardsPage() {
     if (!householdId) {
         return (
             <div className="card">
-                <Banner type="error">No household selected. Create your household first.</Banner>
-                <button className="btn mt-4" onClick={() => navigate('/onboarding/household', { replace: true })}>Go to household setup</button>
+                <Banner type="error">No hay hogar seleccionado. Crea tu hogar primero.</Banner>
+                <button className="btn u-mt-4" onClick={() => navigate('/onboarding/household', { replace: true })}>Ir a configuración del hogar</button>
             </div>
         )
     }
 
     return (
-        <section className="card onboardingCard" aria-label="Set up your cards">
+        <section className="card onboardingCard" aria-label="Configura tus tarjetas">
             <div className="onboardingHeader">
-                <p className="authEyebrow">Setup step</p>
-                <h2 className="authTitle">Add your cards</h2>
-                <p className="authMeta">Create at least one card so it is ready when you register your first expense.</p>
+                <p className="authEyebrow">Paso de configuración</p>
+                <h2 className="authTitle">Añade tus tarjetas</h2>
+                <p className="authMeta">Crea al menos una tarjeta para tenerla lista cuando registres tu primer gasto.</p>
             </div>
 
             {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
             {message ? <Banner type="ok" floating onDismiss={() => setMessage('')}>{message}</Banner> : null}
 
-            <button type="button" className="btn btnGhost btnSm mt-2" onClick={toggleForm}>
+            <button type="button" className="btn btnGhost btnSm u-mt-2" onClick={toggleForm}>
                 {showForm ? '− Cancelar' : '+ Agregar tarjeta'}
             </button>
 
             {showForm && (
-                <form className="formStack mt-4" onSubmit={handleCreateCard}>
-                    <FormField label="Bank" htmlFor="onboardingBankName">
+                <form className="formStack u-mt-4" onSubmit={handleCreateCard}>
+                    <FormField label="Banco" htmlFor="onboardingBankName">
                     <select
                         id="onboardingBankName"
                         className="input"
@@ -139,18 +164,18 @@ export function OnboardingCardsPage() {
                     </select>
                 </FormField>
 
-                <FormField label="Card name" htmlFor="onboardingCardName">
+                <FormField label="Nombre de la tarjeta" htmlFor="onboardingCardName">
                     <input
                         id="onboardingCardName"
                         className="input"
                         value={cardName}
                         onChange={(e) => setCardName(e.target.value)}
-                        placeholder="e.g. Platinum"
+                        placeholder="Ej. Platino"
                         disabled={saving}
                     />
                 </FormField>
 
-                <FormField label="Cutoff day" htmlFor="onboardingCutoffDay">
+                <FormField label="Día de corte" htmlFor="onboardingCutoffDay">
                     <input
                         id="onboardingCutoffDay"
                         className="input"
@@ -163,48 +188,50 @@ export function OnboardingCardsPage() {
                     />
                 </FormField>
 
-                <button type="submit" className="btn btnPrimary w-full" disabled={!canCreate || saving}>
-                    {saving ? 'Adding...' : 'Save card'}
+                <button type="submit" className="btn btnPrimary u-w-full" disabled={!canCreate || saving}>
+                    {saving ? 'Guardando...' : 'Guardar tarjeta'}
                 </button>
             </form>
             )}
 
-            <div className="formSection mt-6">
-                <h3 className="sectionTitle">Your cards</h3>
+            <div className="formSection u-mt-8">
+                <h3 className="sectionTitle">Tus tarjetas</h3>
                 {loading ? (
-                    <p className="text-sm text-dim">Loading cards...</p>
+                    <p className="u-text-sm u-text-dim">Cargando tarjetas...</p>
                 ) : !hasCards ? (
-                    <p className="text-sm text-dim">No cards yet. Add one using the button above.</p>
+                    <p className="u-text-sm u-text-dim">Aún no hay tarjetas. Puedes añadir una ahora o saltar este paso.</p>
                 ) : (
-                    <div className="fixedExpensesTable cardAdminTable">
-                        <div className="fixedTableHeader">
-                            <span className="cardColBank">Banco</span>
-                            <span className="cardColName">Tarjeta</span>
-                            <span className="cardColCutoff">Corte</span>
-                            <span className="cardColActions">Acción</span>
-                        </div>
+                    <div className="formStack">
                         {cards.map((item) => (
-                            <div key={item.id} className="fixedTableRow">
-                                <span className="cardColBank">{item.bank_name}</span>
-                                <span className="cardColName">{item.card_name}</span>
-                                <span className="cardColCutoff">{item.cutoff_day}</span>
-                                <span className="cardColActions">
-                                    <button
-                                        type="button"
-                                        className="btn btnSm btnGhostDanger"
-                                        onClick={() => handleDelete(item.id)}
-                                    >
-                                        Eliminar
-                                    </button>
-                                </span>
+                            <div key={item.id} className="u-flex u-items-center u-gap-2">
+                                <label className="sharedToggleLabel u-flex-1" htmlFor={`preferred-card-${item.id}`}>
+                                    <input
+                                        id={`preferred-card-${item.id}`}
+                                        type="radio"
+                                        name="preferred-card"
+                                        value={item.id}
+                                        checked={selectedCardId === item.id}
+                                        onChange={() => setSelectedCardId(item.id)}
+                                    />
+                                    <span className="sharedToggleText">{item.bank_name} - {item.card_name} (corte {item.cutoff_day})</span>
+                                </label>
+                                <button
+                                    type="button"
+                                    className="btn btnSm btnGhostDanger"
+                                    onClick={() => handleDelete(item.id)}
+                                    title="Eliminar tarjeta"
+                                >
+                                    ✕
+                                </button>
                             </div>
                         ))}
+                        <p className="formHint">La tarjeta seleccionada será la predeterminada al crear gastos.</p>
                     </div>
                 )}
             </div>
 
-            <div className="flex gap-4 mt-4">
-                <button type="button" className="btn btnPrimary flex-1" onClick={handleContinue} disabled={!hasCards}>Continue to fixed expenses</button>
+            <div className="u-flex u-gap-4 u-mt-4">
+                <button type="button" className="btn btnPrimary u-flex-1" onClick={handleContinue} disabled={!hasCards}>Continuar a gastos fijos</button>
             </div>
         </section>
     )

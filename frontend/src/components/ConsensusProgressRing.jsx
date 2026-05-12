@@ -22,7 +22,7 @@ export function ConsensusProgressRing({ approved = 0, total = 0, label = 'Consen
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="#E8E8E8"
+            stroke="var(--color-border)"
             strokeWidth={strokeWidth}
           />
           <motion.circle
@@ -30,7 +30,7 @@ export function ConsensusProgressRing({ approved = 0, total = 0, label = 'Consen
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke={percent >= 100 ? '#4A9E5C' : percent >= 50 ? '#D4A843' : '#0A0A0A'}
+            stroke={percent >= 100 ? 'var(--color-green-600)' : percent >= 50 ? 'var(--color-amber-400)' : 'var(--color-text-1)'}
             strokeWidth={strokeWidth}
             strokeLinecap="butt"
             strokeDasharray={circumference}

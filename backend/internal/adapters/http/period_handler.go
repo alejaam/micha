@@ -106,8 +106,7 @@ func (h *PeriodHandler) handleClose(w http.ResponseWriter, r *http.Request) {
 		Force bool `json:"force"`
 	}
 	if err := decodeJSON(r, w, &input); err != nil {
-		// If force is not provided, default to false.
-		input.Force = false
+		return
 	}
 
 	output, err := h.closePeriod.Execute(r.Context(), inbound.ClosePeriodInput{
