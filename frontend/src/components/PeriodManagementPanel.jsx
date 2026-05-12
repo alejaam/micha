@@ -2,6 +2,11 @@ import { useState } from 'react'
 import { transitionPeriodToReview, approvePeriod, closePeriod, initializePeriod } from '../api'
 import { ConsensusProgressRing } from './ConsensusProgressRing'
 
+const monthNames = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+]
+
 /**
  * PeriodManagementPanel — UI for managing the period lifecycle.
  *
@@ -71,7 +76,10 @@ export function PeriodManagementPanel({
             setSubmitting(true)
             setError('')
             await closePeriod({ householdId, periodId: period.id || period.ID, force })
-            onStatusChange()
+            const now = new Date()
+            const currentMonthName = monthNames[now.getMonth()]
+            const nextMonthName = monthNames[(now.getMonth() + 1) % 12]
+            onStatusChange({ message: `Periodo de ${currentMonthName} cerrado. Bienvenido a ${nextMonthName}.` })
         } catch (err) {
             setError(err.message)
         } finally {
@@ -79,12 +87,17 @@ export function PeriodManagementPanel({
         }
     }
 
+    const status = period?.Status || period?.status || 'open'
+
+    // ─── Banner mode: No active period OR review ───
+    const isBanner = !period || status === 'review'
+
     // ─── Render: No active period ───
     if (!period) {
         if (!isOwner) return null
 
         return (
-            <section className="card periodActionCard">
+            <section className={`card periodActionCard ${isBanner ? 'periodActionCard--banner' : ''}`}>
                 <div className="periodActionContent">
                     <div>
                         <h3 className="sectionTitle">Comenzar seguimiento</h3>
@@ -106,9 +119,7 @@ export function PeriodManagementPanel({
         )
     }
 
-    const status = period.Status || period.status || 'open'
-
-    // ─── Render: Open period ───
+    // ─── Render: Open period (compact card) ───
     if (status === 'open') {
         return (
             <section className="card periodActionCard">
@@ -133,10 +144,10 @@ export function PeriodManagementPanel({
         )
     }
 
-    // ─── Render: Review period ───
+    // ─── Render: Review period (banner mode) ───
     if (status === 'review') {
         return (
-            <section className="card periodActionCard reviewMode">
+            <section className={`card periodActionCard ${isBanner ? 'periodActionCard--banner' : ''}`}>
                 <div className="periodReviewGrid">
                     <div className="periodReviewInfo">
                         <h3 className="sectionTitle">Periodo en revisión</h3>
