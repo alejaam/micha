@@ -2906,6 +2906,73 @@ html {
     color: var(--color-brand-700);
 }
 
+/* ─── CardExpensesPanel — expandable rows & installments ────────────────────── */
+.cardTableRowGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+.cardTableRowGroup:last-of-type .cardTableRow {
+    border-bottom: none;
+}
+
+.cardTableRowExpanded {
+    border-bottom: none !important;
+}
+
+.cardRowChevron {
+    margin-left: 8px;
+    font-size: 0.7rem;
+    color: var(--color-text-4);
+}
+
+.cardInstallmentsPanel {
+    padding: 12px 16px 12px 32px;
+    background: var(--color-surface-2);
+    border-top: 1px solid var(--color-border-soft);
+    border-bottom: 1px solid var(--color-border-soft);
+    width: 100%;
+}
+
+.cardInstallmentsHeader,
+.cardInstallmentRow {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 12px;
+    padding: 6px 0;
+    font-size: 0.8rem;
+}
+
+.cardInstallmentsHeader {
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-4);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.7rem;
+    border-bottom: 1px solid var(--color-border-soft);
+    margin-bottom: 4px;
+}
+
+.cardInstallmentRow {
+    color: var(--color-text-2);
+}
+
+.cardInstallmentConcept {
+    font-weight: var(--fw-medium);
+}
+
+.cardInstallmentsMore {
+    padding: 8px 0;
+    font-size: 0.8rem;
+    color: var(--color-brand-600);
+    font-weight: var(--fw-medium);
+    cursor: pointer;
+}
+
+.cardInstallmentsMore:hover {
+    color: var(--color-brand-700);
+}
+
 /* ─── Settlement redesign ────────────────────────────────────────────────────── */
 .adjustmentList {
     display: grid;

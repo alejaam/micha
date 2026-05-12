@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { formatCurrency } from '../utils'
 
 /**
@@ -40,6 +40,20 @@ export function CardExpensesPanel({ items = [], members = [], currency = 'MXN' }
 
     const grandTotal = cardItems.reduce((s, e) => s + e.amount_cents, 0)
 
+    const [expandedCard, setExpandedCard] = useState(null)
+
+    const getCardInstallments = useCallback((cardName) => {
+        const normalized = cardName || 'Desconocida'
+        return cardItems
+            .filter((e) =>
+                (e.card_name || 'Desconocida') === normalized &&
+                e.expense_type === 'msi' &&
+                Number(e.total_installments) > 0
+            )
+            .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+            .slice(0, 5)
+    }, [cardItems])
+
     if (cardItems.length === 0) {
         return (
             <section className="card" aria-label="Gastos de tarjeta">
@@ -73,16 +87,81 @@ export function CardExpensesPanel({ items = [], members = [], currency = 'MXN' }
                 </div>
 
                 {/* Card rows */}
-                {grouped.map(({ cardName, byMember }) => (
-                    <div key={cardName} className="cardTableRow">
-                        <span className="cardColConcept cardCardLabel">{cardName}</span>
-                        {members.map((m) => (
-                            <span key={m.id} className="cardColMember cardAmount">
-                                {byMember[m.id] ? formatCurrency(byMember[m.id], currency) : '—'}
-                            </span>
-                        ))}
-                    </div>
-                ))}
+                {grouped.map(({ cardName, byMember }) => {
+                    const isExpanded = expandedCard === cardName
+                    const installments = getCardInstallments(cardName)
+                    const hasMore = installments.length > 0 &&
+                        cardItems.filter((e) =>
+                            (e.card_name || 'Desconocida') === (cardName || 'Desconocida') &&
+                            e.expense_type === 'msi'
+                        ).length > 5
+
+                    const handleToggle = () => {
+                        setExpandedCard(isExpanded ? null : cardName)
+                    }
+
+                    const handleKeyDown = (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            handleToggle()
+                        }
+                    }
+
+                    return (
+                        <div key={cardName} className="cardTableRowGroup">
+                            <div
+                                className={`cardTableRow${isExpanded ? ' cardTableRowExpanded' : ''}`}
+                                onClick={handleToggle}
+                                onKeyDown={handleKeyDown}
+                                role="button"
+                                tabIndex={0}
+                                aria-expanded={isExpanded}
+                            >
+                                <span className="cardColConcept cardCardLabel">
+                                    {cardName}
+                                    {installments.length > 0 && (
+                                        <span className="cardRowChevron" aria-hidden>{isExpanded ? '▾' : '▸'}</span>
+                                    )}
+                                </span>
+                                {members.map((m) => (
+                                    <span key={m.id} className="cardColMember cardAmount">
+                                        {byMember[m.id] ? formatCurrency(byMember[m.id], currency) : '—'}
+                                    </span>
+                                ))}
+                            </div>
+
+                            {isExpanded && installments.length > 0 && (
+                                <div className="cardInstallmentsPanel">
+                                    <div className="cardInstallmentsHeader">
+                                        <span>Concepto</span>
+                                        <span>Cuota</span>
+                                        <span>Restantes</span>
+                                        <span>Monto</span>
+                                    </div>
+                                    {installments.map((item) => (
+                                        <div key={item.id} className="cardInstallmentRow">
+                                            <span className="cardInstallmentConcept">{item.description}</span>
+                                            <span className="cardInstallmentQuota">
+                                                {item.current_installment || 1}/{item.total_installments}
+                                            </span>
+                                            <span className="cardInstallmentRemaining">
+                                                {Number(item.total_installments) - (Number(item.current_installment) || 1)} meses
+                                            </span>
+                                            <span className="cardInstallmentAmount">
+                                                {formatCurrency(item.amount_cents, currency)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                    {hasMore && (
+                                        <div className="cardInstallmentsMore">
+                                            <span>Ver todos los plazos</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )
+                })}
 
                 {/* Total row */}
                 <div className="cardTableRow cardTotalRow">
