@@ -94,7 +94,49 @@ jobs:
         continue-on-error: true
 
   # ==========================================
-  # Job 3: Integration & Docker
+  # Job 3: Security Checks
+  # ==========================================
+  security:
+    name: 🔒 Security
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Check for sensitive files
+        run: |
+          echo "Checking for sensitive files..."
+          FOUND=0
+          
+          # Check if .env is tracked in git (should not be)
+          if git ls-files | grep -q "^backend/\.env$"; then
+            echo "❌ ERROR: backend/.env is tracked in git"
+            FOUND=1
+          fi
+          
+          # Check for common sensitive files
+          for pattern in ".env" "*.pem" "*.key" ".htaccess" "phpinfo.php" "config.php" "backup.sql" "database.sql"; do
+            if git ls-files | grep -q "$pattern$"; then
+              echo "❌ WARNING: Sensitive file pattern found: $pattern"
+              git ls-files | grep "$pattern$" || true
+            fi
+          done
+          
+          # Check for .git directory exposure risk
+          if [ -d ".git" ]; then
+            echo "✓ .git directory exists locally (ok if not deployed)"
+          fi
+          
+          if [ $FOUND -eq 1 ]; then
+            echo "❌ Security check FAILED"
+            exit 1
+          fi
+          
+          echo "✅ Security check passed"
+
+  # ==========================================
+  # Job 4: Integration & Docker
   # ==========================================
   integration:
     name: 🐳 Integration
@@ -117,12 +159,12 @@ jobs:
           docker compose -f docker-compose.yml build
 
   # ==========================================
-  # Job 4: Summary
+  # Job 5: Summary
   # ==========================================
   summary:
     name: ✅ CI Summary
     runs-on: ubuntu-latest
-    needs: [backend, frontend, integration]
+    needs: [backend, frontend, security, integration]
     if: always()
 
     steps:
@@ -133,4 +175,5 @@ jobs:
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Backend | ${{ needs.backend.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Frontend | ${{ needs.frontend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Integration | ${{ needs.integration.result }} |" >> $GITHUB_STEP_SUMMARY
