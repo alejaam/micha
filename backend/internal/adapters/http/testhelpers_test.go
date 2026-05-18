@@ -271,5 +271,3 @@ func makeTestSettlementOutput() inbound.CalculateSettlementOutput {
 		},
 	}
 }
-
-
