@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"micha/backend/internal/domain/category"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/household"
 	"micha/backend/internal/domain/member"
@@ -130,121 +129,6 @@ type mockCalculateSettlement struct {
 func (m *mockCalculateSettlement) Execute(_ context.Context, input inbound.CalculateSettlementInput) (inbound.CalculateSettlementOutput, error) {
 	m.lastInput = input
 	return m.returnOutput, m.returnErr
-}
-
-// mockRegisterHousehold implements inbound.RegisterHouseholdUseCase
-type mockRegisterHousehold struct {
-	returnOutput inbound.RegisterHouseholdOutput
-	returnErr    error
-}
-
-func (m *mockRegisterHousehold) Execute(_ context.Context, _ inbound.RegisterHouseholdInput) (inbound.RegisterHouseholdOutput, error) {
-	return m.returnOutput, m.returnErr
-}
-
-// mockListHouseholds implements inbound.ListHouseholdsUseCase
-type mockListHouseholds struct {
-	returnHouseholds []household.Household
-	returnErr        error
-}
-
-func (m *mockListHouseholds) Execute(_ context.Context, _ inbound.ListHouseholdsQuery) ([]household.Household, error) {
-	return m.returnHouseholds, m.returnErr
-}
-
-// mockGetHousehold implements inbound.GetHouseholdUseCase
-type mockGetHousehold struct {
-	returnHousehold household.Household
-	returnErr       error
-}
-
-func (m *mockGetHousehold) Execute(_ context.Context, _ string) (household.Household, error) {
-	return m.returnHousehold, m.returnErr
-}
-
-// mockUpdateHousehold implements inbound.UpdateHouseholdUseCase
-type mockUpdateHousehold struct {
-	returnErr error
-}
-
-func (m *mockUpdateHousehold) Execute(_ context.Context, _ inbound.UpdateHouseholdInput) error {
-	return m.returnErr
-}
-
-// mockRegisterMember implements inbound.RegisterMemberUseCase
-type mockRegisterMember struct {
-	returnOutput inbound.RegisterMemberOutput
-	returnErr    error
-}
-
-func (m *mockRegisterMember) Execute(_ context.Context, _ inbound.RegisterMemberInput) (inbound.RegisterMemberOutput, error) {
-	return m.returnOutput, m.returnErr
-}
-
-// mockListMembers implements inbound.ListMembersUseCase
-type mockListMembers struct {
-	returnMembers []member.Member
-	returnErr     error
-}
-
-func (m *mockListMembers) Execute(_ context.Context, _ inbound.ListMembersQuery) ([]member.Member, error) {
-	return m.returnMembers, m.returnErr
-}
-
-// mockUpdateMember implements inbound.UpdateMemberUseCase
-type mockUpdateMember struct {
-	returnErr error
-}
-
-func (m *mockUpdateMember) Execute(_ context.Context, _ inbound.UpdateMemberInput) error {
-	return m.returnErr
-}
-
-// mockDeleteMember implements inbound.DeleteMemberUseCase
-type mockDeleteMember struct {
-	returnErr error
-}
-
-func (m *mockDeleteMember) Execute(_ context.Context, _ inbound.DeleteMemberInput) error {
-	return m.returnErr
-}
-
-// mockUpdateSplitConfig implements inbound.UpdateSplitConfigUseCase
-type mockUpdateSplitConfig struct {
-	returnErr error
-}
-
-func (m *mockUpdateSplitConfig) Execute(_ context.Context, _ inbound.UpdateSplitConfigInput) error {
-	return m.returnErr
-}
-
-// mockCreateCategory implements inbound.CreateCategoryUseCase
-type mockCreateCategory struct {
-	returnOutput inbound.CreateCategoryOutput
-	returnErr    error
-}
-
-func (m *mockCreateCategory) Execute(_ context.Context, _ inbound.CreateCategoryInput) (inbound.CreateCategoryOutput, error) {
-	return m.returnOutput, m.returnErr
-}
-
-// mockListCategories implements inbound.ListCategoriesUseCase
-type mockListCategories struct {
-	returnCategories []category.Category
-	returnErr        error
-}
-
-func (m *mockListCategories) Execute(_ context.Context, _ inbound.ListCategoriesQuery) ([]category.Category, error) {
-	return m.returnCategories, m.returnErr
-}
-
-// mockDeleteCategory implements inbound.DeleteCategoryUseCase
-type mockDeleteCategory struct {
-	returnErr error
-}
-
-func (m *mockDeleteCategory) Execute(_ context.Context, _ inbound.DeleteCategoryInput) error {
-	return m.returnErr
 }
 
 // --- Mock Token Validator ---
@@ -368,29 +252,6 @@ func (m *mockMemberRepo) LinkByEmail(_ context.Context, email, userID string) er
 	return nil
 }
 
-// --- Helper to create test expenses ---
-
-func makeTestExpense(t *testing.T, id, householdID string, amountCents int64) expense.Expense {
-	t.Helper()
-	e, err := expense.NewFromAttributes(expense.ExpenseAttributes{
-		ID:             expense.ID(id),
-		HouseholdID:    householdID,
-		PaidByMemberID: "m-1",
-		AmountCents:    amountCents,
-		Description:    "Test expense",
-		IsShared:       true,
-		Currency:       "MXN",
-		PaymentMethod:  expense.PaymentMethodCash,
-		ExpenseType:    expense.ExpenseTypeVariable,
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
-	})
-	if err != nil {
-		t.Fatalf("failed to create test expense: %v", err)
-	}
-	return e
-}
-
 // --- Helper to create test settlements ---
 
 func makeTestSettlementOutput() inbound.CalculateSettlementOutput {
@@ -409,41 +270,4 @@ func makeTestSettlementOutput() inbound.CalculateSettlementOutput {
 			{FromMemberID: "m-2", ToMemberID: "m-1", AmountCents: 2500},
 		},
 	}
-}
-
-// --- Helper to create test household ---
-
-func makeTestHousehold(t *testing.T, id string) household.Household {
-	t.Helper()
-	h, err := household.NewFromAttributes(household.Attributes{
-		ID:             household.ID(id),
-		Name:           "Test Household",
-		SettlementMode: household.SettlementModeEqual,
-		Currency:       "MXN",
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
-	})
-	if err != nil {
-		t.Fatalf("failed to create test household: %v", err)
-	}
-	return h
-}
-
-// --- Helper to create test member ---
-
-func makeTestMember(t *testing.T, id, householdID string) member.Member {
-	t.Helper()
-	m, err := member.NewFromAttributes(member.Attributes{
-		ID:                 member.ID(id),
-		HouseholdID:        householdID,
-		Name:               "Test Member",
-		Email:              "test@example.com",
-		MonthlySalaryCents: 100000,
-		CreatedAt:          time.Now(),
-		UpdatedAt:          time.Now(),
-	})
-	if err != nil {
-		t.Fatalf("failed to create test member: %v", err)
-	}
-	return m
 }

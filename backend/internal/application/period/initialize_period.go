@@ -60,7 +60,7 @@ func (u InitializePeriodUseCase) Execute(ctx context.Context, input inbound.Init
 	// 3. Create initial period based on household config.
 	now := u.now()
 	closingDay := h.Attributes().ClosingDay
-	
+
 	var start, end time.Time
 	if now.Day() <= closingDay {
 		// We are before the closing day of the current month.
@@ -95,7 +95,7 @@ func (u InitializePeriodUseCase) Execute(ctx context.Context, input inbound.Init
 	// 4. Adopt orphan expenses: link existing expenses in this date range to the new period.
 	// This is critical for legacy data rollover.
 	if err := u.expenseRepo.AdoptOrphanExpenses(ctx, input.HouseholdID, string(p.ID()), start, end); err != nil {
-		// Log and continue — we don't want to block period creation if this fails 
+		// Log and continue — we don't want to block period creation if this fails
 		// (e.g. if column doesn't exist yet)
 		fmt.Printf("Warning: failed to adopt orphan expenses: %v\n", err)
 	}

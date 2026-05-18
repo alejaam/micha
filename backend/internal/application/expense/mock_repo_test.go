@@ -455,8 +455,8 @@ func (r *mockPeriodRepo) seedPeriod(id, householdID string, startDate, endDate t
 	r.periods[id] = p
 }
 
-func (r *mockPeriodRepo) Create(_ context.Context, _ period.Period) error   { return nil }
-func (r *mockPeriodRepo) Update(_ context.Context, _ period.Period) error   { return nil }
+func (r *mockPeriodRepo) Create(_ context.Context, _ period.Period) error { return nil }
+func (r *mockPeriodRepo) Update(_ context.Context, _ period.Period) error { return nil }
 func (r *mockPeriodRepo) GetByID(_ context.Context, _ period.ID) (period.Period, error) {
 	return period.Period{}, nil
 }

@@ -49,7 +49,6 @@ func NewClosePeriodUseCase(
 	}
 }
 
-
 func (u ClosePeriodUseCase) Execute(ctx context.Context, input inbound.ClosePeriodInput) (inbound.ClosePeriodOutput, error) {
 	// 1. Retrieve the household and current member/actor.
 	h, err := u.householdRepo.FindByID(ctx, input.HouseholdID)
@@ -57,8 +56,8 @@ func (u ClosePeriodUseCase) Execute(ctx context.Context, input inbound.ClosePeri
 		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: %w", err)
 	}
 
-	if _, err := u.memberRepo.FindByUserID(ctx, input.HouseholdID, input.CurrentUserID); err != nil {
-		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: %w", err)
+	if _, findErr := u.memberRepo.FindByUserID(ctx, input.HouseholdID, input.CurrentUserID); findErr != nil {
+		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: %w", findErr)
 	}
 
 	// 2. Retrieve the period and validate status.
@@ -185,7 +184,7 @@ func (u ClosePeriodUseCase) rolloverFixedExpenses(ctx context.Context, currentPe
 			attrs.PeriodID = nextPeriodID
 			attrs.CreatedAt = now
 			attrs.UpdatedAt = now
-			
+
 			cloned, err := expense.NewFromAttributes(attrs)
 			if err != nil {
 				return fmt.Errorf("failed to clone fixed expense: %w", err)
@@ -202,7 +201,7 @@ func (u ClosePeriodUseCase) rolloverInstallments(ctx context.Context, nextPeriod
 	// Find installments whose StartDate falls within the next period.
 	// BUT, our Expense entity now has period_id. For each installment due in the next period,
 	// we should probably create an Expense record of type 'msi' linked to that period.
-	
+
 	installments, err := u.installmentRepo.ListByHouseholdAndPeriod(ctx, nextPeriod.HouseholdID(), nextPeriod.StartDate(), nextPeriod.EndDate())
 	if err != nil {
 		return err

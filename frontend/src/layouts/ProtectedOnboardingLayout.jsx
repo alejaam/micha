@@ -1,4 +1,4 @@
-import { Navigate, useLocation } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useAppShell } from '../context/AppShellContext'
 import { OnboardingLayout } from './OnboardingLayout'
@@ -16,7 +16,6 @@ import { OnboardingLayout } from './OnboardingLayout'
 export function ProtectedOnboardingLayout() {
     const { isAuthenticated } = useAuth()
     const { households, loadingHouseholds, members, loadingMembers } = useAppShell()
-    const location = useLocation()
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />

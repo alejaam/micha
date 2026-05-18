@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getCurrentPeriod, getPeriodConsensus } from '../api';
 
 /**
@@ -31,7 +31,7 @@ export function useDashboardUxState(householdId) {
     const [consensus, setConsensus] = useState({ approved: 0, total: 0, percent: 0, source: 'pending' });
     const [consensusLoading, setConsensusLoading] = useState(false);
 
-    const loadPeriod = async () => {
+    const loadPeriod = useCallback(async () => {
         if (!householdId) return;
         try {
             setIsLoadingPeriod(true);
@@ -52,10 +52,10 @@ export function useDashboardUxState(householdId) {
         } finally {
             setIsLoadingPeriod(false);
         }
-    }
+    }, [householdId])
 
     // Load consensus when household and period are available
-    const loadConsensus = async (periodId) => {
+    const loadConsensus = useCallback(async (periodId) => {
         if (!householdId || !periodId) {
             setConsensus({ approved: 0, total: 0, percent: 0, source: 'pending' });
             return;
@@ -78,11 +78,11 @@ export function useDashboardUxState(householdId) {
         } finally {
             setConsensusLoading(false);
         }
-    };
+    }, [householdId]);
 
     useEffect(() => {
         loadPeriod();
-    }, [householdId]);
+    }, [loadPeriod]);
 
     // Reload consensus when period changes
     useEffect(() => {
@@ -90,7 +90,7 @@ export function useDashboardUxState(householdId) {
         if (targetId) {
             loadConsensus(targetId);
         }
-    }, [currentPeriod?.id, selectedPeriodId, householdId]);
+    }, [currentPeriod?.id, selectedPeriodId, loadConsensus]);
 
     const openBottomSheet = () => setIsBottomSheetOpen(true);
     const closeBottomSheet = () => setIsBottomSheetOpen(false);

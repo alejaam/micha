@@ -52,8 +52,8 @@ func main() {
 	}
 	defer pool.Close()
 
-	if err := pool.Ping(ctx); err != nil {
-		slog.Error("database unreachable", "error", err)
+	if pingErr := pool.Ping(ctx); pingErr != nil {
+		slog.Error("database unreachable", "error", pingErr)
 		os.Exit(1)
 	}
 
@@ -63,8 +63,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := migrations.Apply(ctx, pool, migrationsDir); err != nil {
-		slog.Error("failed to apply migrations", "error", err)
+	if migrateErr := migrations.Apply(ctx, pool, migrationsDir); migrateErr != nil {
+		slog.Error("failed to apply migrations", "error", migrateErr)
 		os.Exit(1)
 	}
 
@@ -191,8 +191,9 @@ func main() {
 	srv := httpadapter.NewServer(cfg.HTTPPort, serverDeps)
 
 	httpServer := &http.Server{
-		Addr:    ":" + cfg.HTTPPort,
-		Handler: srv.Handler(),
+		Addr:              ":" + cfg.HTTPPort,
+		Handler:           srv.Handler(),
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	go func() {

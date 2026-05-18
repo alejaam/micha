@@ -91,7 +91,7 @@ func applyFile(ctx context.Context, db *pgxpool.Pool, fullPath, filename string)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 
 	if _, execErr := tx.Exec(ctx, string(sqlBytes)); execErr != nil {
 		return fmt.Errorf("exec statement: %w", execErr)

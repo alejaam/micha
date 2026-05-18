@@ -5,10 +5,9 @@ import { useState } from 'react'
  *
  * @param {string} initialValue
  * @param {(value: string) => string | null} [validator] — returns error string or null
- * @param {{ debounceMs?: number }} [opts]
  * @returns {{ value: string, error: string | null, touched: boolean, setValue: (v: string) => void, onBlur: () => void, setTouched: (v: boolean) => void, isValid: boolean }}
  */
-export function useFormField(initialValue = '', validator, opts = {}) {
+export function useFormField(initialValue = '', validator) {
     const [value, setValue] = useState(initialValue)
     const [touched, setTouched] = useState(false)
 
