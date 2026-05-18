@@ -13,8 +13,7 @@ linters:
     # Calidad de código
     - gosimple      # Simplificaciones de código
     - ineffassign   # Asignaciones ineffectuales
-    - unused        # Código no usado
-    - deadcode      # Código muerto
+    - unused        # Código no usado (reemplaza a deadcode)
     
     # Estilo y formato
     - gofmt         # Formato estándar Go
