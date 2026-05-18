@@ -8,7 +8,8 @@
  *   onSelect(periodId) — called when user picks a period (null = current)
  */
 function formatPeriodLabel(period) {
-  const raw = period.start_date || period.startDate || period.StartDate
+  if (!period) return 'Periodo'
+  const raw = period?.start_date || period?.startDate || period?.StartDate
   if (!raw) return 'Periodo'
   const start = new Date(raw)
   if (isNaN(start.getTime())) return 'Periodo'
@@ -36,16 +37,20 @@ export function PeriodSelector({ periods = [], selectedPeriodId, currentPeriodId
         aria-label="Seleccionar periodo"
       >
         {currentPeriodId && (
-          <option value={currentPeriodId}>Actual — {formatPeriodLabel(periods.find(p => (p.id || p.ID) === currentPeriodId))}</option>
+          <option value={currentPeriodId}>Actual — {formatPeriodLabel(periods.find(p => (p?.id || p?.ID) === currentPeriodId))}</option>
         )}
         {periods
           .filter((p) => {
-            const id = p.id || p.ID
+            const id = p?.id || p?.ID
             return id !== currentPeriodId && parseStatus(p) === 'closed'
           })
-          .sort((a, b) => new Date(b.start_date || b.StartDate) - new Date(a.start_date || a.StartDate))
+          .sort((a, b) => {
+            const dateA = new Date(a?.start_date || a?.StartDate || 0)
+            const dateB = new Date(b?.start_date || b?.StartDate || 0)
+            return dateB - dateA
+          })
           .map((p) => {
-            const id = p.id || p.ID
+            const id = p?.id || p?.ID
             return (
               <option key={id} value={id}>
                 {formatPeriodLabel(p)}
