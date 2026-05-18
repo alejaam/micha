@@ -5,6 +5,7 @@ import { AppShellContext } from './context/AppShellContext'
 import { useAuth } from './context/AuthContext'
 import { useDashboardUxState } from './hooks/useDashboardUxState'
 import { useHouseholds } from './hooks/useHouseholds'
+import { useMembers } from './hooks/useMembers'
 import { AppLayout } from './layouts/AppLayout'
 import { AuthLayout } from './layouts/AuthLayout'
 import { ProtectedOnboardingLayout } from './layouts/ProtectedOnboardingLayout'
@@ -85,11 +86,22 @@ function AppShell() {
     } = useHouseholds({ isAuthenticated, handleProtectedError })
 
     const {
+        members,
+        loadingMembers,
+        loadMembers,
+    } = useMembers({ isAuthenticated, householdId, handleProtectedError })
+
+    const {
         currentPeriod,
         periodStatus,
         setPeriodStatus,
         isMutationLocked,
         loadPeriod: reloadPeriod,
+        selectedPeriodId,
+        setSelectedPeriodId,
+        consensus,
+        consensusLoading,
+        loadConsensus,
     } = useDashboardUxState(householdId)
 
     const selectedHousehold = useMemo(
@@ -118,6 +130,14 @@ function AppShell() {
         isMutationLocked,
         currentPeriod,
         reloadPeriod,
+        members,
+        loadingMembers,
+        loadMembers,
+        selectedPeriodId,
+        setSelectedPeriodId,
+        consensus,
+        consensusLoading,
+        loadConsensus,
     }), [
         health,
         householdId,
@@ -132,6 +152,14 @@ function AppShell() {
         isMutationLocked,
         currentPeriod,
         reloadPeriod,
+        members,
+        loadingMembers,
+        loadMembers,
+        selectedPeriodId,
+        setSelectedPeriodId,
+        consensus,
+        consensusLoading,
+        loadConsensus,
     ])
 
     return (

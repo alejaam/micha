@@ -74,14 +74,14 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
   }
 
   return (
-    <section className="card" aria-label="Add a new expense">
+    <section className="card" aria-label="Agregar nuevo gasto">
       <h2 className="sectionTitle">
         <span className="sectionTitleIcon" aria-hidden>＋</span>
-        New expense
+        Nuevo gasto
       </h2>
 
       <form onSubmit={handleSubmit} className="formStack" noValidate>
-        <FormField label="Amount" htmlFor="newAmount">
+        <FormField label="Monto" htmlFor="newAmount">
           <div className="inputWrap">
             <span className="inputPrefix" aria-hidden>$</span>
             <input
@@ -91,18 +91,18 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(sanitizeAmountInput(e.target.value))}
-              aria-label="Amount in dollars"
+              aria-label="Monto"
               disabled={isSubmitting}
               pattern="[0-9]*\.?[0-9]*"
             />
           </div>
         </FormField>
 
-        <FormField label="Description" htmlFor="newDescription">
+        <FormField label="Descripción" htmlFor="newDescription">
           <input
             id="newDescription"
             className="input"
-            placeholder="e.g. Groceries at Trader Joe's"
+            placeholder="Ej. Súper de la semana"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             autoComplete="off"
@@ -111,14 +111,14 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
         </FormField>
 
         {!isLoadingMembers && paidByMemberName ? (
-          <p className="formHint">Paid by: {paidByMemberName}</p>
+          <p className="formHint">Pagado por: {paidByMemberName}</p>
         ) : null}
 
         {!isLoadingMembers && !hasMembers ? (
-          <p className="formHint">Create at least one member before adding expenses.</p>
+          <p className="formHint">Crea al menos un miembro antes de agregar gastos.</p>
         ) : null}
 
-        <FormField label="Category" htmlFor="newCategory">
+        <FormField label="Categoría" htmlFor="newCategory">
           <select
             id="newCategory"
             className="input"
@@ -126,17 +126,17 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
             onChange={(e) => setCategory(e.target.value)}
             disabled={isSubmitting}
           >
-            <option value="rent">Rent</option>
+            <option value="rent">Renta</option>
             <option value="auto">Auto</option>
-            <option value="streaming">Streaming / Services</option>
-            <option value="food">Food</option>
+            <option value="streaming">Streaming / Servicios</option>
+            <option value="food">Comida</option>
             <option value="personal">Personal</option>
-            <option value="savings">Savings</option>
-            <option value="other">Other</option>
+            <option value="savings">Ahorros</option>
+            <option value="other">Otro</option>
           </select>
         </FormField>
 
-        <FormField label="Payment method" htmlFor="newPaymentMethod">
+        <FormField label="Método de pago" htmlFor="newPaymentMethod">
           <select
             id="newPaymentMethod"
             className="input"
@@ -144,15 +144,15 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
             onChange={(e) => setPaymentMethod(e.target.value)}
             disabled={isSubmitting}
           >
-            <option value="cash">Cash</option>
-            <option value="card">Card</option>
-            <option value="transfer">Transfer</option>
-            <option value="voucher">Voucher</option>
+            <option value="cash">Efectivo</option>
+            <option value="card">Tarjeta</option>
+            <option value="transfer">Transferencia</option>
+            <option value="voucher">Vale</option>
           </select>
         </FormField>
 
         {isCardPayment && (
-          <FormField label="Card" htmlFor="newCardId">
+          <FormField label="Tarjeta" htmlFor="newCardId">
             {cards.length > 0 ? (
               <select
                 id="newCardId"
@@ -161,7 +161,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
                 onChange={(e) => setCardId(e.target.value)}
                 disabled={isSubmitting}
               >
-                <option value="" disabled>Select card...</option>
+                <option value="" disabled>Selecciona tarjeta...</option>
                 {cards.map((card) => (
                   <option key={card.id} value={card.id}>{card.card_name}</option>
                 ))}
@@ -172,7 +172,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
           </FormField>
         )}
 
-        <FormField label="Expense type" htmlFor="newExpenseType">
+        <FormField label="Tipo de gasto" htmlFor="newExpenseType">
           <select
             id="newExpenseType"
             className="input"
@@ -181,13 +181,13 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
             disabled={isSubmitting}
           >
             <option value="variable">Variable</option>
-            <option value="fixed">Fixed</option>
-            <option value="msi">MSI (installments)</option>
+            <option value="fixed">Fijo</option>
+            <option value="msi">MSI (meses sin intereses)</option>
           </select>
         </FormField>
 
         {isMSI && (
-          <FormField label="Total installments" htmlFor="newTotalInstallments">
+          <FormField label="Total de cuotas" htmlFor="newTotalInstallments">
             <input
               id="newTotalInstallments"
               className="input"
@@ -209,7 +209,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
             onChange={(e) => setIsShared(e.target.checked)}
             disabled={isSubmitting}
           />
-          Shared expense
+          Gasto compartido
         </label>
 
         <button
@@ -220,10 +220,10 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
           {isSubmitting ? (
             <>
               <span className="spinIcon" aria-hidden>⟳</span>
-              Saving…
+              Guardando…
             </>
           ) : (
-            'Add expense'
+            'Agregar gasto'
           )}
         </button>
       </form>

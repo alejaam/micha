@@ -1,21 +1,20 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createHousehold, createMember } from '../api'
+import { createHousehold } from '../api'
 import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
 import { FormField } from '../ui/FormField'
-import { dollarsToCents } from '../utils'
 
 const CURRENCIES = [
-    { code: 'MXN', label: '🇲🇽 MXN — Mexican Peso' },
-    { code: 'USD', label: '🇺🇸 USD — US Dollar' },
+    { code: 'MXN', label: '🇲🇽 MXN — Peso Mexicano' },
+    { code: 'USD', label: '🇺🇸 USD — Dólar Estadounidense' },
     { code: 'EUR', label: '🇪🇺 EUR — Euro' },
-    { code: 'COP', label: '🇨🇴 COP — Colombian Peso' },
-    { code: 'ARS', label: '🇦🇷 ARS — Argentine Peso' },
-    { code: 'CLP', label: '🇨🇱 CLP — Chilean Peso' },
-    { code: 'PEN', label: '🇵🇪 PEN — Peruvian Sol' },
-    { code: 'BRL', label: '🇧🇷 BRL — Brazilian Real' },
+    { code: 'COP', label: '🇨🇴 COP — Peso Colombiano' },
+    { code: 'ARS', label: '🇦🇷 ARS — Peso Argentino' },
+    { code: 'CLP', label: '🇨🇱 CLP — Peso Chileno' },
+    { code: 'PEN', label: '🇵🇪 PEN — Sol Peruano' },
+    { code: 'BRL', label: '🇧🇷 BRL — Real Brasileño' },
 ]
 
 const SETTLEMENT_HINTS = {
@@ -24,7 +23,7 @@ const SETTLEMENT_HINTS = {
 }
 
 export function OnboardingHouseholdPage() {
-    const { user, handleProtectedError } = useAuth()
+    const { handleProtectedError } = useAuth()
     const { setHouseholdId, loadHouseholds } = useAppShell()
     const navigate = useNavigate()
 
@@ -35,16 +34,12 @@ export function OnboardingHouseholdPage() {
     const [closingDay, setClosingDay] = useState(15)
     const [periodFrequency, setPeriodFrequency] = useState('monthly')
 
-    // Member state
-    const [memberName, setMemberName] = useState('')
-    const [salaryDollars, setSalaryDollars] = useState('')
-
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
 
     async function handleSubmit(e) {
         e.preventDefault()
-        if (!hhName.trim() || !memberName.trim()) return
+        if (!hhName.trim()) return
         
         setBusy(true)
         setError('')
@@ -61,26 +56,17 @@ export function OnboardingHouseholdPage() {
             
             const createdHouseholdId = hhOut?.household_id ?? hhOut?.id ?? ''
             if (!createdHouseholdId) {
-                throw new Error('household created but id was not returned')
+                throw new Error('El hogar fue creado pero no se devolvió el ID')
             }
 
             // Keep the new ID locally
             setHouseholdId(createdHouseholdId)
 
-            // 2. Auto-create the creator as the first member
-            const salaryCents = dollarsToCents(salaryDollars) || 0
-            await createMember({
-                householdId: createdHouseholdId,
-                name: memberName.trim(),
-                email: user?.email || '',
-                monthlySalaryCents: salaryCents,
-            })
-
-            // 3. Refresh households list now that there's a member linked to the user
+            // 2. Refresh households list
             await loadHouseholds()
 
-            // 4. Continue onboarding with cards setup
-            navigate('/onboarding/cards', { replace: true })
+            // 3. Continue to member onboarding
+            navigate('/onboarding/member', { replace: true })
             
         } catch (err) {
             if (!handleProtectedError(err)) setError(err.message)
@@ -172,46 +158,12 @@ export function OnboardingHouseholdPage() {
                     </FormField>
                 </div>
 
-                <div className="formSection u-mt-4">
-                    <h3 className="sectionTitle">Tu perfil</h3>
-                    <p className="u-text-sm u-text-dim u-mb-2">
-                        Serás añadido como el primer miembro. Tu correo ({user?.email}) se vincula automáticamente.
-                    </p>
-                    <FormField label="Tu nombre" htmlFor="memName">
-                        <input
-                            id="memName"
-                            className="input"
-                            placeholder="Ej. Alex"
-                            value={memberName}
-                            onChange={(e) => setMemberName(e.target.value)}
-                            disabled={busy}
-                        />
-                    </FormField>
-                    <FormField label="Salario mensual (opcional)" htmlFor="memSalary">
-                        <div className="inputWrap">
-                            <span className="inputPrefix" aria-hidden>$</span>
-                            <input
-                                id="memSalary"
-                                className="input inputWithPrefix"
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                placeholder="Ej. 30000"
-                                value={salaryDollars}
-                                onChange={(e) => setSalaryDollars(e.target.value)}
-                                disabled={busy}
-                            />
-                        </div>
-                        <p className="formHint">Se usa para calcular la división proporcional. Puedes actualizarlo después.</p>
-                    </FormField>
-                </div>
-
                 <button
                     type="submit"
                     className="btn btnPrimary btnFull u-mt-6"
-                    disabled={busy || !hhName.trim() || !memberName.trim()}
+                    disabled={busy || !hhName.trim()}
                 >
-                    {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Creando…</> : 'Finalizar configuración →'}
+                    {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Creando hogar…</> : 'Crear hogar →'}
                 </button>
             </form>
         </section>

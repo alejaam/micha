@@ -291,12 +291,6 @@ ul {
     }
 }
 
-.appHeader .periodStatusRibbon {
-    flex: 1 1 100%;
-    width: 100%;
-    order: 10; /* Keep it at the very bottom of the header stack */
-}
-
 .brand {
     display: flex;
     align-items: center;
@@ -1593,79 +1587,83 @@ ul {
     opacity: 0.45;
 }
 
-/* ─── Period status ribbon ───────────────────────────────────────────────────── */
-.periodStatusRibbon {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: 10px 14px;
-    background: var(--color-surface);
-    font-weight: var(--fw-medium);
-    position: relative;
-    z-index: var(--z-base);
-}
-
-.periodStatusRibbonLabel {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-text-4);
-}
-
-.periodStatusRibbonState {
+/* ─── Period chip (compact) ──────────────────────────────────────────────────── */
+.periodChip {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    font-weight: var(--fw-bold);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    border: 1px solid transparent;
+    font-size: 0.75rem;
+    font-weight: var(--fw-semibold);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    line-height: 1.4;
+    transition: background var(--dur-fast), border-color var(--dur-fast);
 }
 
-.periodStatusRibbonState::before {
-    content: '';
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: currentColor;
+.periodChipDot {
+    font-size: 0.5rem;
+    line-height: 1;
 }
 
-.periodStatusRibbonText {
-    font-size: 0.82rem;
-    color: var(--color-text-2);
+.periodChipLabel {
+    text-transform: capitalize;
 }
 
-.periodStatusRibbon-open {
-    border-color: var(--color-green-500);
-    background: var(--color-green-50);
-}
-
-.periodStatusRibbon-open .periodStatusRibbonState {
+/* Open — green */
+.periodChip-open {
     color: var(--color-green-700);
+    background: var(--color-green-50);
+    border-color: var(--color-green-100);
 }
 
-.periodStatusRibbon-review {
-    border-color: var(--color-amber-500);
-    background: var(--color-amber-50);
+.periodChip-open .periodChipDot {
+    color: var(--color-green-500);
 }
 
-.periodStatusRibbon-review .periodStatusRibbonState {
+/* Review — amber */
+.periodChip-review {
     color: var(--color-amber-700);
+    background: var(--color-amber-50);
+    border-color: var(--color-amber-100);
 }
 
-.periodStatusRibbon-closed {
-    border-color: var(--color-red-500);
-    background: var(--color-red-50);
+.periodChip-review .periodChipDot {
+    color: var(--color-amber-500);
 }
 
-.periodStatusRibbon-closed .periodStatusRibbonState {
-    color: var(--color-red-700);
+/* Closed — gray */
+.periodChip-closed {
+    color: var(--color-text-3);
+    background: var(--color-surface-2);
+    border-color: var(--color-border);
+}
+
+.periodChip-closed .periodChipDot {
+    color: var(--color-text-4);
+}
+
+/* ─── Period selector (header dropdown) ──────────────────────────────────────── */
+.periodSelector {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.periodSelectorSelect {
+    width: auto;
+    min-width: 120px;
+    max-width: 200px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.periodSelectorBack {
+    white-space: nowrap;
+    font-size: 0.72rem;
 }
 
 /* Hide FAB on desktop where we have more space */
@@ -2086,11 +2084,6 @@ html, body {
     box-sizing: border-box;
 }
 
-.periodStatusRibbon {
-    align-self: stretch;
-    box-sizing: border-box;
-}
-
 .headerControls {
     width: 100%;
     flex-wrap: wrap;
@@ -2375,92 +2368,110 @@ html {
     color: var(--color-brand-700);
 }
 
-/* ─── IncomesPanel ───────────────────────────────────────────────────────────── */
-.incomesGrid {
+/* ─── IncomesPanel — stacked bar ──────────────────────────────────────────────── */
+.stackedBarSection {
     display: grid;
-    gap: 12px;
+    gap: 16px;
 }
 
-.incomeMemberCard {
-    background: linear-gradient(135deg, var(--color-surface-2), var(--color-surface));
-    border: 1px solid var(--color-border-soft);
-    border-radius: var(--radius-md);
-    padding: 16px 18px;
+.stackedBar {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    transition: all var(--dur-fast) var(--ease-out);
+    height: 32px;
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    background: var(--color-border-soft);
+    box-shadow: var(--shadow-inner);
 }
 
-.incomeMemberCard:hover {
-    border-color: var(--color-brand-200);
-    box-shadow: var(--shadow-sm);
+.stackedBarSegment {
+    height: 100%;
+    transition: width var(--dur-slower) var(--ease-out);
+    min-width: 4px;
 }
 
-.incomeMemberHeader {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
+.stackedBarSegment:first-child {
+    border-radius: var(--radius-pill) 0 0 var(--radius-pill);
+}
+
+.stackedBarSegment:last-child {
+    border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
+}
+
+.stackedBarSegment:only-child {
+    border-radius: var(--radius-pill);
+}
+
+.stackedBarLegend {
+    display: grid;
     gap: 8px;
 }
 
-.incomeMemberName {
-    font-size: 0.92rem;
-    font-weight: var(--fw-semibold);
-    color: var(--color-text-1);
-}
-
-.incomePct {
-    font-size: 0.82rem;
-    font-weight: var(--fw-bold);
-    color: var(--color-brand-600);
-    background: var(--color-brand-50);
-    padding: 2px 8px;
-    border-radius: var(--radius-pill);
-}
-
-.incomeSalary {
-    font-size: 1.35rem;
-    font-weight: var(--fw-bold);
-    color: var(--color-text-1);
-    letter-spacing: -0.02em;
-}
-
-.incomeBar {
-    height: 6px;
-    background: var(--color-border);
-    border-radius: var(--radius-pill);
-    overflow: hidden;
-}
-
-.incomeBarFill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--color-brand-400), var(--color-brand-500));
-    border-radius: var(--radius-pill);
-    transition: width var(--dur-slower) var(--ease-out);
-}
-
-.incomeTotalRow {
+.stackedBarLegendRow {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 14px 18px;
-    border-radius: var(--radius-md);
-    background: var(--color-brand-50);
-    border: 1px solid var(--color-brand-100);
+    gap: 10px;
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    transition: background var(--dur-fast);
+}
+
+.stackedBarLegendRow:hover {
+    background: var(--color-surface-2);
+}
+
+.stackedBarLegendSwatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.stackedBarLegendName {
+    flex: 1;
+    font-weight: var(--fw-semibold);
+    color: var(--color-text-1);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stackedBarLegendAmount {
+    font-family: var(--font-mono);
+    font-weight: var(--fw-medium);
+    color: var(--color-text-2);
+    text-align: right;
+    min-width: 80px;
+}
+
+.stackedBarLegendPct {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-brand-600);
+    text-align: right;
+    min-width: 48px;
+}
+
+.stackedBarLegendTotal {
+    border-top: 1px solid var(--color-border-soft);
+    padding-top: 10px;
     margin-top: 4px;
 }
 
-.incomeTotalLabel {
-    font-size: 0.875rem;
-    color: var(--color-text-3);
-    font-weight: var(--fw-medium);
+.stackedBarLegendTotal .stackedBarLegendName {
+    font-weight: var(--fw-bold);
+    color: var(--color-text-1);
 }
 
-.incomeTotalValue {
-    font-size: 1.1rem;
+.stackedBarLegendTotal .stackedBarLegendAmount {
     font-weight: var(--fw-bold);
-    color: var(--color-brand-700);
+    color: var(--color-text-1);
+}
+
+.stackedBarLegendTotal .stackedBarLegendPct {
+    color: var(--color-text-3);
 }
 
 /* ─── FixedExpensesPanel ─────────────────────────────────────────────────────── */
@@ -3469,6 +3480,11 @@ html {
     font-family: var(--font-mono);
     text-transform: uppercase;
     color: var(--color-text-3);
+}
+
+.consensusMeta {
+    font-size: 0.72rem;
+    color: var(--color-text-4);
 }
 
 /* Banner mode — prominent when period needs action */

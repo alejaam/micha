@@ -9,6 +9,7 @@ import (
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/period"
 	periodapproval "micha/backend/internal/domain/period_approval"
+	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
 )
@@ -70,15 +71,15 @@ func (u ClosePeriodUseCase) Execute(ctx context.Context, input inbound.ClosePeri
 		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: only periods in review can be closed")
 	}
 
-	// 3. Consensus Check.
+	// 3. Only the household owner can close a period.
+	if h.OwnerID() != input.CurrentUserID {
+		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: %w", shared.ErrForbidden)
+	}
+
+	// 4. Consensus Check (non-force requires unanimous approval).
 	if !input.Force {
 		if err := u.validateConsensus(ctx, input.HouseholdID, input.PeriodID); err != nil {
 			return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: consensus required: %w", err)
-		}
-	} else {
-		// Only owner can force close.
-		if h.OwnerID() != input.CurrentUserID {
-			return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: only owner can force close")
 		}
 	}
 

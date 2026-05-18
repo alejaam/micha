@@ -32,7 +32,7 @@ export function Banner({ type, children, onDismiss, floating = false }) {
           type="button"
           className="bannerDismiss"
           onClick={onDismiss}
-          aria-label="Dismiss"
+          aria-label="Cerrar"
         >
           ✕
         </button>

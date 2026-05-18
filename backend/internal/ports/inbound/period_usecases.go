@@ -66,3 +66,21 @@ type InitializePeriodOutput struct {
 type InitializePeriodUseCase interface {
 	Execute(ctx context.Context, input InitializePeriodInput) (InitializePeriodOutput, error)
 }
+
+// GetPeriodConsensusInput defines the data needed to query period consensus.
+type GetPeriodConsensusInput struct {
+	HouseholdID string
+	PeriodID    string
+}
+
+// GetPeriodConsensusOutput contains the consensus summary for a period.
+type GetPeriodConsensusOutput struct {
+	Approved int     `json:"approved"`
+	Total    int     `json:"total"`
+	Percent  float64 `json:"percent"`
+}
+
+// GetPeriodConsensusUseCase contract.
+type GetPeriodConsensusUseCase interface {
+	Execute(ctx context.Context, input GetPeriodConsensusInput) (GetPeriodConsensusOutput, error)
+}

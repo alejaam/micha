@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import { listPeriods } from '../api'
+import { PeriodSelector } from './PeriodSelector'
 import { PeriodStatusRibbon } from './PeriodStatusRibbon'
 import { useAuth } from '../context/AuthContext'
 import { UserMenu } from './UserMenu'
@@ -28,9 +30,30 @@ export function AppHeader({
   periodStatus = 'open',
   isMutationLocked = false,
   currentPeriod = null,
+  selectedPeriodId = null,
+  onSelectPeriod = null,
 }) {
   const { user } = useAuth()
   const periodName = formatPeriodName(currentPeriod)
+
+  const [allPeriods, setAllPeriods] = useState([])
+
+  // Load all periods when household changes
+  useEffect(() => {
+    if (!householdId) {
+      setAllPeriods([])
+      return
+    }
+    let cancelled = false
+    listPeriods({ householdId })
+      .then((data) => {
+        if (!cancelled) setAllPeriods(Array.isArray(data) ? data : [])
+      })
+      .catch(() => {
+        if (!cancelled) setAllPeriods([])
+      })
+    return () => { cancelled = true }
+  }, [householdId])
 
   // Flash animation when period ID changes
   const prevPeriodIdRef = useRef(currentPeriod?.id)
@@ -84,8 +107,21 @@ export function AppHeader({
         </nav>
       )}
 
-      {/* Controls */}
+        {/* Controls */}
       <div className="headerControls">
+        {/* Period chip inline */}
+        <PeriodStatusRibbon status={periodStatus} />
+
+        {/* Period selector (visible when there are periods to browse) */}
+        {householdId && (
+          <PeriodSelector
+            periods={allPeriods}
+            selectedPeriodId={selectedPeriodId}
+            currentPeriodId={currentPeriod?.id}
+            onSelect={(periodId) => onSelectPeriod && onSelectPeriod(periodId)}
+          />
+        )}
+
         {/* Invite member */}
         {householdId && (
           <Link
@@ -118,8 +154,6 @@ export function AppHeader({
 
         <UserMenu user={user} households={households} householdId={householdId} onHouseholdChange={onHouseholdChange} onLogout={onLogout} health={health} />
       </div>
-
-      <PeriodStatusRibbon status={periodStatus} />
     </header>
   )
 }

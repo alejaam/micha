@@ -380,9 +380,8 @@ export async function closePeriod({ householdId, periodId, force = true }) {
     return parseResponse(response)
 }
 
-export async function advanceTime(days) {
-    const response = await fetch(`${API_BASE_URL}/v1/dev/time-offset?days=${days}`, {
-        method: 'POST',
+export async function getPeriodConsensus({ householdId, periodId }) {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/periods/${periodId}/consensus`, {
         headers: buildProtectedHeaders(),
     })
     return parseResponse(response)

@@ -21,6 +21,7 @@ export function PeriodManagementPanel({
     period,
     onStatusChange,
     isOwner = false,
+    consensus,
 }) {
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState('')
@@ -178,8 +179,15 @@ export function PeriodManagementPanel({
                     </div>
 
                     <div className="periodConsensusBox">
-                        <ConsensusProgressRing percent={50} /> {/* TODO: Real consensus data */}
+                        <ConsensusProgressRing
+                            approved={consensus?.approved ?? 0}
+                            total={consensus?.total ?? 0}
+                            label="Consenso"
+                        />
                         <span className="consensusLabel">Consenso</span>
+                        {consensus && consensus.total > 0 && (
+                            <span className="consensusMeta">{consensus.approved} de {consensus.total} aprobaron</span>
+                        )}
                     </div>
                 </div>
 

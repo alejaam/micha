@@ -16,7 +16,6 @@ import (
 
 	httpadapter "micha/backend/internal/adapters/http"
 	"micha/backend/internal/adapters/postgres"
-	appshared "micha/backend/internal/application/shared"
 	authapp "micha/backend/internal/application/auth"
 	cardapp "micha/backend/internal/application/card"
 	categoryapp "micha/backend/internal/application/category"
@@ -67,12 +66,6 @@ func main() {
 	if err := migrations.Apply(ctx, pool, migrationsDir); err != nil {
 		slog.Error("failed to apply migrations", "error", err)
 		os.Exit(1)
-	}
-
-	// Enable time simulation in development mode.
-	if cfg.Environment == "development" {
-		appshared.SetSimulationMode(true)
-		slog.Info("time simulation mode enabled")
 	}
 
 	expenseRepo := postgres.NewExpenseRepository(pool)
@@ -169,6 +162,7 @@ func main() {
 		ApprovePeriod:      periodapp.NewApprovePeriodUseCase(periodApprovalRepo, periodRepo, memberRepo, idGen),
 		ClosePeriod:        periodapp.NewClosePeriodUseCase(periodRepo, periodApprovalRepo, householdRepo, memberRepo, expenseRepo, installmentRepo, txManager, idGen),
 		InitializePeriod:   periodapp.NewInitializePeriodUseCase(periodRepo, householdRepo, memberRepo, expenseRepo, idGen),
+		GetConsensus:       periodapp.NewGetPeriodConsensusUseCase(periodRepo, periodApprovalRepo, memberRepo),
 		PeriodRepo:         periodRepo,
 	}
 
@@ -192,7 +186,6 @@ func main() {
 		JWTValidator:   validator,
 		MemberRepo:     memberRepo,
 		AllowedOrigins: cfg.AllowedOrigins,
-		IsDev:          cfg.Environment == "development",
 	}
 
 	srv := httpadapter.NewServer(cfg.HTTPPort, serverDeps)

@@ -43,7 +43,10 @@ function useHouseholdDataInternal() {
         setPeriodStatus,
         isMutationLocked,
         currentPeriod,
+        selectedPeriodId,
     } = useAppShell()
+
+    const effectivePeriodId = selectedPeriodId || currentPeriod?.id
 
     const [message, setMessage] = useState('')
     const [error, setError] = useState('')
@@ -70,7 +73,7 @@ function useHouseholdDataInternal() {
     const { items, loadingList, loadExpenses } = useExpenses({
         isAuthenticated,
         householdId,
-        periodId: currentPeriod?.id,
+        periodId: effectivePeriodId,
         handleProtectedError,
         onErrorClear,
     })
@@ -191,6 +194,11 @@ function useHouseholdDataInternal() {
             await loadSettlement()
             return true
         } catch (err) {
+            // Graceful handling: no active period → friendly message, not a crash
+            if (!currentPeriod && (err.code === 'NOT_FOUND' || err.code === 'NO_ACTIVE_PERIOD' || /no active period|no hay periodo/i.test(err.message))) {
+                setError('No hay un periodo activo. Inicializa el mes primero en la sección de Balances.')
+                return false
+            }
             if (!handleProtectedError(err)) setError(err.message)
             return false
         } finally {

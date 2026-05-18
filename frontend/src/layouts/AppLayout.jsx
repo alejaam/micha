@@ -23,6 +23,8 @@ export function AppLayout() {
         periodStatus,
         isMutationLocked,
         currentPeriod,
+        selectedPeriodId,
+        setSelectedPeriodId,
     } = useAppShell()
 
     if (!isAuthenticated) {
@@ -48,10 +50,12 @@ export function AppLayout() {
                     periodStatus={periodStatus}
                     isMutationLocked={isMutationLocked}
                     currentPeriod={currentPeriod}
+                    selectedPeriodId={selectedPeriodId}
+                    onSelectPeriod={setSelectedPeriodId}
                 />
                 <Outlet />
                 <BottomNav householdId={householdId} />
-                <TimeSimulator onAdvanced={handleReload} />
+                <TimeSimulator />
             </div>
         </HouseholdDataProvider>
     )

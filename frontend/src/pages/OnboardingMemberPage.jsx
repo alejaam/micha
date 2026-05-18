@@ -32,11 +32,7 @@ export function OnboardingMemberPage() {
                 monthlySalaryCents: salaryCents,
             })
             await loadHouseholds()
-            if (typeof window !== 'undefined') {
-                window.location.assign('/')
-            } else {
-                navigate('/', { replace: true })
-            }
+            navigate('/', { replace: true })
         } catch (err) {
             if (!handleProtectedError(err)) setError(err.message)
         } finally {

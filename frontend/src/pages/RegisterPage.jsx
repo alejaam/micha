@@ -24,7 +24,7 @@ export function RegisterPage() {
     async function handleSubmit(e) {
         e.preventDefault()
         if (!passwordsMatch) {
-            setError('Passwords do not match.')
+            setError('Las contraseñas no coinciden.')
             return
         }
         setBusy(true)
@@ -33,7 +33,7 @@ export function RegisterPage() {
             await register({ email: email.trim(), password })
             // Auto-login with the same credentials — no need to type them again
             await login({ email: email.trim(), password })
-            navigate('/', { replace: true })
+            navigate('/onboarding/household', { replace: true })
         } catch (err) {
             setError(err.message)
         } finally {
@@ -42,35 +42,35 @@ export function RegisterPage() {
     }
 
     return (
-        <section className="authCard card" aria-label="Create account">
+        <section className="authCard card" aria-label="Crear cuenta">
             <div className="authHeader">
-                <p className="authEyebrow">Welcome to micha</p>
-                <h1 className="authTitle">Create your account</h1>
-                <p className="authMeta">Create credentials to start tracking shared expenses.</p>
+                <p className="authEyebrow">Bienvenido a micha</p>
+                <h1 className="authTitle">Crear tu cuenta</h1>
+                <p className="authMeta">Crea tus credenciales para empezar a registrar gastos compartidos.</p>
             </div>
 
             <div className="authSwitch">
-                <Link to="/login" className="btn btnGhost btnSm">Sign in</Link>
-                <span className="btn btnPrimary btnSm">Create account</span>
+                <Link to="/login" className="btn btnGhost btnSm">Iniciar sesión</Link>
+                <span className="btn btnPrimary btnSm">Crear cuenta</span>
             </div>
 
             {error ? <Banner type="error">{error}</Banner> : null}
 
             <form className="formStack" onSubmit={handleSubmit} noValidate>
-                <FormField label="Email" htmlFor="regEmail">
+                <FormField label="Correo electrónico" htmlFor="regEmail">
                     <input
                         id="regEmail"
                         className="input"
                         type="email"
                         autoComplete="email"
-                        placeholder="you@example.com"
+                        placeholder="tu@ejemplo.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         disabled={busy}
                     />
                 </FormField>
 
-                <FormField label="Password" htmlFor="regPassword">
+                <FormField label="Contraseña" htmlFor="regPassword">
                     <input
                         id="regPassword"
                         className="input"
@@ -83,7 +83,7 @@ export function RegisterPage() {
                     />
                 </FormField>
 
-                <FormField label="Confirm password" htmlFor="regConfirmPassword">
+                <FormField label="Confirmar contraseña" htmlFor="regConfirmPassword">
                     <input
                         id="regConfirmPassword"
                         className="input"
@@ -95,12 +95,12 @@ export function RegisterPage() {
                         disabled={busy}
                     />
                     {confirmPassword && !passwordsMatch && (
-                        <p className="formHint formHintError">Passwords do not match</p>
+                        <p className="formHint formHintError">Las contraseñas no coinciden</p>
                     )}
                 </FormField>
 
                 <button type="submit" className="btn btnPrimary btnFull" disabled={!canSubmit}>
-                    {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Creating account…</> : 'Create account'}
+                    {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Creando cuenta…</> : 'Crear cuenta'}
                 </button>
             </form>
         </section>

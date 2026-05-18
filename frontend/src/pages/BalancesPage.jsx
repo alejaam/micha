@@ -15,6 +15,8 @@ export function BalancesPage() {
         currentPeriod,
         reloadPeriod,
         handleReload: reloadShell,
+        consensus,
+        loadConsensus,
     } = useAppShell()
 
     const {
@@ -76,11 +78,14 @@ export function BalancesPage() {
                 onStatusChange={({ message: statusMessage } = {}) => {
                     reloadPeriod()
                     reloadShell()
+                    const targetId = currentPeriod?.id
+                    if (targetId) loadConsensus(targetId)
                     if (statusMessage) setMessage(statusMessage)
                 }}
                 isOwner={isOwner}
                 members={members}
                 currentUserMemberId={currentMember?.id}
+                consensus={consensus}
             />
 
             <div className="dashboardCol">

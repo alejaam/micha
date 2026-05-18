@@ -87,13 +87,13 @@ export function ExpenseModal({
                 // Fallback: use hardcoded categories if backend fails
                 if (!cancelled) {
                     setCategories([
-                        { id: 'rent', slug: 'rent', name: 'Rent', is_default: true },
+                        { id: 'rent', slug: 'rent', name: 'Renta', is_default: true },
                         { id: 'auto', slug: 'auto', name: 'Auto', is_default: true },
-                        { id: 'streaming', slug: 'streaming', name: 'Streaming / Services', is_default: true },
-                        { id: 'food', slug: 'food', name: 'Food', is_default: true },
+                        { id: 'streaming', slug: 'streaming', name: 'Streaming / Servicios', is_default: true },
+                        { id: 'food', slug: 'food', name: 'Comida', is_default: true },
                         { id: 'personal', slug: 'personal', name: 'Personal', is_default: true },
-                        { id: 'savings', slug: 'savings', name: 'Savings', is_default: true },
-                        { id: 'other', slug: 'other', name: 'Other', is_default: true },
+                        { id: 'savings', slug: 'savings', name: 'Ahorros', is_default: true },
+                        { id: 'other', slug: 'other', name: 'Otro', is_default: true },
                     ])
                     if (!category) setCategory('other')
                 }

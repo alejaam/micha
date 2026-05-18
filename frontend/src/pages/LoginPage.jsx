@@ -29,35 +29,35 @@ export function LoginPage() {
     }
 
     return (
-        <section className="authCard card" aria-label="Sign in">
+        <section className="authCard card" aria-label="Iniciar sesión">
             <div className="authHeader">
-                <p className="authEyebrow">Welcome to micha</p>
-                <h1 className="authTitle">Sign in to your household</h1>
-                <p className="authMeta">Use your registered email and password to continue.</p>
+                <p className="authEyebrow">Bienvenido a micha</p>
+                <h1 className="authTitle">Iniciar sesión en tu hogar</h1>
+                <p className="authMeta">Usa tu correo y contraseña registrados para continuar.</p>
             </div>
 
             <div className="authSwitch">
-                <span className="btn btnPrimary btnSm">Sign in</span>
-                <Link to="/register" className="btn btnGhost btnSm">Create account</Link>
+                <span className="btn btnPrimary btnSm">Iniciar sesión</span>
+                <Link to="/register" className="btn btnGhost btnSm">Crear cuenta</Link>
             </div>
 
             {error ? <Banner type="error">{error}</Banner> : null}
 
             <form className="formStack" onSubmit={handleSubmit} noValidate>
-                <FormField label="Email" htmlFor="loginEmail">
+                <FormField label="Correo electrónico" htmlFor="loginEmail">
                     <input
                         id="loginEmail"
                         className="input"
                         type="email"
                         autoComplete="email"
-                        placeholder="you@example.com"
+                        placeholder="tu@ejemplo.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         disabled={busy}
                     />
                 </FormField>
 
-                <FormField label="Password" htmlFor="loginPassword">
+                <FormField label="Contraseña" htmlFor="loginPassword">
                     <input
                         id="loginPassword"
                         className="input"
@@ -71,7 +71,7 @@ export function LoginPage() {
                 </FormField>
 
                 <button type="submit" className="btn btnPrimary btnFull" disabled={!canSubmit}>
-                    {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Signing in…</> : 'Sign in'}
+                    {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Iniciando sesión…</> : 'Iniciar sesión'}
                 </button>
             </form>
         </section>

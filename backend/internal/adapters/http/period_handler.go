@@ -14,6 +14,7 @@ type PeriodHandlerDeps struct {
 	ApprovePeriod      inbound.ApprovePeriodUseCase
 	ClosePeriod        inbound.ClosePeriodUseCase
 	InitializePeriod   inbound.InitializePeriodUseCase
+	GetConsensus       inbound.GetPeriodConsensusUseCase
 	PeriodRepo         outbound.PeriodRepository
 }
 
@@ -22,6 +23,7 @@ type PeriodHandler struct {
 	approvePeriod      inbound.ApprovePeriodUseCase
 	closePeriod        inbound.ClosePeriodUseCase
 	initializePeriod   inbound.InitializePeriodUseCase
+	getConsensus       inbound.GetPeriodConsensusUseCase
 	periodRepo         outbound.PeriodRepository
 }
 
@@ -31,6 +33,7 @@ func newPeriodHandler(deps PeriodHandlerDeps) *PeriodHandler {
 		approvePeriod:      deps.ApprovePeriod,
 		closePeriod:        deps.ClosePeriod,
 		initializePeriod:   deps.InitializePeriod,
+		getConsensus:       deps.GetConsensus,
 		periodRepo:         deps.PeriodRepo,
 	}
 }
@@ -166,6 +169,24 @@ func (h *PeriodHandler) handleGetCurrent(w http.ResponseWriter, r *http.Request)
 			"created_at":   attrs.CreatedAt,
 			"updated_at":   attrs.UpdatedAt,
 		},
+	})
+}
+
+func (h *PeriodHandler) handleGetConsensus(w http.ResponseWriter, r *http.Request) {
+	householdID := r.PathValue("household_id")
+	periodID := r.PathValue("period_id")
+
+	output, err := h.getConsensus.Execute(r.Context(), inbound.GetPeriodConsensusInput{
+		HouseholdID: householdID,
+		PeriodID:    periodID,
+	})
+	if err != nil {
+		writeError(w, http.StatusNotFound, "NOT_FOUND", "period not found")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"data": output,
 	})
 }
 

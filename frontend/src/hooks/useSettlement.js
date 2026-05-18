@@ -4,10 +4,14 @@ import { getSettlement } from '../api'
 export function useSettlement({
     isAuthenticated,
     householdId,
+    periodId,
     handleProtectedError,
     onUnexpectedError,
     shouldIgnoreError,
 }) {
+    // Note: periodId is accepted for future use (e.g., fetching settlement
+    // for a specific historical period). Currently the settlement panel uses
+    // its own year/month picker, so periodId is not yet wired into the fetch.
     const [settlement, setSettlement] = useState(null)
     const [loadingSettlement, setLoadingSettlement] = useState(false)
     const [settlementYear, setSettlementYear] = useState(new Date().getUTCFullYear())

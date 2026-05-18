@@ -1,31 +1,9 @@
 import { useEffect, useState } from 'react';
-import { getCurrentPeriod } from '../api';
+import { getCurrentPeriod, getPeriodConsensus } from '../api';
 
 /**
  * Hook for managing the dashboard UI contextual state (ribbon status, active views).
  */
-const PERIOD_STATUS_MAP = {
-    open: {
-        stateLabel: '[OPEN]',
-        description: 'Periodo abierto — puedes registrar y editar gastos.',
-    },
-    review: {
-        stateLabel: '[REVIEW]',
-        description: 'Periodo en revisión — las acciones de edición están bloqueadas temporalmente.',
-    },
-    closed: {
-        stateLabel: '[CLOSED]',
-        description: 'Periodo cerrado — ya no se permiten cambios en gastos.',
-    },
-}
-
-export function buildRibbonState(status = 'open') {
-    const normalizedStatus = PERIOD_STATUS_MAP[status] ? status : 'open'
-    return {
-        status: normalizedStatus,
-        ...PERIOD_STATUS_MAP[normalizedStatus],
-    }
-}
 
 export function buildConsensusState({ approved = 0, total = 0, source = 'derived' } = {}) {
     const safeTotal = Math.max(0, Number(total) || 0)
@@ -45,6 +23,13 @@ export function useDashboardUxState(householdId) {
     const [periodStatus, setPeriodStatus] = useState('open');
     const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
     const [isLoadingPeriod, setIsLoadingPeriod] = useState(false);
+
+    // C9: Selected period state
+    const [selectedPeriodId, setSelectedPeriodId] = useState(null);
+
+    // C7: Real consensus state
+    const [consensus, setConsensus] = useState({ approved: 0, total: 0, percent: 0, source: 'pending' });
+    const [consensusLoading, setConsensusLoading] = useState(false);
 
     const loadPeriod = async () => {
         if (!householdId) return;
@@ -69,17 +54,50 @@ export function useDashboardUxState(householdId) {
         }
     }
 
+    // Load consensus when household and period are available
+    const loadConsensus = async (periodId) => {
+        if (!householdId || !periodId) {
+            setConsensus({ approved: 0, total: 0, percent: 0, source: 'pending' });
+            return;
+        }
+        try {
+            setConsensusLoading(true);
+            const data = await getPeriodConsensus({ householdId, periodId });
+            if (data) {
+                setConsensus(buildConsensusState({
+                    approved: data.approved ?? data.approved_count ?? 0,
+                    total: data.total ?? data.total_members ?? 0,
+                    source: 'api',
+                }));
+            } else {
+                setConsensus({ approved: 0, total: 0, percent: 0, source: 'empty' });
+            }
+        } catch (err) {
+            console.error('Failed to load consensus:', err);
+            setConsensus({ approved: 0, total: 0, percent: 0, source: 'error' });
+        } finally {
+            setConsensusLoading(false);
+        }
+    };
+
     useEffect(() => {
         loadPeriod();
     }, [householdId]);
+
+    // Reload consensus when period changes
+    useEffect(() => {
+        const targetId = selectedPeriodId || currentPeriod?.id;
+        if (targetId) {
+            loadConsensus(targetId);
+        }
+    }, [currentPeriod?.id, selectedPeriodId, householdId]);
 
     const openBottomSheet = () => setIsBottomSheetOpen(true);
     const closeBottomSheet = () => setIsBottomSheetOpen(false);
 
     // Business rule: lock mutations during 'review'
-    const normalizedPeriodStatus = buildRibbonState(periodStatus).status
-    const isMutationLocked = normalizedPeriodStatus === 'review' || normalizedPeriodStatus === 'closed';
-    const consensus = buildConsensusState({ approved: 0, total: 0, source: 'mock' })
+    const statusForLock = periodStatus === 'review' || periodStatus === 'closed' ? periodStatus : 'open'
+    const isMutationLocked = statusForLock === 'review' || statusForLock === 'closed';
 
     return {
         currentPeriod,
@@ -90,7 +108,11 @@ export function useDashboardUxState(householdId) {
         closeBottomSheet,
         isMutationLocked,
         consensus,
+        consensusLoading,
+        loadConsensus,
         loadPeriod,
         isLoadingPeriod,
+        selectedPeriodId,
+        setSelectedPeriodId,
     };
 }

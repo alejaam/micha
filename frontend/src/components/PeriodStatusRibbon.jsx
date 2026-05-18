@@ -1,22 +1,37 @@
-import { buildRibbonState } from '../hooks/useDashboardUxState'
-
 /**
- * PeriodStatusRibbon — compact status strip for the current period lifecycle.
+ * PeriodStatusRibbon — compact inline chip for the current period lifecycle.
+ * Renders as <span> for inline placement in header.
+ *
+ * Status → label mapping:
+ *   open   → "Abierto"   (green)
+ *   review → "Revisión"  (amber)
+ *   closed → "Cerrado"   (gray)
  */
+const CHIP_LABELS = {
+    open: 'Abierto',
+    review: 'Revisión',
+    closed: 'Cerrado',
+}
+
+const CHIP_DESCRIPTIONS = {
+    open: 'Periodo abierto — puedes registrar y editar gastos.',
+    review: 'Periodo en revisión — las acciones de edición están bloqueadas temporalmente.',
+    closed: 'Periodo cerrado — ya no se permiten cambios en gastos.',
+}
+
 export function PeriodStatusRibbon({ status = 'open' }) {
-    const ribbonState = buildRibbonState(status)
-    const { status: normalizedStatus, stateLabel, description } = ribbonState
+    const normalizedStatus = CHIP_LABELS[status] ? status : 'open'
+    const label = CHIP_LABELS[normalizedStatus]
+    const description = CHIP_DESCRIPTIONS[normalizedStatus]
 
     return (
-        <div
-            className={`periodStatusRibbon periodStatusRibbon-${normalizedStatus}`}
+        <span
+            className={`periodChip periodChip-${normalizedStatus}`}
             role="status"
-            aria-live="polite"
             aria-label={`Estado del periodo: ${description}`}
         >
-            <span className="periodStatusRibbonLabel">PERIOD</span>
-            <span className="periodStatusRibbonState">{stateLabel}</span>
-            <span className="periodStatusRibbonText">{description}</span>
-        </div>
+            <span className="periodChipDot" aria-hidden>●</span>
+            <span className="periodChipLabel">{label}</span>
+        </span>
     )
 }
