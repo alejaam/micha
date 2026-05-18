@@ -121,8 +121,8 @@ func (m *mockMemberRepo2) ListByHousehold(_ context.Context, _ string, _, _ int)
 func (m *mockMemberRepo2) ListHouseholdIDsByUserID(_ context.Context, _ string) ([]string, error) {
 	return nil, nil
 }
-func (m *mockMemberRepo2) Update(_ context.Context, _ member.Member) error   { return nil }
-func (m *mockMemberRepo2) Delete(_ context.Context, _ string) error          { return nil }
+func (m *mockMemberRepo2) Update(_ context.Context, _ member.Member) error { return nil }
+func (m *mockMemberRepo2) Delete(_ context.Context, _ string) error        { return nil }
 func (m *mockMemberRepo2) CountActiveByHousehold(_ context.Context, _ string) (int, error) {
 	return 0, nil
 }
@@ -194,7 +194,7 @@ func (m *mockInstallmentRepo) ListByHouseholdAndPeriod(_ context.Context, _ stri
 }
 
 // Unused interface methods
-func (m *mockInstallmentRepo) Save(_ context.Context, _ installment.Installment) error    { return nil }
+func (m *mockInstallmentRepo) Save(_ context.Context, _ installment.Installment) error { return nil }
 func (m *mockInstallmentRepo) SaveAll(_ context.Context, _ []installment.Installment) error {
 	return nil
 }

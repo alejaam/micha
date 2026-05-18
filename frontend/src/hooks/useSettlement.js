@@ -4,7 +4,6 @@ import { getSettlement } from '../api'
 export function useSettlement({
     isAuthenticated,
     householdId,
-    periodId,
     handleProtectedError,
     onUnexpectedError,
     shouldIgnoreError,

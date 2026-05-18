@@ -24,8 +24,8 @@ func main() {
 
 	for rows.Next() {
 		var id, hid, name, slug string
-		if err := rows.Scan(&id, &hid, &name, &slug); err != nil {
-			log.Fatalf("Scan failed: %v\n", err)
+		if scanErr := rows.Scan(&id, &hid, &name, &slug); scanErr != nil {
+			log.Fatalf("Scan failed: %v\n", scanErr)
 		}
 		fmt.Printf("Cat: %s, Household: %s, Name: %s, Slug: %s\n", id, hid, name, slug)
 	}

@@ -33,7 +33,7 @@ func (u LoginUseCase) Execute(ctx context.Context, input inbound.LoginInput) (in
 		return inbound.LoginOutput{}, fmt.Errorf("login: %w", err)
 	}
 
-	if err := u.hasher.Verify(input.Password, foundUser.PasswordHash()); err != nil {
+	if verifyErr := u.hasher.Verify(input.Password, foundUser.PasswordHash()); verifyErr != nil {
 		return inbound.LoginOutput{}, shared.ErrInvalidCredentials
 	}
 

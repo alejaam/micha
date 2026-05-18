@@ -4,6 +4,7 @@ import { StepIndicator } from '../ui/auth'
 import { useSlideDirection } from '../hooks/useSlideDirection'
 import { useAuth } from '../context/AuthContext'
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const ONBOARDING_STEPS = [
     { path: '/onboarding/household', label: 'Hogar' },
     { path: '/onboarding/cards', label: 'Tarjetas' },

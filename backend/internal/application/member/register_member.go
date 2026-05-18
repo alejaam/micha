@@ -75,7 +75,9 @@ func (u RegisterMemberUseCase) Execute(ctx context.Context, input inbound.Regist
 	// not the raw input string, to avoid mismatches caused by whitespace or casing.
 	if m.UserID() == "" && input.CallerUserID != "" &&
 		strings.EqualFold(m.Email(), strings.TrimSpace(input.CallerEmail)) {
-		m.LinkUser(input.CallerUserID)
+		if linkErr := m.LinkUser(input.CallerUserID); linkErr != nil {
+			return inbound.RegisterMemberOutput{}, fmt.Errorf("register member: %w", linkErr)
+		}
 	}
 
 	if err := u.repo.Save(ctx, m); err != nil {

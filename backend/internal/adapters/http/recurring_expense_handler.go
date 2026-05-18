@@ -64,12 +64,12 @@ func (h recurringExpenseHandler) handleCreate(w http.ResponseWriter, r *http.Req
 
 	var endDate *time.Time
 	if body.EndDate != nil {
-		parsed, err := time.Parse(time.DateOnly, *body.EndDate)
-		if err != nil {
+		parsedEnd, parseErr := time.Parse(time.DateOnly, *body.EndDate)
+		if parseErr != nil {
 			writeError(w, http.StatusBadRequest, "INVALID_END_DATE", "end_date must be in YYYY-MM-DD format")
 			return
 		}
-		endDate = &parsed
+		endDate = &parsedEnd
 	}
 
 	input := inbound.CreateRecurringExpenseInput{

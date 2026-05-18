@@ -7,11 +7,6 @@ import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
 import { FormField } from '../ui/FormField'
 
-const SETTLEMENT_HINTS = {
-    equal: 'Cada miembro paga la misma parte, sin importar ingresos.',
-    proportional: 'Los miembros que ganan más contribuyen con una mayor parte de los gastos.',
-}
-
 function preferredCardStorageKey(householdId) {
     return `micha_preferred_card_${householdId}`
 }

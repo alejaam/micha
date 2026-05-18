@@ -65,7 +65,7 @@ func (u ApprovePeriodUseCase) Execute(ctx context.Context, input inbound.Approve
 
 	now := u.now()
 	var a periodapproval.PeriodApproval
-	
+
 	if err == nil {
 		// Update existing
 		attrs := existing.Attributes()
