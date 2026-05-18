@@ -31,11 +31,16 @@ export function PeriodHistory({ householdId }) {
 
     if (closedPeriods.length === 0) return null
 
+    // Filter out null/undefined periods to prevent errors
+    const validClosedPeriods = closedPeriods.filter(Boolean)
+
+    if (validClosedPeriods.length === 0) return null
+
     return (
         <section className="card" aria-label="Historial de periodos">
             <h2 className="sectionTitle">Historial de periodos</h2>
             <div className="periodHistoryList">
-                {closedPeriods.map((p) => {
+                {validClosedPeriods.map((p) => {
                     const startDate = p?.start_date || p?.StartDate
                     const endDate = p?.end_date || p?.EndDate
                     if (!startDate || !endDate) return null
