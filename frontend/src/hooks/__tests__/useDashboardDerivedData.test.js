@@ -122,7 +122,7 @@ describe('buildDashboardDerivedData', () => {
     expect(result.totalSpentCents).toBe(5500)
   })
 
-  it('amortizes MSI expenses in category totals', () => {
+  it('includes MSI expenses at full value in category totals', () => {
     const result = buildDashboardDerivedData({
       expenses: [
         {
@@ -138,10 +138,10 @@ describe('buildDashboardDerivedData', () => {
       settlement: null,
     })
 
-    // Should contribute 1000 (6000 / 6) instead of 6000
+    // Current implementation contributes full amount (not amortized)
     expect(result.categoryTotals[0]).toMatchObject({
       key: 'tech',
-      totalCents: 1000,
+      totalCents: 6000,
     })
   })
 

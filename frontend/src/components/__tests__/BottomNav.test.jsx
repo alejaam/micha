@@ -7,7 +7,7 @@ function renderNav(path = '/') {
   window.history.pushState({}, '', path)
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <BottomNav />
+      <BottomNav householdId="hh-1" />
     </MemoryRouter>,
   )
 }

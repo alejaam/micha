@@ -2,7 +2,6 @@ import { renderHook, act } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import {
   buildConsensusState,
-  buildRibbonState,
   useDashboardUxState,
 } from '../useDashboardUxState'
 
@@ -43,28 +42,14 @@ describe('useDashboardUxState', () => {
     expect(result.current.isBottomSheetOpen).toBe(false)
   })
 
-  it('exposes a default mock consensus state', () => {
+  it('exposes a default pending consensus state', () => {
     const { result } = renderHook(() => useDashboardUxState('open'))
     expect(result.current.consensus).toEqual({
       approved: 0,
       total: 0,
       percent: 0,
-      source: 'mock',
+      source: 'pending',
     })
-  })
-})
-
-describe('buildRibbonState', () => {
-  it('returns review content for review status', () => {
-    expect(buildRibbonState('review')).toEqual({
-      status: 'review',
-      stateLabel: '[REVIEW]',
-      description: 'Periodo en revisión — las acciones de edición están bloqueadas temporalmente.',
-    })
-  })
-
-  it('falls back to open for unknown status', () => {
-    expect(buildRibbonState('invalid').status).toBe('open')
   })
 })
 

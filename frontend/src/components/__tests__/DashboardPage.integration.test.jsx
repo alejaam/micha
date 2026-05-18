@@ -35,7 +35,12 @@ vi.mock('recharts', () => ({
   Tooltip: () => null,
 }))
 
+const mockUseAppShell = vi.fn()
 const mockUseHouseholdData = vi.fn()
+
+vi.mock('../../context/AppShellContext', () => ({
+  useAppShell: () => mockUseAppShell(),
+}))
 
 vi.mock('../../hooks/useHouseholdData', () => ({
   useHouseholdData: () => mockUseHouseholdData(),
@@ -92,6 +97,9 @@ function makeDefaultState(overrides = {}) {
 }
 
 function renderDashboard(custom = {}) {
+  mockUseAppShell.mockReturnValue({
+    currentPeriod: { id: 'p1', status: 'open' },
+  })
   mockUseHouseholdData.mockReturnValue(makeDefaultState(custom))
 
   return render(
@@ -109,10 +117,10 @@ describe('DashboardPage integration', () => {
   it('renders overview sections and priority strip when data exists', () => {
     renderDashboard()
 
-    expect(screen.getByText(/balances y conciliación primero/i)).toBeInTheDocument()
-    expect(screen.getByText(/transferencias pendientes/i)).toBeInTheDocument()
+    expect(screen.getByText('Este mes')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /gastos recientes/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /ver balances →/i })).toBeInTheDocument()
+    expect(screen.getByText('Ver todos los movimientos →')).toBeInTheDocument()
   })
 
   it('shows empty state when no expenses exist', () => {
@@ -138,8 +146,8 @@ describe('DashboardPage integration', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /añadir rápido/i }))
 
-    fireEvent.change(screen.getByLabelText(/amount in dollars/i), { target: { value: '12.50' } })
-    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'Milk' } })
+    fireEvent.change(screen.getByLabelText(/Monto/i), { target: { value: '12.50' } })
+    fireEvent.change(screen.getByLabelText(/Descripción/i), { target: { value: 'Milk' } })
 
     const form = screen.getByRole('dialog', { name: /añadir rápido/i }).querySelector('form')
     fireEvent.submit(form)

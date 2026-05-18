@@ -1,10 +1,12 @@
 package httpadapter
 
 import (
+	"errors"
 	"net/http"
 
 	appshared "micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/period"
+	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
 )
@@ -47,7 +49,12 @@ func (h *PeriodHandler) handleInitialize(w http.ResponseWriter, r *http.Request)
 		CurrentUserID: userID,
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		switch {
+		case errors.Is(err, shared.ErrForbidden):
+			writeError(w, http.StatusForbidden, "FORBIDDEN", err.Error())
+		default:
+			writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		}
 		return
 	}
 
@@ -65,7 +72,12 @@ func (h *PeriodHandler) handleTransitionToReview(w http.ResponseWriter, r *http.
 		CurrentUserID: userID,
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		switch {
+		case errors.Is(err, shared.ErrForbidden):
+			writeError(w, http.StatusForbidden, "FORBIDDEN", err.Error())
+		default:
+			writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		}
 		return
 	}
 
@@ -93,7 +105,12 @@ func (h *PeriodHandler) handleApprove(w http.ResponseWriter, r *http.Request) {
 		Comment:       input.Comment,
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		switch {
+		case errors.Is(err, shared.ErrForbidden):
+			writeError(w, http.StatusForbidden, "FORBIDDEN", err.Error())
+		default:
+			writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		}
 		return
 	}
 
@@ -119,7 +136,12 @@ func (h *PeriodHandler) handleClose(w http.ResponseWriter, r *http.Request) {
 		Force:         input.Force,
 	})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		switch {
+		case errors.Is(err, shared.ErrForbidden):
+			writeError(w, http.StatusForbidden, "FORBIDDEN", err.Error())
+		default:
+			writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
+		}
 		return
 	}
 

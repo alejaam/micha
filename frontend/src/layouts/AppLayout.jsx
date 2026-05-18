@@ -1,7 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
 import { BottomNav } from '../components/BottomNav'
-import { TimeSimulator } from '../components/TimeSimulator'
 import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { HouseholdDataProvider } from '../hooks/useHouseholdData'
@@ -55,7 +54,6 @@ export function AppLayout() {
                 />
                 <Outlet />
                 <BottomNav householdId={householdId} />
-                <TimeSimulator />
             </div>
         </HouseholdDataProvider>
     )

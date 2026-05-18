@@ -489,31 +489,85 @@ Eliminar fricción de captura y acelerar resumen mensual.
 
 ---
 
-## Plantilla obligatoria para cada iteración
-
-### Iteración 00X — <título>
-- Fecha: YYYY-MM-DD
-- Fase:
+### Iteración 006 — UX Polish y Period Guardrails
+- Fecha: 2026-05-17
+- Fase: Intermedia (entre Phase 3 y Phase 4)
 - Objetivo:
+  - pulir UX, traducir UI a español, endurecer seguridad de backend y añadir navegación entre periodos.
 - MEM:
-  -
+  - backend tenía time simulator (deuda técnica de producción), period close permitía a no-owners cerrar por consenso.
+  - frontend: mixed English/Spanish, onboarding roto (sin periodo inicial), datos de consenso mock, sin selector de periodo, componentes UI oversize.
+  - decisión: tres PRs verticales (A: backend, B: onboarding+i18n, C: period UX).
 - SEQ:
-  -
+  - SDD completo: proposal → specs → design → tasks → apply (3 PRs) → verify → archive.
+  - PR A mergeó antes de PR C (consensus endpoint necesario desde frontend).
 - THINK:
   - Hipótesis:
+    - PRs independientes reducen riesgo de regresión y permiten rollback por slice.
+    - backend-first asegura que frontend tenga endpoints reales.
   - Validación ejecutada:
+    - `cd backend && go test -race ./...` ✅ (214 tests, 0 fallos, race detector clean).
+    - `cd frontend && npm run build` ✅ (0 errores, 0 warnings).
+    - `cd frontend && npx vitest run` ❌ 15 fallos (7 del cambio, 8 pre-existentes).
   - Resultado:
+    - ✅ Time simulator removido (dev_handler.go eliminado, clock.go simplificado).
+    - ✅ Owner-only period close en ambos paths (consenso y force).
+    - ✅ Endpoint `GET .../periods/{pid}/consensus` operativo.
+    - ✅ Onboarding: register → household → member → dashboard funcional.
+    - ✅ UI 100% en español (Login, Register, ExpenseForm, IncomesPanel, etc.).
+    - ✅ Chip compacto de estado de periodo (~80×24px) en header.
+    - ✅ Barra apilada 100% para ingresos con leyenda.
+    - ✅ Datos reales de consenso (no mock 50%).
+    - ✅ Selector global de periodo con "Volver al actual".
+    - ⚠️ initializePeriod no se llama automáticamente en onboarding (gap parcial).
+    - ⚠️ 15 tests frontend rotos por test drift.
   - Decisión siguiente:
+    - continuar con Phase 4 (gastos recurrentes) según roadmap original.
+    - abordar issues conocidos como P1/P2: error mapping handleClose→403, cleanup TimeSimulator dead code, auto-init periodo en onboarding, frontend test fixes.
 - Cambios por capa:
   - Domain:
+    - sin cambios (solo use cases nuevos/get_period_consensus.go).
   - Application:
+    - `close_period.go`: owner check reposicionado antes de consenso.
+    - `get_period_consensus.go`: nuevo caso de uso para estadísticas de aprobación.
+    - `shared/clock.go`: simplificado (remove simulación, `Now()` → `time.Now()`).
   - Ports:
+    - `inbound/period_usecases.go`: nuevo `GetConsensusUseCase` + `GetConsensusInput/Output`.
   - Adapters:
+    - `dev_handler.go`: eliminado (ruta `/v1/dev/time-offset`).
+    - `period_handler.go`: nuevo `handleGetConsensus`, route registrada.
+    - `server.go`: removido `IsDev` field, dev route, devHandler import.
+    - `cmd/api/main.go`: wired `GetPeriodConsensusUseCase`.
   - DB/Migrations:
+    - sin cambios.
   - Frontend:
+    - PR A: removed `advanceTime` de api.js, TimeSimulator.jsx → null.
+    - PR B: onboarding flow fix (redirect + period init opción), i18n español (Login, Register, ExpenseForm, IncomesPanel, ConsensusProgressRing).
+    - PR C: PeriodStatusRibbon → chip compacto, IncomesPanel → stacked bar, real consensus data, PeriodSelector.jsx (nuevo), selectedPeriodId state via AppShellContext.
 - Archivos clave:
-  -
+  - `backend/internal/application/period/close_period.go`
+  - `backend/internal/application/period/get_period_consensus.go`
+  - `backend/internal/application/shared/clock.go`
+  - `backend/internal/adapters/http/dev_handler.go` (eliminado)
+  - `backend/internal/adapters/http/period_handler.go`
+  - `backend/internal/adapters/http/server.go`
+  - `backend/cmd/api/main.go`
+  - `frontend/src/pages/RegisterPage.jsx`
+  - `frontend/src/pages/LoginPage.jsx`
+  - `frontend/src/components/ExpenseForm.jsx`
+  - `frontend/src/components/PeriodStatusRibbon.jsx`
+  - `frontend/src/components/IncomesPanel.jsx`
+  - `frontend/src/components/PeriodSelector.jsx` (nuevo)
+  - `frontend/src/hooks/useDashboardUxState.js`
+  - `frontend/src/api.js`
+  - `frontend/src/components/AppHeader.jsx`
+  - `frontend/src/styles.css`
+  - SDD artifacts: engram obs #288–#297
 - Riesgos / deuda:
-  -
+  - clock.go no se eliminó completamente (AD-001 desviación).
+  - TimeSimulator import/render dead code en AppLayout.jsx.
+  - handleClose siempre retorna 500 (debería mapear ErrForbidden → 403).
+  - initializePeriod no automático en onboarding.
+  - 15 tests frontend fallando (7 por test drift del cambio).
 - Bloqueos (si aplica):
-  -
+  - ninguno.

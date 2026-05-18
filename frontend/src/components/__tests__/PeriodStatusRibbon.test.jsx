@@ -4,13 +4,12 @@ import { MemoryRouter } from 'react-router-dom'
 import { AppHeader } from '../AppHeader'
 import { PeriodStatusRibbon } from '../PeriodStatusRibbon'
 import { AuthProvider } from '../../context/AuthContext'
-import { buildRibbonState } from '../../hooks/useDashboardUxState'
 
 describe('PeriodStatusRibbon', () => {
   it('renders review variant with accessible status text', () => {
     render(<PeriodStatusRibbon status="review" />)
 
-    expect(screen.getByText('[REVIEW]')).toBeInTheDocument()
+    expect(screen.getByText('Revisión')).toBeInTheDocument()
     expect(
       screen.getByRole('status', {
         name: /estado del periodo: periodo en revisión/i,
@@ -20,7 +19,7 @@ describe('PeriodStatusRibbon', () => {
 
   it('falls back to open when status is unknown', () => {
     render(<PeriodStatusRibbon status="unexpected" />)
-    expect(screen.getByText('[OPEN]')).toBeInTheDocument()
+    expect(screen.getByText('Abierto')).toBeInTheDocument()
   })
 })
 
@@ -50,11 +49,4 @@ describe('AppHeader mutation lock wiring', () => {
   })
 })
 
-describe('ribbon state derivation', () => {
-  it('maps closed state to expected content', () => {
-    expect(buildRibbonState('closed')).toMatchObject({
-      status: 'closed',
-      stateLabel: '[CLOSED]',
-    })
-  })
-})
+

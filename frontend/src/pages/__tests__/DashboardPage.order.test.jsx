@@ -123,28 +123,21 @@ describe('DashboardPage DOM order', () => {
     renderDashboard()
 
     // Collect all top-level heading texts in DOM order.
-    // PeriodManagementPanel uses h3.sectionTitle (no aria-label on <section>),
-    // so we find all <h2> and <h3> elements and check their text.
     const headings = document.querySelectorAll('h2, h3')
     const headingTexts = Array.from(headings).map((h) => h.textContent.trim())
 
     // The priority order (h2/h3 texts that should appear):
-    // 1. "Cierre de periodo" (PeriodManagementPanel, compact open state)
-    // 2. "Tu sueldo restante" (RemainingSalaryPanel) or "Este mes" (ExpenseSummary)
-    // 3. "Gastos recientes" (RecentExpenses h2)
-    // 4. "Gráficos dinámicos" (DynamicChartsPanel h2)
-    // 5. Period history
+    // 1. "Este mes" (ExpenseSummary h2) or "Tu sueldo restante" (RemainingSalaryPanel h3)
+    // 2. "Gastos recientes" (RecentExpenses h2)
+    // 3. "Gráficos dinámicos" (DynamicChartsPanel h2)
+    // 4. Period history
 
-    const cierreIdx = headingTexts.findIndex((t) => t.includes('Cierre de periodo'))
     const sueldoIdx = headingTexts.findIndex((t) => t === 'Tu sueldo restante')
     const esteMesIdx = headingTexts.findIndex((t) => t === 'Este mes')
     const recientesIdx = headingTexts.findIndex((t) => t === 'Gastos recientes')
     const graficosIdx = headingTexts.findIndex((t) => t === 'Gráficos dinámicos')
 
-    // Period management must come first
-    expect(cierreIdx).toBe(0)
-
-    // Salary/Summary should come before RecentExpenses
+    // Summary must come first
     if (sueldoIdx >= 0 && recientesIdx >= 0) {
       expect(sueldoIdx).toBeLessThan(recientesIdx)
     }
