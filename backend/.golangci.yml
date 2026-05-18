@@ -1,33 +1,52 @@
-version: "2"
+# Golangci-lint configuration
 run:
   timeout: 5m
-  tests: true
+  go: '1.23'
+  skip-dirs:
+    - vendor
 
 linters:
   enable:
-    - govet
-    - revive
-    - staticcheck
-    - errcheck
-    - unused
-    - gosimple
-    - ineffassign
-    - typecheck
-    - shadow
-  settings:
-    revive:
-      rules:
-        - name: package-comments
-          disabled: true
-        - name: exported
-          disabled: true
-    staticcheck:
-      checks: ["all"]
-    errcheck:
-      check-type-assertions: true
-      check-blank: true
+    - errcheck      # Check for unchecked errors
+    - gosimple      # Simplify code
+    - govet         # Vet examines Go source code
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Static analysis
+    - unused        # Check for unused constants, variables, functions
+    - gocritic      # Provides diagnostics that check for bugs, performance and style issues
+    - gofmt         # Check if code was gofmt-ed
+    - goimports     # Check import statements
+    - misspell      # Find commonly misspelled English words
+    - revive        # Fast, configurable, extensible, flexible, and beautiful linter for Go
+
+linters-settings:
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - wrapperFunc
+      - dupImport
 
 issues:
-  fix: false
-  max-issues-per-linter: 0
-  max-same-issues: 0
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocritic
+        - gosec
+        - dupl
+  
+  # Maximum issues count per one linter
+  max-issues-per-linter: 50
+  
+  # Maximum count of issues with the same text
+  max-same-issues: 10
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
