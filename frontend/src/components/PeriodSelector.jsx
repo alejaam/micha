@@ -28,6 +28,9 @@ export function PeriodSelector({ periods = [], selectedPeriodId, currentPeriodId
     onSelect(value || null)
   }
 
+  // Filter out null/undefined periods to prevent "undefined is not an object" errors
+  const validPeriods = periods.filter(Boolean)
+
   return (
     <div className="periodSelector">
       <select
@@ -37,9 +40,9 @@ export function PeriodSelector({ periods = [], selectedPeriodId, currentPeriodId
         aria-label="Seleccionar periodo"
       >
         {currentPeriodId && (
-          <option value={currentPeriodId}>Actual — {formatPeriodLabel(periods.find(p => (p?.id || p?.ID) === currentPeriodId))}</option>
+          <option value={currentPeriodId}>Actual — {formatPeriodLabel(validPeriods.find(p => (p?.id || p?.ID) === currentPeriodId))}</option>
         )}
-        {periods
+        {validPeriods
           .filter((p) => {
             const id = p?.id || p?.ID
             return id !== currentPeriodId && parseStatus(p) === 'closed'
