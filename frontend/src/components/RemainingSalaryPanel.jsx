@@ -15,8 +15,10 @@ export function RemainingSalaryPanel({ householdId, memberId, period, currency =
         if (!householdId || !memberId || !period) return
 
         let cancelled = false
-        const from = period.start_date || period.StartDate
-        const to = period.end_date || period.EndDate
+        const from = period?.start_date || period?.StartDate
+        const to = period?.end_date || period?.EndDate
+        
+        if (!from || !to) return
 
         setLoading(true)
         getRemainingSalary({ householdId, memberId, from, to })

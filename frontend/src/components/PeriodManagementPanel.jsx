@@ -47,10 +47,14 @@ export function PeriodManagementPanel({
     }
 
     const handleStartReview = async () => {
+        if (!period?.id && !period?.ID) {
+            setError('No hay periodo activo')
+            return
+        }
         try {
             setSubmitting(true)
             setError('')
-            await transitionPeriodToReview({ householdId, periodId: period.id || period.ID })
+            await transitionPeriodToReview({ householdId, periodId: period?.id || period?.ID })
             onStatusChange()
         } catch (err) {
             setError(err.message)
@@ -60,10 +64,14 @@ export function PeriodManagementPanel({
     }
 
     const handleVote = async (voteStatus) => {
+        if (!period?.id && !period?.ID) {
+            setError('No hay periodo activo')
+            return
+        }
         try {
             setSubmitting(true)
             setError('')
-            await approvePeriod({ householdId, periodId: period.id || period.ID, status: voteStatus })
+            await approvePeriod({ householdId, periodId: period?.id || period?.ID, status: voteStatus })
             onStatusChange()
         } catch (err) {
             setError(err.message)
@@ -73,10 +81,14 @@ export function PeriodManagementPanel({
     }
 
     const handleFinalClose = async (force = false) => {
+        if (!period?.id && !period?.ID) {
+            setError('No hay periodo activo')
+            return
+        }
         try {
             setSubmitting(true)
             setError('')
-            await closePeriod({ householdId, periodId: period.id || period.ID, force })
+            await closePeriod({ householdId, periodId: period?.id || period?.ID, force })
             const now = new Date()
             const currentMonthName = monthNames[now.getMonth()]
             const nextMonthName = monthNames[(now.getMonth() + 1) % 12]

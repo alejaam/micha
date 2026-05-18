@@ -8,7 +8,7 @@ import { UserMenu } from './UserMenu'
 
 function formatPeriodName(period) {
   if (!period) return 'Sin periodo activo'
-  const raw = period.start_date || period.startDate || period.StartDate
+  const raw = period?.start_date || period?.startDate || period?.StartDate
   if (!raw) return 'Periodo actual'
   const start = new Date(raw)
   if (isNaN(start.getTime())) return 'Periodo actual'

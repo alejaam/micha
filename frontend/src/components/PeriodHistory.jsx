@@ -35,16 +35,21 @@ export function PeriodHistory({ householdId }) {
         <section className="card" aria-label="Historial de periodos">
             <h2 className="sectionTitle">Historial de periodos</h2>
             <div className="periodHistoryList">
-                {closedPeriods.map((p) => (
-                    <article key={p.id} className="periodHistoryItem">
-                        <div className="periodDates">
-                            <strong>{new Date(p.start_date || p.StartDate).toLocaleDateString()}</strong>
-                            <span> al </span>
-                            <strong>{new Date(p.end_date || p.EndDate).toLocaleDateString()}</strong>
-                        </div>
-                        <span className="badge badgeClosed">Cerrado</span>
-                    </article>
-                ))}
+                {closedPeriods.map((p) => {
+                    const startDate = p?.start_date || p?.StartDate
+                    const endDate = p?.end_date || p?.EndDate
+                    if (!startDate || !endDate) return null
+                    return (
+                        <article key={p.id} className="periodHistoryItem">
+                            <div className="periodDates">
+                                <strong>{new Date(startDate).toLocaleDateString()}</strong>
+                                <span> al </span>
+                                <strong>{new Date(endDate).toLocaleDateString()}</strong>
+                            </div>
+                            <span className="badge badgeClosed">Cerrado</span>
+                        </article>
+                    )
+                })}
             </div>
         </section>
     )
