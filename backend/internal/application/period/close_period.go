@@ -49,7 +49,6 @@ func NewClosePeriodUseCase(
 	}
 }
 
-
 func (u ClosePeriodUseCase) Execute(ctx context.Context, input inbound.ClosePeriodInput) (inbound.ClosePeriodOutput, error) {
 	// 1. Retrieve the household and current member/actor.
 	h, err := u.householdRepo.FindByID(ctx, input.HouseholdID)

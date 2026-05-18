@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"micha/backend/internal/application/shared"
+	appshared "micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"

@@ -62,7 +62,7 @@ func (u ApprovePeriodUseCase) Execute(ctx context.Context, input inbound.Approve
 
 	// 3. Check if an approval already exists for this member/period.
 	existing, err := u.approvalRepo.GetByMemberAndPeriod(ctx, string(m.ID()), input.PeriodID)
-	
+
 	now := u.now()
 	var a periodapproval.PeriodApproval
 	

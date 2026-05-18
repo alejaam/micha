@@ -108,7 +108,7 @@ func (m *mockMemberRepo2) ListAllByHousehold(_ context.Context, householdID stri
 }
 
 // Unused interface methods
-func (m *mockMemberRepo2) Save(_ context.Context, _ member.Member) error           { return nil }
+func (m *mockMemberRepo2) Save(_ context.Context, _ member.Member) error { return nil }
 func (m *mockMemberRepo2) FindByID(_ context.Context, _ string) (member.Member, error) {
 	return member.Member{}, shared.ErrNotFound
 }
