@@ -202,23 +202,23 @@ export function OnboardingCardsPage() {
                     <p className="u-text-sm u-text-dim">Aún no hay tarjetas. Puedes añadir una ahora o saltar este paso.</p>
                 ) : (
                     <div className="formStack">
-                        {cards.map((item) => (
-                            <div key={item.id} className="u-flex u-items-center u-gap-2">
-                                <label className="sharedToggleLabel u-flex-1" htmlFor={`preferred-card-${item.id}`}>
+                        {cards.filter(Boolean).map((item) => (
+                            <div key={item?.id} className="u-flex u-items-center u-gap-2">
+                                <label className="sharedToggleLabel u-flex-1" htmlFor={`preferred-card-${item?.id}`}>
                                     <input
-                                        id={`preferred-card-${item.id}`}
+                                        id={`preferred-card-${item?.id}`}
                                         type="radio"
                                         name="preferred-card"
-                                        value={item.id}
-                                        checked={selectedCardId === item.id}
-                                        onChange={() => setSelectedCardId(item.id)}
+                                        value={item?.id}
+                                        checked={selectedCardId === item?.id}
+                                        onChange={() => setSelectedCardId(item?.id)}
                                     />
-                                    <span className="sharedToggleText">{item.bank_name} - {item.card_name} (corte {item.cutoff_day})</span>
+                                    <span className="sharedToggleText">{item?.bank_name} - {item?.card_name} (corte {item?.cutoff_day})</span>
                                 </label>
                                 <button
                                     type="button"
                                     className="btn btnSm btnGhostDanger"
-                                    onClick={() => handleDelete(item.id)}
+                                    onClick={() => handleDelete(item?.id)}
                                     title="Eliminar tarjeta"
                                 >
                                     ✕
