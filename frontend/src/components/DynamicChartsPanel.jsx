@@ -46,7 +46,7 @@ export function CategoryDonutChart({ data, currency }) {
       <h3 className="chartPanelTitle">Distribución por categoría</h3>
 
       <div className="chartCanvas chartCanvasDonut">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <PieChart>
             <Tooltip formatter={(value) => chartTooltipValue(value, currency)} />
             <Pie
@@ -85,7 +85,7 @@ export function MemberComparisonChart({ data, currency }) {
       <h3 className="chartPanelTitle">Gasto real vs cuota esperada</h3>
 
       <div className="chartCanvas">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <BarChart data={data} margin={{ top: 10, right: 8, left: 8, bottom: 8 }}>
             <CartesianGrid stroke={CHART_GRID} vertical={false} />
             <XAxis dataKey="memberName" tick={{ fill: CHART_TEXT, fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -117,7 +117,7 @@ export function SpendingTrendChart({ data, currency }) {
       <h3 className="chartPanelTitle">Historial de gastos mensuales</h3>
 
       <div className="chartCanvas">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <LineChart data={data} margin={{ top: 10, right: 8, left: 8, bottom: 8 }}>
             <CartesianGrid stroke={CHART_GRID} vertical={false} />
             <XAxis dataKey="label" tick={{ fill: CHART_TEXT, fontSize: 11 }} axisLine={false} tickLine={false} />

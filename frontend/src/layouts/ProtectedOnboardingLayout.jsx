@@ -1,7 +1,9 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useAppShell } from '../context/AppShellContext'
 import { OnboardingLayout } from './OnboardingLayout'
+
+const POST_ONBOARDING_PATHS = ['/onboarding/household', '/onboarding/cards', '/onboarding/fixed-expenses']
 
 /**
  * ProtectedOnboardingLayout — auth guard for onboarding routes.
@@ -12,10 +14,14 @@ import { OnboardingLayout } from './OnboardingLayout'
  * - No household → allow /onboarding/household creation
  * - Has household but NO member → redirect to /onboarding/member
  * - Has household AND member → redirect to / (onboarding complete)
+ *
+ * Post-onboarding management routes (/onboarding/cards, /onboarding/fixed-expenses)
+ * are always allowed so users can reach them from RulesPage.
  */
 export function ProtectedOnboardingLayout() {
     const { isAuthenticated } = useAuth()
     const { households, loadingHouseholds, members, loadingMembers } = useAppShell()
+    const { pathname } = useLocation()
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />
@@ -38,6 +44,11 @@ export function ProtectedOnboardingLayout() {
     // Has household but no member → redirect to create the first member
     if (members.length === 0) {
         return <Navigate to="/onboarding/member" replace />
+    }
+
+    // Allow post-onboarding management routes even when onboarding is complete
+    if (POST_ONBOARDING_PATHS.includes(pathname)) {
+        return <OnboardingLayout />
     }
 
     // Has household AND member → onboarding complete, redirect to dashboard
