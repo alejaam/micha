@@ -17,6 +17,7 @@ export function BalancesPage() {
         handleReload: reloadShell,
         consensus,
         loadConsensus,
+        isLoadingPeriod,
     } = useAppShell()
 
     const {
@@ -61,6 +62,17 @@ export function BalancesPage() {
     useEffect(() => {
         loadSettlement()
     }, [loadSettlement])
+
+    // Show loading state while period is being fetched
+    if (isLoadingPeriod) {
+        return (
+            <section className="card" aria-label="Cargando periodo">
+                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                    <p className="text-secondary">Cargando periodo...</p>
+                </div>
+            </section>
+        )
+    }
 
     return (
         <motion.div

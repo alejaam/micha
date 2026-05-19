@@ -20,6 +20,7 @@ export function DashboardPage() {
     const navigate = useNavigate()
     const {
         currentPeriod,
+        isLoadingPeriod,
     } = useAppShell()
 
     const {
@@ -78,6 +79,17 @@ export function DashboardPage() {
                     </button>
                 </div>
             </div>
+        )
+    }
+
+    // Show loading state while period is being fetched
+    if (isLoadingPeriod) {
+        return (
+            <section className="card" aria-label="Cargando periodo">
+                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                    <p className="text-secondary">Cargando periodo...</p>
+                </div>
+            </section>
         )
     }
 
