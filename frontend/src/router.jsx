@@ -21,6 +21,9 @@ import { OnboardingMemberPage } from './pages/OnboardingMemberPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { RulesPage } from './pages/RulesPage'
 
+import { ErrorBoundary } from './components/ErrorBoundary'
+import { ErrorPage } from './pages/ErrorPage'
+
 /**
  * Static router — created once at module level so React never tears down and
  * recreates the router tree on state changes inside AppShell.
@@ -30,6 +33,7 @@ const router = createBrowserRouter([
     {
         path: '/',
         element: <AppLayout />,
+        errorElement: <ErrorPage />,
         children: [
             { index: true, element: <DashboardPage /> },
             { path: 'expenses', element: <ExpensesPage /> },
@@ -45,6 +49,7 @@ const router = createBrowserRouter([
     },
     {
         element: <AuthLayout />,
+        errorElement: <ErrorPage />,
         children: [
             { path: '/login', element: <LoginPage /> },
             { path: '/register', element: <RegisterPage /> },
@@ -52,6 +57,7 @@ const router = createBrowserRouter([
     },
     {
         element: <ProtectedOnboardingLayout />,
+        errorElement: <ErrorPage />,
         children: [
             { path: '/onboarding/household', element: <OnboardingHouseholdPage /> },
             { path: '/onboarding/cards', element: <OnboardingCardsPage /> },
@@ -102,6 +108,7 @@ function AppShell() {
         consensus,
         consensusLoading,
         loadConsensus,
+        isLoadingPeriod,
     } = useDashboardUxState(householdId)
 
     const selectedHousehold = useMemo(
@@ -138,6 +145,7 @@ function AppShell() {
         consensus,
         consensusLoading,
         loadConsensus,
+        isLoadingPeriod,
     }), [
         health,
         householdId,
@@ -160,12 +168,15 @@ function AppShell() {
         consensus,
         consensusLoading,
         loadConsensus,
+        isLoadingPeriod,
     ])
 
     return (
-        <AppShellContext.Provider value={shellValue}>
-            <RouterProvider router={router} />
-        </AppShellContext.Provider>
+        <ErrorBoundary>
+            <AppShellContext.Provider value={shellValue}>
+                <RouterProvider router={router} />
+            </AppShellContext.Provider>
+        </ErrorBoundary>
     )
 }
 
