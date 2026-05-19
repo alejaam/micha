@@ -20,10 +20,10 @@ export function HistorySection({
   provisionalReason = '',
   onQuickAdd,
 }) {
-  const safeClosedPeriods = Array.isArray(closedPeriods) ? closedPeriods : []
-  const safeComparisonSeries = Array.isArray(comparisonSeries) ? comparisonSeries : []
-  const safeMemberBalanceTrend = Array.isArray(memberBalanceTrend) ? memberBalanceTrend : []
-  const safeCompletedMsi = Array.isArray(completedMsi) ? completedMsi : []
+  const safeClosedPeriods = Array.isArray(closedPeriods) ? closedPeriods.filter(Boolean) : []
+  const safeComparisonSeries = Array.isArray(comparisonSeries) ? comparisonSeries.filter(Boolean) : []
+  const safeMemberBalanceTrend = Array.isArray(memberBalanceTrend) ? memberBalanceTrend.filter(Boolean) : []
+  const safeCompletedMsi = Array.isArray(completedMsi) ? completedMsi.filter(Boolean) : []
 
   if (!isLoading && safeClosedPeriods.length === 0) {
     return (
