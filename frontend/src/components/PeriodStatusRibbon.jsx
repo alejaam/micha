@@ -1,11 +1,53 @@
+import { formatCurrency } from '../utils'
+
 /**
- * PeriodStatusRibbon — compact inline chip for the current period lifecycle.
- * Renders as <span> for inline placement in header.
+ * PeriodBar — redesigned PeriodStatusRibbon that shows period title, date range,
+ * balance, and status as a full-width bar at the top of the dashboard.
  *
- * Status → label mapping:
- *   open   → "Abierto"   (green)
- *   review → "Revisión"  (amber)
- *   closed → "Cerrado"   (gray)
+ * @param {object} currentPeriod - { startDate, endDate, status }
+ * @param {number} balance       - positive = debt (total spent), negative = owed (overpaid surplus)
+ */
+export function PeriodBar({ currentPeriod = {}, balance = 0 }) {
+    const { startDate, endDate, status = 'open' } = currentPeriod
+
+    const formatDate = (iso) => {
+        if (!iso) return ''
+        const d = new Date(iso)
+        return d.toLocaleDateString('es-MX', { month: 'long', day: 'numeric' })
+    }
+
+    const statusLabel =
+        status === 'open' ? 'Abierto'
+            : status === 'review' ? 'Revisión'
+                : 'Cerrado'
+
+    const balanceLabel = balance >= 0
+        ? formatCurrency(balance)
+        : `-${formatCurrency(Math.abs(balance))}`
+
+    return (
+        <div className="periodBar" role="status" aria-label="Resumen del periodo">
+            <div className="periodBarLeft">
+                <h2 className="periodBarTitle">Periodo actual</h2>
+                <span className="periodBarDate">
+                    {formatDate(startDate)} — {formatDate(endDate)}
+                </span>
+            </div>
+            <div className="periodBarRight">
+                <span className={`periodBarBalance${balance < 0 ? ' negative' : ''}`}>
+                    {balanceLabel}
+                </span>
+                <span className={`periodBarStatus ${status}`}>
+                    {statusLabel}
+                </span>
+            </div>
+        </div>
+    )
+}
+
+/**
+ * PeriodStatusRibbon — legacy compact inline chip (kept for AppHeader backward compat).
+ * @param {string} status - 'open' | 'review' | 'closed'
  */
 const CHIP_LABELS = {
     open: 'Abierto',

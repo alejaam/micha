@@ -1,10 +1,9 @@
 /* ─── Design tokens ─────────────────────────────────────────────────────────── */
 :root {
-    --font-sans: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'Space Mono', ui-monospace, monospace;
-    --font-brand: 'Doto', 'Space Grotesk', sans-serif;
 
-    /* Palette — Blue-neutral brand + refined neutrals */
+    /* Palette — Artesanía contemporánea mexicana */
     --color-bg: #f8fafc;
     --color-bg-subtle: #f1f5f9;
     --color-surface: #ffffff;
@@ -22,39 +21,27 @@
     --color-text-4: #94a3b8;
     /* muted      */
 
-    /* Brand — Refined blue palette */
-    --color-brand-50: #eff6ff;
-    --color-brand-100: #dbeafe;
-    --color-brand-200: #bfdbfe;
-    --color-brand-400: #60a5fa;
-    --color-brand-500: #3b82f6;
-    --color-brand-600: #2563eb;
-    --color-brand-700: #1d4ed8;
+    --color-anil-50: #ECF3F5;
+    --color-anil-100: #D6E4E8;
+    --color-anil-500: #1A3A4A;
+    --color-anil-600: #152E3C;
+    --color-anil-700: #10232E;
 
-    /* Success green */
-    --color-green-50: #f0fdf4;
-    --color-green-100: #dcfce7;
+    --color-rosa-50: #FDF2F3;
+    --color-rosa-100: #FBE2E4;
+    --color-rosa-500: #E8747C;
+    --color-rosa-600: #D4646E;
+    --color-rosa-700: #B84E58;
+
+    --color-barro-50: #F9F4F0;
+    --color-barro-100: #F0E6DE;
+    --color-barro-500: #C49375;
+    --color-barro-600: #B08469;
+
+    /* Keep green, red, amber for semantic use but reduce */
     --color-green-500: #22c55e;
-    --color-green-600: #16a34a;
-    --color-green-700: #15803d;
-
-    /* Error red */
-    --color-red-50: #fef2f2;
-    --color-red-100: #fee2e2;
     --color-red-500: #ef4444;
-    --color-red-600: #dc2626;
-    --color-red-700: #b91c1c;
-
-    /* Warning amber */
-    --color-amber-50: #fffbeb;
-    --color-amber-100: #fef3c7;
-    --color-amber-400: #fbbf24;
     --color-amber-500: #f59e0b;
-    --color-amber-600: #d97706;
-    --color-amber-700: #b45309;
-
-    /* Aliases */
-    --color-text-heading: #0f172a;
 
     /* Radii — Nothing Design strictly <= 16px */
     --radius-xs: 0px;
@@ -155,8 +142,8 @@ body {
     color: var(--color-text-2);
     background-color: var(--color-bg);
     background-image:
-        radial-gradient(ellipse 80% 60% at 10% -10%, rgba(59, 130, 246, .08) 0%, transparent 50%),
-        radial-gradient(ellipse 60% 50% at 90% 110%, rgba(56, 189, 248, .06) 0%, transparent 50%);
+        radial-gradient(ellipse 80% 60% at 10% -10%, rgba(26, 58, 74, .06) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 50% at 90% 110%, rgba(232, 116, 124, .05) 0%, transparent 50%);
     background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -1478,6 +1465,69 @@ ul {
 /* Hide on desktop */
 @media (min-width: 880px) {
     .bottomNav {
+        display: none;
+    }
+}
+
+/* ─── Pill Navigation (Mobile) ──────────────────────────────────────────────── */
+.pillNav {
+    display: flex;
+    gap: var(--sp-xs);
+    padding: var(--sp-xs);
+    background: var(--color-bg-subtle);
+    border-radius: var(--radius-xl);
+    margin: var(--sp-sm) var(--sp-lg);
+}
+
+.pillNavItem {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-sm);
+    border-radius: var(--radius-lg);
+    gap: 2px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all var(--dur-fast) var(--ease-out);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.pillNavItem:hover {
+    background: var(--color-surface-2);
+}
+
+.pillNavItem.active {
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.pillNavIcon {
+    width: 20px;
+    height: 20px;
+    color: var(--color-text-3);
+}
+
+.pillNavItem.active .pillNavIcon {
+    color: var(--color-anil-500);
+}
+
+.pillNavLabel {
+    font-size: 0.65rem;
+    color: var(--color-text-4);
+    font-weight: var(--fw-medium);
+}
+
+.pillNavItem.active .pillNavLabel {
+    color: var(--color-anil-500);
+}
+
+/* Hide on desktop */
+@media (min-width: 880px) {
+    .pillNav {
         display: none;
     }
 }
@@ -3596,3 +3646,48 @@ html {
 .salaryVal.negative {
     color: var(--color-red-500);
 }
+
+/* ─── Period Bar ──────── */
+.periodBar { display: flex; justify-content: space-between; align-items: center; padding: var(--sp-lg); background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.periodBarLeft { display: flex; flex-direction: column; gap: 2px; }
+.periodBarTitle { font-size: 0.8rem; color: var(--color-text-3); font-weight: var(--fw-medium); text-transform: uppercase; letter-spacing: 0.03em; }
+.periodBarDate { font-size: 0.9rem; color: var(--color-text-2); }
+.periodBarRight { text-align: right; }
+.periodBarBalance { font-size: 1.4rem; font-weight: var(--fw-bold); color: var(--color-text-1); }
+.periodBarBalance.negative { color: var(--color-rosa-600); }
+.periodBarStatus { font-size: 0.75rem; padding: 2px 8px; border-radius: var(--radius-pill); display: inline-block; font-weight: var(--fw-medium); }
+.periodBarStatus.open { background: var(--color-anil-50); color: var(--color-anil-500); }
+.periodBarStatus.review { background: var(--color-rosa-50); color: var(--color-rosa-600); }
+.periodBarStatus.closed { background: var(--color-barro-50); color: var(--color-barro-600); }
+
+/* ─── Feed ────────────── */
+.feed { display: flex; flex-direction: column; }
+.feedItem { display: flex; align-items: center; gap: var(--sp-md); padding: var(--sp-md) var(--sp-lg); border-bottom: 1px solid var(--color-border-soft); }
+.feedItem:last-child { border-bottom: none; }
+.feedItemAvatar { width: 36px; height: 36px; border-radius: 50%; background: var(--color-anil-50); color: var(--color-anil-500); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: var(--fw-semibold); flex-shrink: 0; }
+.feedItemBody { flex: 1; min-width: 0; }
+.feedItemName { font-weight: var(--fw-medium); color: var(--color-text-1); font-size: 0.9rem; }
+.feedItemDesc { font-size: 0.8rem; color: var(--color-text-3); }
+.feedItemMeta { display: flex; align-items: center; gap: var(--sp-xs); }
+.feedItemType { font-size: 0.85rem; }
+.feedItemAmount { font-weight: var(--fw-semibold); color: var(--color-text-1); font-size: 0.95rem; white-space: nowrap; margin-left: auto; }
+.feedTime { font-size: 0.75rem; color: var(--color-text-4); }
+
+/* ─── Categories Grid ─── */
+.categoriesGrid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-md); }
+.categoryCard { padding: var(--sp-lg); background: var(--color-bg-subtle); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: var(--sp-xs); }
+.categoryCardName { font-size: 0.75rem; color: var(--color-text-3); text-transform: uppercase; letter-spacing: 0.03em; font-weight: var(--fw-medium); }
+.categoryCardAmount { font-size: 1.1rem; font-weight: var(--fw-semibold); color: var(--color-text-1); }
+.categoryCardBar { height: 3px; border-radius: 2px; background: var(--color-border); margin-top: var(--sp-sm); overflow: hidden; }
+.categoryCardBarFill { height: 100%; border-radius: 2px; background: var(--color-anil-500); transition: width var(--dur-base) var(--ease-out); }
+
+/* ─── MSI Progress ────── */
+.msiList { display: flex; flex-direction: column; gap: var(--sp-md); }
+.msiItem { display: flex; flex-direction: column; gap: var(--sp-xs); padding: var(--sp-sm) 0; }
+.msiItemHeader { display: flex; justify-content: space-between; align-items: center; }
+.msiItemName { font-size: 0.9rem; color: var(--color-text-1); font-weight: var(--fw-medium); }
+.msiItemAmount { font-size: 0.85rem; color: var(--color-text-2); }
+.msiItemProgress { display: flex; align-items: center; gap: var(--sp-sm); }
+.msiBar { flex: 1; height: 4px; border-radius: 2px; background: var(--color-border); overflow: hidden; }
+.msiBarFill { height: 100%; border-radius: 2px; background: var(--color-rosa-500); transition: width var(--dur-base) var(--ease-out); }
+.msiLabel { font-size: 0.75rem; color: var(--color-text-4); white-space: nowrap; }

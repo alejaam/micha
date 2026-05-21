@@ -2,15 +2,14 @@ import { AnimatePresence } from 'framer-motion'
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BottomSheet } from '../components/BottomSheet'
-import { DynamicChartsPanel } from '../components/DynamicChartsPanel'
+import { CardExpensesPanel as MSI } from '../components/CardExpensesPanel'
+import { DynamicChartsPanel as CategoriesGrid } from '../components/DynamicChartsPanel'
 import { ExpenseForm } from '../components/ExpenseForm'
 import { ExpenseModal } from '../components/ExpenseModal'
-import { ExpenseSummary } from '../components/ExpenseSummary'
 import { FAB } from '../components/FAB'
-import { MembersPanel } from '../components/MembersPanel'
 import { PeriodHistory } from '../components/PeriodHistory'
-import { RecentExpenses } from '../components/RecentExpenses'
-import { RemainingSalaryPanel } from '../components/RemainingSalaryPanel'
+import { PeriodStatusRibbon as PeriodBar } from '../components/PeriodStatusRibbon'
+import { RecentExpenses as Feed } from '../components/RecentExpenses'
 import { useAppShell } from '../context/AppShellContext'
 import { useHouseholdData } from '../hooks/useHouseholdData'
 import { Banner } from '../ui/Banner'
@@ -36,9 +35,7 @@ export function DashboardPage() {
         householdId,
         isMutationLocked,
         categoryTotals,
-        memberActualVsExpected,
         msiProgress,
-        spendingTrend,
         handleCreate,
         message,
         setMessage,
@@ -96,6 +93,9 @@ export function DashboardPage() {
     const hasRecurringFixed = recurringItems.some((item) => item.expense_type === 'fixed')
     const hasExpenses = items.length > 0 || hasRecurringFixed
 
+    // Derive household balance from settlement total shared cents
+    const periodBalance = settlement?.total_shared_cents ?? 0
+
     return (
         <>
             {error && <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner>}
@@ -113,30 +113,13 @@ export function DashboardPage() {
                 </section>
             ) : (
                 <>
-                    {/* ─── (b) RemainingSalary + ExpenseSummary row ─── */}
-                    <div className="u-flex u-flex-wrap u-gap-4" aria-label="Resumen financiero">
-                        {currentMember && (
-                            <div className="u-flex-1" style={{ minWidth: 280 }}>
-                                <RemainingSalaryPanel
-                                    householdId={householdId}
-                                    memberId={currentMember.id}
-                                    period={currentPeriod}
-                                    currency={activeCurrency}
-                                />
-                            </div>
-                        )}
-                        <div className="u-flex-1" style={{ minWidth: 280 }}>
-                            <section className="card dashboardSummaryCard" aria-label="Resumen del mes">
-                                <h2 className="sectionTitle">
-                                    <span className="sectionTitleIcon" aria-hidden>📊</span>
-                                    Este mes
-                                </h2>
-                                <ExpenseSummary settlement={settlement} currency={activeCurrency} />
-                            </section>
-                        </div>
-                    </div>
+                    {/* ─── 1. PeriodBar ─── */}
+                    <PeriodBar
+                        currentPeriod={currentPeriod}
+                        balance={periodBalance}
+                    />
 
-                    {/* ─── (c) RecentExpenses ─── */}
+                    {/* ─── 2. Feed ─── */}
                     <section className="card" aria-label="Gastos recientes">
                         <div className="listHeader">
                             <h2 className="listTitle">Gastos recientes</h2>
@@ -144,11 +127,12 @@ export function DashboardPage() {
                                 <span className="listCount">{items.length} total</span>
                             )}
                         </div>
-                        <RecentExpenses
+                        <Feed
                             items={items}
                             isLoading={loadingList}
                             currency={activeCurrency}
-                            limit={5}
+                            members={members}
+                            limit={10}
                             onQuickAdd={handleOpenQuickAdd}
                         />
                         <button
@@ -161,32 +145,21 @@ export function DashboardPage() {
                         </button>
                     </section>
 
-                    {/* ─── (d) DynamicChartsPanel ─── */}
-                    <DynamicChartsPanel
+                    {/* ─── 3. CategoriesGrid ─── */}
+                    <CategoriesGrid
                         categoryTotals={categoryTotals}
-                        memberActualVsExpected={memberActualVsExpected}
+                        currency={activeCurrency}
+                    />
+
+                    {/* ─── 4. MSI progress list ─── */}
+                    <MSI
+                        items={items}
                         msiProgress={msiProgress}
-                        spendingTrend={spendingTrend}
                         currency={activeCurrency}
                     />
 
-                    {/* ─── (e) MembersPanel ─── */}
-                    <MembersPanel
-                        members={members}
-                        currency={activeCurrency}
-                    />
-
-                    {/* ─── (f) PeriodHistory ─── */}
+                    {/* ─── 5. PeriodHistory ─── */}
                     <PeriodHistory householdId={householdId} />
-
-                    <button
-                        type="button"
-                        className="btn btnPrimary"
-                        onClick={() => navigate('/balances')}
-                        style={{ marginTop: '1rem' }}
-                    >
-                        Ver Balances →
-                    </button>
                 </>
             )}
 
