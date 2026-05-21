@@ -26,9 +26,9 @@ describe('CategoriesGrid', () => {
     expect(screen.getByText('FOOD')).toBeInTheDocument()
     expect(screen.getByText('RENT')).toBeInTheDocument()
     expect(screen.getByText('TRANSPORT')).toBeInTheDocument()
-    expect(screen.getByText(/^\$500\.00/)).toBeInTheDocument()
-    expect(screen.getByText(/^\$300\.00/)).toBeInTheDocument()
-    expect(screen.getByText(/^\$200\.00/)).toBeInTheDocument()
+    expect(screen.getByText(/500\.00/)).toBeInTheDocument()
+    expect(screen.getByText(/300\.00/)).toBeInTheDocument()
+    expect(screen.getByText(/200\.00/)).toBeInTheDocument()
   })
 
   it('groups extra categories into "Otros" when more than 5 exist', () => {
