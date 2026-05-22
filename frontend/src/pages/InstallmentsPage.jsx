@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
-import { CardExpensesPanel } from '../components/CardExpensesPanel'
+import { MSI as CardExpensesPanel } from '../components/CardExpensesPanel'
 import { ExpenseModal } from '../components/ExpenseModal'
 import { FAB } from '../components/FAB'
 import { FixedExpensesPanel } from '../components/FixedExpensesPanel'

@@ -13,32 +13,24 @@ function renderNav(path = '/') {
 }
 
 describe('BottomNav', () => {
-  it('renders all five nav items with emoji and Spanish labels', () => {
+  it('renders all five nav items with Spanish labels', () => {
     renderNav('/')
 
-    const resumen = screen.getByText('Resumen')
-    const movimientos = screen.getByText('Movimientos')
-    const balances = screen.getByText('Balances')
-    const plazos = screen.getByText('Plazos')
-    const reglas = screen.getByText('Reglas')
-
-    expect(resumen).toBeInTheDocument()
-    expect(movimientos).toBeInTheDocument()
-    expect(balances).toBeInTheDocument()
-    expect(plazos).toBeInTheDocument()
-    expect(reglas).toBeInTheDocument()
+    expect(screen.getByText('Vista')).toBeInTheDocument()
+    expect(screen.getByText('Movimientos')).toBeInTheDocument()
+    expect(screen.getByText('Balances')).toBeInTheDocument()
+    expect(screen.getByText('Plazos')).toBeInTheDocument()
+    expect(screen.getByText('Config')).toBeInTheDocument()
   })
 
-  it('shows emoji icons with aria-hidden', () => {
+  it('renders Heroicons SVG icons with aria-hidden', () => {
     renderNav('/')
 
-    const icons = document.querySelectorAll('.bottomNavIcon[aria-hidden="true"]')
+    const icons = document.querySelectorAll('.pillNavIcon[aria-hidden="true"]')
     expect(icons.length).toBe(5)
-    expect(icons[0].textContent).toBe('📊')
-    expect(icons[1].textContent).toBe('💸')
-    expect(icons[2].textContent).toBe('⚖️')
-    expect(icons[3].textContent).toBe('📅')
-    expect(icons[4].textContent).toBe('⚙️')
+    icons.forEach((icon) => {
+      expect(icon.tagName).toBe('svg')
+    })
   })
 
   it('marks the active route with aria-current="page"', () => {
@@ -48,12 +40,12 @@ describe('BottomNav', () => {
     expect(activeLink).toHaveAttribute('aria-current', 'page')
   })
 
-  it('has no single-letter icons (O, M, B, P, R)', () => {
+  it('has no single-letter icons (V, M, B, P, C)', () => {
     renderNav('/')
 
-    const iconElements = document.querySelectorAll('.bottomNavIcon')
+    const iconElements = document.querySelectorAll('.pillNavLabel')
     iconElements.forEach((el) => {
-      expect(el.textContent).not.toMatch(/^[OMBPR]$/)
+      expect(el.textContent).not.toMatch(/^[VMNPC]$/)
     })
   })
 })

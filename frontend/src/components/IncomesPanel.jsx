@@ -5,12 +5,12 @@ import { formatCurrency } from '../utils'
  * to distinguish each member's contribution.
  */
 const STACK_COLORS = [
-    'var(--color-brand-500)',
-    'var(--color-brand-400)',
-    'var(--color-brand-600)',
-    'var(--color-brand-300)',
-    'var(--color-brand-700)',
-    'var(--color-brand-200)',
+    'var(--color-anil-500)',
+    'var(--color-rosa-500)',
+    'var(--color-anil-600)',
+    'var(--color-barro-500)',
+    'var(--color-anil-700)',
+    'var(--color-rosa-100)',
 ]
 
 function pctOf(total, part) {

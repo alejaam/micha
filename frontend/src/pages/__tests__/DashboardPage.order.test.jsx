@@ -21,22 +21,6 @@ vi.mock('framer-motion', async () => {
   }
 })
 
-// Mock recharts
-vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }) => <div>{children}</div>,
-  PieChart: ({ children }) => <div>{children}</div>,
-  Pie: ({ children }) => <div>{children}</div>,
-  Cell: () => null,
-  BarChart: ({ children }) => <div>{children}</div>,
-  Bar: () => null,
-  CartesianGrid: () => null,
-  LineChart: ({ children }) => <div>{children}</div>,
-  Line: () => null,
-  XAxis: () => null,
-  YAxis: () => null,
-  Tooltip: () => null,
-}))
-
 const mockUseAppShell = vi.fn()
 const mockUseHouseholdData = vi.fn()
 
@@ -100,7 +84,7 @@ function makeDefaultState(overrides = {}) {
 
 function renderDashboard(custom = {}) {
   mockUseAppShell.mockReturnValue({
-    currentPeriod: { id: 'p1', status: 'open' },
+    currentPeriod: { id: 'p1', startDate: '2026-01-01', endDate: '2026-01-31', status: 'open' },
     reloadPeriod: vi.fn(),
     selectedHousehold: { id: 'house-1', owner_id: 'u1' },
     handleReload: vi.fn(),
@@ -126,32 +110,37 @@ describe('DashboardPage DOM order', () => {
     const headings = document.querySelectorAll('h2, h3')
     const headingTexts = Array.from(headings).map((h) => h.textContent.trim())
 
-    // The priority order (h2/h3 texts that should appear):
-    // 1. "Este mes" (ExpenseSummary h2) or "Tu sueldo restante" (RemainingSalaryPanel h3)
-    // 2. "Gastos recientes" (RecentExpenses h2)
-    // 3. "Gráficos dinámicos" (DynamicChartsPanel h2)
-    // 4. Period history
+    // The priority order for the redesigned dashboard:
+    // 1. "Periodo actual" (PeriodBar h2)
+    // 2. "Gastos recientes" (Feed h2)
+    // 3. "Categorías" (CategoriesGrid h2)
+    // 4. "Pagos a meses (MSI)" (MSI h2)
 
-    const sueldoIdx = headingTexts.findIndex((t) => t === 'Tu sueldo restante')
-    const esteMesIdx = headingTexts.findIndex((t) => t === 'Este mes')
+    const periodoIdx = headingTexts.findIndex((t) => t.startsWith('Periodo actual'))
     const recientesIdx = headingTexts.findIndex((t) => t === 'Gastos recientes')
-    const graficosIdx = headingTexts.findIndex((t) => t === 'Gráficos dinámicos')
+    const categoriasIdx = headingTexts.findIndex((t) => t.startsWith('Categorías'))
+    const msiIdx = headingTexts.findIndex((t) => t.startsWith('Pagos a meses'))
 
-    // Summary must come first
-    if (sueldoIdx >= 0 && recientesIdx >= 0) {
-      expect(sueldoIdx).toBeLessThan(recientesIdx)
-    }
-    if (esteMesIdx >= 0 && recientesIdx >= 0) {
-      expect(esteMesIdx).toBeLessThan(recientesIdx)
+    // PeriodBar must come first
+    expect(periodoIdx).toBeGreaterThanOrEqual(0)
+    if (recientesIdx >= 0) {
+      expect(periodoIdx).toBeLessThan(recientesIdx)
     }
 
-    // Charts should come after RecentExpenses
-    if (graficosIdx >= 0 && recientesIdx >= 0) {
-      expect(graficosIdx).toBeGreaterThan(recientesIdx)
+    // Categories should come after RecentExpenses
+    if (categoriasIdx >= 0 && recientesIdx >= 0) {
+      expect(categoriasIdx).toBeGreaterThan(recientesIdx)
+    }
+
+    // MSI should come after Categories
+    if (msiIdx >= 0 && categoriasIdx >= 0) {
+      expect(msiIdx).toBeGreaterThan(categoriasIdx)
     }
 
     // Ver todos los movimientos should exist
     expect(screen.getByText('Ver todos los movimientos →')).toBeInTheDocument()
-    expect(screen.getByText('Ver Balances →')).toBeInTheDocument()
+
+    // Ver Balances → should NOT exist (removed in redesign)
+    expect(screen.queryByText('Ver Balances →')).not.toBeInTheDocument()
   })
 })

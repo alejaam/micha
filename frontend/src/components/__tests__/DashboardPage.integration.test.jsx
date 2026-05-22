@@ -20,21 +20,6 @@ vi.mock('framer-motion', async () => {
   }
 })
 
-vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }) => <div>{children}</div>,
-  PieChart: ({ children }) => <div>{children}</div>,
-  Pie: ({ children }) => <div>{children}</div>,
-  Cell: () => null,
-  BarChart: ({ children }) => <div>{children}</div>,
-  Bar: () => null,
-  CartesianGrid: () => null,
-  LineChart: ({ children }) => <div>{children}</div>,
-  Line: () => null,
-  XAxis: () => null,
-  YAxis: () => null,
-  Tooltip: () => null,
-}))
-
 const mockUseAppShell = vi.fn()
 const mockUseHouseholdData = vi.fn()
 
@@ -98,7 +83,7 @@ function makeDefaultState(overrides = {}) {
 
 function renderDashboard(custom = {}) {
   mockUseAppShell.mockReturnValue({
-    currentPeriod: { id: 'p1', status: 'open' },
+    currentPeriod: { id: 'p1', status: 'open', startDate: '2026-01-01', endDate: '2026-01-31' },
   })
   mockUseHouseholdData.mockReturnValue(makeDefaultState(custom))
 
@@ -114,13 +99,14 @@ describe('DashboardPage integration', () => {
     vi.clearAllMocks()
   })
 
-  it('renders overview sections and priority strip when data exists', () => {
+  it('renders redesigned overview sections when data exists', () => {
     renderDashboard()
 
-    expect(screen.getByText('Este mes')).toBeInTheDocument()
+    expect(screen.getByText(/Periodo actual/)).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /gastos recientes/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /ver balances →/i })).toBeInTheDocument()
     expect(screen.getByText('Ver todos los movimientos →')).toBeInTheDocument()
+    // "Ver Balances →" button was removed in redesign
+    expect(screen.queryByText(/ver balances/i)).not.toBeInTheDocument()
   })
 
   it('shows empty state when no expenses exist', () => {

@@ -1,65 +1,46 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
-import { DynamicChartsPanel } from '../DynamicChartsPanel'
+import { describe, expect, it } from 'vitest'
+import { CategoriesGrid } from '../DynamicChartsPanel'
 
-vi.mock('framer-motion', async () => {
-  const React = await import('react')
-  return {
-    motion: new Proxy(
-      {},
-      {
-        get: (_, tag) => {
-          const Comp = ({ children, ...props }) => React.createElement(tag, props, children)
-          Comp.displayName = `motion.${String(tag)}`
-          return Comp
-        },
-      },
-    ),
-  }
-})
-
-vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }) => <div>{children}</div>,
-  PieChart: ({ children }) => <div>{children}</div>,
-  Pie: ({ children }) => <div>{children}</div>,
-  Cell: () => null,
-  BarChart: ({ children }) => <div>{children}</div>,
-  Bar: () => null,
-  CartesianGrid: () => null,
-  LineChart: ({ children }) => <div>{children}</div>,
-  Line: () => null,
-  XAxis: () => null,
-  YAxis: () => null,
-  Tooltip: () => null,
-}))
-
-describe('DynamicChartsPanel', () => {
-  it('returns nothing when there is no chart data', () => {
+describe('CategoriesGrid', () => {
+  it('returns nothing when there are no categories', () => {
     const { container } = render(
-      <DynamicChartsPanel
-        categoryTotals={[]}
-        memberActualVsExpected={[]}
-        msiProgress={[]}
-        spendingTrend={[]}
-      />,
+      <CategoriesGrid categoryTotals={[]} />,
     )
 
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('renders charts region and keyboard-focusable textual summaries', () => {
+  it('renders category cards with uppercase labels and amounts', () => {
     render(
-      <DynamicChartsPanel
-        categoryTotals={[{ key: 'food', label: 'Food', totalCents: 1000, percentage: 50 }]}
-        memberActualVsExpected={[{ memberId: 'm1', memberName: 'Ana', actualCents: 1200, expectedCents: 1000, deltaCents: 200 }]}
-        msiProgress={[{ id: 'msi1', description: 'Laptop', currentInstallment: 2, totalInstallments: 6, progressPercent: 33, remainingInstallments: 4 }]}
-        spendingTrend={[{ key: '2026-01', label: 'Jan 26', totalCents: 1000 }]}
+      <CategoriesGrid
+        categoryTotals={[
+          { key: 'food', label: 'Food', totalCents: 50000, percentage: 50 },
+          { key: 'rent', label: 'Rent', totalCents: 30000, percentage: 30 },
+          { key: 'transport', label: 'Transport', totalCents: 20000, percentage: 20 },
+        ]}
+        currency="MXN"
       />,
     )
 
-    expect(screen.getByRole('region', { name: /gráficos dinámicos/i })).toBeInTheDocument()
-    const summaries = screen.getByLabelText(/resumen textual de gráficos/i)
-    expect(summaries).toHaveAttribute('tabindex', '0')
-    expect(screen.getByText(/categoría principal:/i)).toBeInTheDocument()
+    expect(screen.getByText('FOOD')).toBeInTheDocument()
+    expect(screen.getByText('RENT')).toBeInTheDocument()
+    expect(screen.getByText('TRANSPORT')).toBeInTheDocument()
+    expect(screen.getByText(/500\.00/)).toBeInTheDocument()
+    expect(screen.getByText(/300\.00/)).toBeInTheDocument()
+    expect(screen.getByText(/200\.00/)).toBeInTheDocument()
+  })
+
+  it('groups extra categories into "Otros" when more than 5 exist', () => {
+    const categories = Array.from({ length: 7 }, (_, i) => ({
+      key: `cat${i}`,
+      label: `Category ${i}`,
+      totalCents: (7 - i) * 1000,
+      percentage: ((7 - i) * 1000) / 28000 * 100,
+    }))
+
+    render(<CategoriesGrid categoryTotals={categories} currency="MXN" />)
+
+    expect(screen.getByText('OTROS')).toBeInTheDocument()
   })
 })
