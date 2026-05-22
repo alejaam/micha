@@ -1399,80 +1399,6 @@ ul {
     animation: slideUp var(--dur-slow) var(--ease-out) forwards;
 }
 
-/* ─── Bottom Navigation (Mobile) ────────────────────────────────────────────── */
-.bottomNav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: var(--nav-height);
-    background: var(--color-surface-elevated);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-top: 1px solid var(--color-border);
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    padding: 0 8px;
-    padding-bottom: env(safe-area-inset-bottom, 0);
-    z-index: var(--z-fixed);
-    box-shadow: 0 -4px 20px rgba(15, 23, 42, .06);
-}
-
-.bottomNavItem {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    padding: 8px 4px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--color-text-4);
-    text-decoration: none;
-    transition: color var(--dur-fast), transform var(--dur-fast);
-    -webkit-tap-highlight-color: transparent;
-}
-
-.bottomNavItem:active {
-    transform: scale(0.92);
-}
-
-.bottomNavItem.active {
-    color: var(--color-anil-600);
-}
-
-.bottomNavIcon {
-    font-size: 1.4rem;
-    line-height: 1;
-    transition: transform var(--dur-fast) var(--ease-spring);
-}
-
-.bottomNavItem.active .bottomNavIcon {
-    transform: scale(1.1);
-}
-
-.bottomNavItemDisabled {
-    opacity: 0.35;
-    cursor: default;
-    pointer-events: none;
-}
-
-.bottomNavLabel {
-    font-size: 0.65rem;
-    font-weight: var(--fw-semibold);
-    letter-spacing: 0.02em;
-}
-
-/* Hide on desktop */
-@media (min-width: 880px) {
-    .bottomNav {
-        display: none;
-    }
-}
-
 /* ─── Pill Navigation (Mobile) ──────────────────────────────────────────────── */
 .pillNav {
     display: flex;
@@ -2300,17 +2226,6 @@ html, body {
 /* ─── Scroll behavior ────────────────────────────────────────────────────────── */
 html {
     scroll-behavior: smooth;
-}
-
-/* ---------- Fintech dashboard alignment (phase 1) ---------- */
-:root {
-    --color-anil-50: #eef5ff;
-    --color-anil-100: #dbeafe;
-    --color-anil-50: #bfdbfe;
-    --color-anil-500: #60a5fa;
-    --color-anil-500: #3b82f6;
-    --color-anil-600: #2563eb;
-    --color-anil-700: #1d4ed8;
 }
 
 .primaryNav {
