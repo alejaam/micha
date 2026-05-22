@@ -43,6 +43,10 @@
     --color-red-500: #ef4444;
     --color-amber-500: #f59e0b;
 
+    --color-green-50: #ecfdf5;
+    --color-red-50: #fef2f2;
+    --color-amber-50: #fffbeb;
+
     /* Radii — Nothing Design strictly <= 16px */
     --radius-xs: 0px;
     --radius-sm: 4px;
@@ -577,8 +581,8 @@ ul {
 
 .pillOk {
     color: var(--color-green-500);
-    background: var(--color-green-500);
-    border-color: var(--color-green-500);
+    background: var(--color-green-50);
+    border-color: var(--color-green-50);
 }
 
 .pillOk::before {
@@ -589,8 +593,8 @@ ul {
 
 .pillOff {
     color: var(--color-amber-500);
-    background: var(--color-amber-500);
-    border-color: var(--color-amber-500);
+    background: var(--color-amber-50);
+    border-color: var(--color-amber-50);
 }
 
 .pillOff::before {
@@ -692,7 +696,7 @@ ul {
 
 .btnGhostDanger:hover:not(:disabled) {
     background: var(--color-red-500);
-    color: var(--color-red-500);
+    color: #fff;
     border-color: var(--color-red-500);
     transform: translateY(-1px);
 }
@@ -945,14 +949,14 @@ ul {
 
 .bannerOk {
     color: var(--color-green-500);
-    background: var(--color-green-500);
-    border-color: var(--color-green-500);
+    background: var(--color-green-50);
+    border-color: var(--color-green-50);
 }
 
 .bannerError {
     color: var(--color-red-500);
-    background: var(--color-red-500);
-    border-color: var(--color-red-500);
+    background: var(--color-red-50);
+    border-color: var(--color-red-50);
 }
 
 .bannerInfo {
@@ -1220,8 +1224,8 @@ ul {
     align-items: flex-start;
     gap: 8px;
     color: var(--color-amber-500);
-    background: var(--color-amber-500);
-    border: 1px solid var(--color-amber-500);
+    background: var(--color-amber-50);
+    border: 1px solid var(--color-amber-50);
     border-radius: var(--radius-sm);
     padding: 8px 12px;
     font-size: 0.875rem;
@@ -1671,8 +1675,8 @@ ul {
 /* Open — green */
 .periodChip-open {
     color: var(--color-green-500);
-    background: var(--color-green-500);
-    border-color: var(--color-green-500);
+    background: var(--color-green-50);
+    border-color: var(--color-green-50);
 }
 
 .periodChip-open .periodChipDot {
@@ -1682,8 +1686,8 @@ ul {
 /* Review — amber */
 .periodChip-review {
     color: var(--color-amber-500);
-    background: var(--color-amber-500);
-    border-color: var(--color-amber-500);
+    background: var(--color-amber-50);
+    border-color: var(--color-amber-50);
 }
 
 .periodChip-review .periodChipDot {
