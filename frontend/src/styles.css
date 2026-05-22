@@ -173,6 +173,7 @@ ul {
     margin: 0 auto;
     display: grid;
     gap: 18px;
+    overflow-x: hidden;
 }
 
 .authShell {
@@ -235,6 +236,7 @@ ul {
 
 /* ─── Card ──────────────────────────────────────────────────────────────────── */
 .card {
+    min-width: 0;
     background: var(--color-surface-elevated);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
