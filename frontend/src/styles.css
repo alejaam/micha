@@ -2463,6 +2463,15 @@ html {
     font-size: 0.875rem;
 }
 
+.fixedTableHeader:first-child {
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.fixedTableRow:last-child,
+.fixedTableRow:last-of-type {
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
 .fixedTableHeader {
     display: flex;
     align-items: center;

@@ -18,6 +18,7 @@ export function InstallmentsPage() {
         activeCurrency,
         householdId,
         isMutationLocked,
+        msiProgress,
         handleCreate,
         message,
         setMessage,
@@ -49,6 +50,7 @@ export function InstallmentsPage() {
             <CardExpensesPanel
                 items={items}
                 members={members}
+                msiProgress={msiProgress}
                 currency={activeCurrency}
             />
 

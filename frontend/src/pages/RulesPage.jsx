@@ -64,7 +64,7 @@ export function RulesPage() {
                     <div className="u-flex u-flex-col u-gap-3">
                         <button
                             type="button"
-                            className="btn"
+                            className="btn btnPrimary"
                             onClick={() => navigate('/onboarding/fixed-expenses')}
                             disabled={isMutationLocked}
                         >
@@ -85,7 +85,7 @@ export function RulesPage() {
                     <div className="u-flex u-flex-col u-gap-3">
                         <button
                             type="button"
-                            className="btn"
+                            className="btn btnPrimary"
                             onClick={() => navigate('/onboarding/household')}
                             disabled={isMutationLocked}
                         >
@@ -93,7 +93,7 @@ export function RulesPage() {
                         </button>
                         <button
                             type="button"
-                            className="btn"
+                            className="btn btnPrimary"
                             onClick={() => navigate('/members/new')}
                             disabled={isMutationLocked}
                         >
