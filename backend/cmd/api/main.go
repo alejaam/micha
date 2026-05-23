@@ -25,6 +25,7 @@ import (
 	periodapp "micha/backend/internal/application/period"
 	recurringexpenseapp "micha/backend/internal/application/recurringexpense"
 	settlementapp "micha/backend/internal/application/settlement"
+	subscriptioncatalogapp "micha/backend/internal/application/subscriptioncatalog"
 	infraauth "micha/backend/internal/infrastructure/auth"
 	"micha/backend/internal/infrastructure/config"
 	"micha/backend/internal/infrastructure/migrations"
@@ -77,6 +78,7 @@ func main() {
 	cardRepo := postgres.NewCardRepository(pool)
 	categoryRepo := postgres.NewCategoryRepository(pool)
 	userRepo := postgres.NewUserRepository(pool)
+	subscriptionCatalogRepo := postgres.NewSubscriptionCatalogRepository(pool)
 	periodRepo := postgres.NewPeriodRepository(pool)
 	periodApprovalRepo := postgres.NewPeriodApprovalRepository(pool)
 	idGen := uuidGenerator{}
@@ -166,11 +168,20 @@ func main() {
 		PeriodRepo:         periodRepo,
 	}
 
+	// Subscription catalog use cases and handler dependencies.
+	subscriptionCatalogDeps := httpadapter.SubscriptionCatalogHandlerDeps{
+		ListServices:    subscriptioncatalogapp.NewListCatalogServicesUseCase(subscriptionCatalogRepo),
+		LinkService:     subscriptioncatalogapp.NewLinkServiceUseCase(subscriptionCatalogRepo),
+		UnlinkService:   subscriptioncatalogapp.NewUnlinkServiceUseCase(subscriptionCatalogRepo),
+		GetSubscriptionKPI: subscriptioncatalogapp.NewGetSubscriptionKPIUseCase(subscriptionCatalogRepo),
+	}
+
 	// Server dependencies grouped by resource.
 	serverDeps := httpadapter.ServerDependencies{
-		Auth:             authDeps,
-		Expense:          expenseDeps,
-		RecurringExpense: recurringExpenseDeps,
+		Auth:               authDeps,
+		Expense:            expenseDeps,
+		RecurringExpense:   recurringExpenseDeps,
+		SubscriptionCatalog: subscriptionCatalogDeps,
 		Household:        householdDeps,
 		Member:           memberDeps,
 		MemberFinance: httpadapter.MemberFinanceHandlerDeps{
