@@ -37,11 +37,14 @@ type ListRecurringExpensesQuery struct {
 // UpdateRecurringExpenseCommand holds the partial-update fields for a recurring expense.
 // Only non-nil fields are applied.
 type UpdateRecurringExpenseCommand struct {
-	ID          string
-	Description *string
-	AmountCents *int64
-	CategoryID  *string
-	IsActive    *bool
+	ID                string
+	Description       *string
+	AmountCents       *int64
+	CategoryID        *string
+	IsActive          *bool
+	RecurrencePattern *string
+	StartDate         *time.Time
+	EndDate           **time.Time
 }
 
 // GenerateRecurringExpensesCommand holds parameters for generating expenses from recurring templates.

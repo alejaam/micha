@@ -63,17 +63,11 @@ func (u GenerateRecurringExpensesUseCase) Execute(ctx context.Context, cmd inbou
 			continue
 		}
 
-		// Determine paid_by_member_id: agnostic expenses have no specific payer
-		paidByMemberID := re.PaidByMemberID()
-		if re.IsAgnostic() {
-			paidByMemberID = ""
-		}
-
 		// Create the expense from the recurring template
 		e, err := expense.NewFromAttributes(expense.ExpenseAttributes{
 			ID:             expense.ID(u.idGenerator.NewID()),
 			HouseholdID:    re.HouseholdID(),
-			PaidByMemberID: paidByMemberID,
+			PaidByMemberID: re.PaidByMemberID(),
 			AmountCents:    re.AmountCents(),
 			Description:    fmt.Sprintf("%s (auto)", re.Description()),
 			IsShared:       true,

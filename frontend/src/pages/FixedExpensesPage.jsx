@@ -245,7 +245,7 @@ export function FixedExpensesPage() {
                 </Banner>
             )}
 
-            <section className="card" aria-label="Gastos fijos">
+            <section className="card spanAll" aria-label="Gastos fijos">
                 <div className="listHeader">
                     <h2 className="listTitle">Gastos fijos</h2>
                     {items.length > 0 && (
@@ -367,64 +367,64 @@ export function FixedExpensesPage() {
                         <table className="fixedExpensesTable">
                             <thead>
                                 <tr>
-                                    <th onClick={() => handleSort('description')} className="sortable">
+                                    <th onClick={() => handleSort('description')} className="sortable col-description">
                                         Descripción<SortIcon field="description" />
                                     </th>
-                                    <th onClick={() => handleSort('amount_cents')} className="sortable">
+                                    <th onClick={() => handleSort('amount_cents')} className="sortable col-amount">
                                         Monto<SortIcon field="amount_cents" />
                                     </th>
-                                    <th onClick={() => handleSort('expense_type')} className="sortable">
+                                    <th onClick={() => handleSort('expense_type')} className="sortable col-type">
                                         Tipo<SortIcon field="expense_type" />
                                     </th>
-                                    <th onClick={() => handleSort('recurrence_pattern')} className="sortable">
+                                    <th onClick={() => handleSort('recurrence_pattern')} className="sortable col-frequency">
                                         Frecuencia<SortIcon field="recurrence_pattern" />
                                     </th>
-                                    <th>Estado</th>
-                                    <th className="actionsCol">Acciones</th>
+                                    <th className="col-status">Estado</th>
+                                    <th className="col-actions">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {sortedItems.map((item) => (
                                     <tr key={item.id}>
-                                        <td className="cellDescription">{item.description}</td>
-                                        <td className="cellAmount">{formatCurrency(item.amount_cents, 'MXN')}</td>
-                                        <td>{EXPENSE_TYPE_LABELS[item.expense_type] ?? item.expense_type}</td>
-                                        <td>{RECURRENCE_LABELS[item.recurrence_pattern] ?? item.recurrence_pattern}</td>
-                                        <td>
-                                            <span className={`statusBadge ${item.is_active ? 'statusActive' : 'statusInactive'}`}>
-                                                {item.is_active ? 'Activo' : 'Inactivo'}
-                                            </span>
-                                        </td>
-                                        <td className="actionsCol">
-                                            <button
-                                                type="button"
-                                                className="btn btnGhost btnSm btnIcon"
-                                                title="Asociar servicios"
-                                                onClick={() => handleOpenCatalog(item)}
-                                                aria-label={`Asociar servicios a ${item.description}`}
-                                            >
-                                                🔗
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="btn btnGhost btnSm btnIcon"
-                                                title="Editar"
-                                                onClick={() => handleEdit(item)}
-                                                aria-label={`Editar ${item.description}`}
-                                            >
-                                                ✏️
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="btn btnGhost btnSm btnIcon"
-                                                title="Eliminar"
-                                                onClick={() => handleDelete(item)}
-                                                aria-label={`Eliminar ${item.description}`}
-                                            >
-                                                🗑️
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    <td className="col-description">{item.description}</td>
+                                    <td className="col-amount">{formatCurrency(item.amount_cents, 'MXN')}</td>
+                                    <td className="col-type">{EXPENSE_TYPE_LABELS[item.expense_type] ?? item.expense_type}</td>
+                                    <td className="col-frequency">{RECURRENCE_LABELS[item.recurrence_pattern] ?? item.recurrence_pattern}</td>
+                                    <td className="col-status">
+                                        <span className={`statusBadge ${item.is_active ? 'statusActive' : 'statusInactive'}`}>
+                                            {item.is_active ? 'Activo' : 'Inactivo'}
+                                        </span>
+                                    </td>
+                                    <td className="col-actions">
+                                        <button
+                                            type="button"
+                                            className="btn btnGhost btnSm btnIcon"
+                                            title="Asociar servicios"
+                                            onClick={() => handleOpenCatalog(item)}
+                                            aria-label={`Asociar servicios a ${item.description}`}
+                                        >
+                                            🔗
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btnGhost btnSm btnIcon"
+                                            title="Editar"
+                                            onClick={() => handleEdit(item)}
+                                            aria-label={`Editar ${item.description}`}
+                                        >
+                                            ✏️
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btnGhost btnSm btnIcon"
+                                            title="Eliminar"
+                                            onClick={() => handleDelete(item)}
+                                            aria-label={`Eliminar ${item.description}`}
+                                        >
+                                            🗑️
+                                        </button>
+                                    </td>
+                                </tr>
                                 ))}
                             </tbody>
                         </table>

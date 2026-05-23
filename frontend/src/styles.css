@@ -234,6 +234,11 @@ ul {
     align-content: start;
 }
 
+/* Utility: span all columns in a grid (useful when pageGrid is multi-column on desktop) */
+.spanAll {
+    grid-column: 1 / -1;
+}
+
 /* ─── Card ──────────────────────────────────────────────────────────────────── */
 .card {
     min-width: 0;
@@ -2191,6 +2196,10 @@ html, body {
     .headerNav {
         display: inline-flex;
     }
+
+    .fixedExpensesTableWrapper {
+        overflow-x: visible;
+    }
 }
 
 @media (min-width: 1040px) {
@@ -2523,22 +2532,27 @@ html {
 
 /* ─── FixedExpensesPage table ────────────────────────────────────────────── */
 .fixedExpensesTableWrapper {
+    width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
 
 .fixedExpensesTableWrapper table.fixedExpensesTable {
+    display: table;
     width: 100%;
     border-collapse: collapse;
     font-size: 0.875rem;
+    table-layout: fixed;
+    border: none;
+    border-radius: 0;
 }
 
 .fixedExpensesTableWrapper table.fixedExpensesTable th,
 .fixedExpensesTableWrapper table.fixedExpensesTable td {
-    padding: 10px 12px;
+    padding: 12px 14px;
     text-align: left;
     border-bottom: 1px solid var(--color-border-soft);
-    white-space: nowrap;
+    vertical-align: middle;
 }
 
 .fixedExpensesTableWrapper table.fixedExpensesTable thead th {
@@ -2570,28 +2584,45 @@ html {
     font-size: 0.7rem;
 }
 
-.cellDescription {
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* Column-specific styles */
+.col-description {
+    /* Takes up remaining space */
+    white-space: normal;
+    word-break: break-word;
     color: var(--color-text-1);
     font-weight: var(--fw-medium);
 }
-
-.cellAmount {
+.col-amount {
+    width: 130px;
+    text-align: right;
+    white-space: nowrap;
     font-weight: var(--fw-bold);
     color: var(--color-text-1);
-    text-align: right;
 }
-
-.actionsCol {
+.col-type {
+    width: 90px;
     text-align: center;
-    min-width: 80px;
+    white-space: nowrap;
+}
+.col-frequency {
+    width: 110px;
+    text-align: center;
+    white-space: nowrap;
+}
+.col-status {
+    width: 110px;
+    text-align: center;
+}
+.col-actions {
+    width: 140px;
+    text-align: center;
+    white-space: nowrap;
 }
 
-.actionsCol button {
-    margin: 0 2px;
+.col-actions button {
+    margin: 0 4px;
 }
+
 
 /* ─── Mobile cards (<640px) ──────────────────────────────────────────────── */
 .fixedExpensesCards {
@@ -4001,7 +4032,7 @@ html {
 .feedItem:last-child { border-bottom: none; }
 .feedItemAvatar { width: 36px; height: 36px; border-radius: 50%; background: var(--color-anil-50); color: var(--color-anil-500); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: var(--fw-semibold); flex-shrink: 0; }
 .feedItemBody { flex: 1; min-width: 0; }
-.feedItemName { font-weight: var(--fw-medium); color: var(--color-text-1); font-size: 0.9rem; }
+.feedItemName { font-weight: var(--fw-medium); color: var(--color-text-1); font-size: 0.9rem; margin-inline-end: 0.5rem;}
 .feedItemDesc { font-size: 0.8rem; color: var(--color-text-3); }
 .feedItemMeta { display: flex; align-items: center; gap: var(--sp-xs); }
 .feedItemType { font-size: 0.85rem; }

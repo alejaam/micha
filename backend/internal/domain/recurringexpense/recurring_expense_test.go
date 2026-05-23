@@ -331,7 +331,7 @@ func TestPatch(t *testing.T) {
 	newCategory := "cat-housing"
 	newActive := false
 
-	err = re.Patch(&newDesc, &newAmount, &newCategory, &newActive)
+	err = re.Patch(&newDesc, &newAmount, &newCategory, &newActive, nil, nil, nil)
 	require.NoError(t, err)
 
 	assert.Equal(t, newDesc, re.Description())
@@ -341,9 +341,21 @@ func TestPatch(t *testing.T) {
 
 	// Test invalid amount
 	invalidAmount := int64(-100)
-	err = re.Patch(nil, &invalidAmount, nil, nil)
+	err = re.Patch(nil, &invalidAmount, nil, nil, nil, nil, nil)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, shared.ErrInvalidMoney)
+
+	// Test patching recurrence pattern, start date, end date
+	newPattern := recurringexpense.RecurrencePatternWeekly
+	newStart := time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC)
+	newEndVal := time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
+	newEnd := &newEndVal
+
+	err = re.Patch(nil, nil, nil, nil, &newPattern, &newStart, &newEnd)
+	require.NoError(t, err)
+	assert.Equal(t, newPattern, re.RecurrencePattern())
+	assert.Equal(t, newStart, re.StartDate())
+	assert.Equal(t, newEnd, re.EndDate())
 }
 
 func TestAdvanceNextGenerationDate(t *testing.T) {
