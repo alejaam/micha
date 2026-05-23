@@ -2521,6 +2521,169 @@ html {
     color: var(--color-text-2);
 }
 
+/* ─── FixedExpensesPage table ────────────────────────────────────────────── */
+.fixedExpensesTableWrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.fixedExpensesTableWrapper table.fixedExpensesTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.fixedExpensesTableWrapper table.fixedExpensesTable th,
+.fixedExpensesTableWrapper table.fixedExpensesTable td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-soft);
+    white-space: nowrap;
+}
+
+.fixedExpensesTableWrapper table.fixedExpensesTable thead th {
+    background: var(--color-anil-50);
+    color: var(--color-anil-600);
+    font-weight: var(--fw-bold);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    position: sticky;
+    top: 0;
+}
+
+.fixedExpensesTableWrapper table.fixedExpensesTable thead th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.fixedExpensesTableWrapper table.fixedExpensesTable thead th.sortable:hover {
+    background: var(--color-anil-100);
+}
+
+.fixedExpensesTableWrapper table.fixedExpensesTable tbody tr:hover {
+    background: var(--color-surface-2);
+}
+
+.fixedExpensesTableWrapper .sortIcon {
+    color: var(--color-anil-400);
+    font-size: 0.7rem;
+}
+
+.cellDescription {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--color-text-1);
+    font-weight: var(--fw-medium);
+}
+
+.cellAmount {
+    font-weight: var(--fw-bold);
+    color: var(--color-text-1);
+    text-align: right;
+}
+
+.actionsCol {
+    text-align: center;
+    min-width: 80px;
+}
+
+.actionsCol button {
+    margin: 0 2px;
+}
+
+/* ─── Mobile cards (<640px) ──────────────────────────────────────────────── */
+.fixedExpensesCards {
+    display: none;
+}
+
+@media (max-width: 639px) {
+    .fixedExpensesTableWrapper {
+        display: none;
+    }
+
+    .fixedExpensesCards {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .fixedExpenseCard {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border-soft);
+        border-radius: var(--radius-md);
+        padding: 14px;
+        transition: background var(--dur-fast);
+    }
+
+    .fixedExpenseCard:hover {
+        background: var(--color-surface-2);
+    }
+
+    .fixedExpenseCardHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+
+    .fixedExpenseCardTitle {
+        font-weight: var(--fw-semibold);
+        color: var(--color-text-1);
+        font-size: 0.95rem;
+    }
+
+    .fixedExpenseCardAmount {
+        font-weight: var(--fw-bold);
+        color: var(--color-text-1);
+        font-size: 0.95rem;
+        flex-shrink: 0;
+        margin-left: 8px;
+    }
+
+    .fixedExpenseCardMeta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+
+    .fixedExpenseCardTag {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: var(--color-anil-50);
+        color: var(--color-anil-600);
+    }
+
+    .fixedExpenseCardActions {
+        display: flex;
+        gap: 8px;
+        border-top: 1px solid var(--color-border-soft);
+        padding-top: 10px;
+    }
+}
+
+/* Status badges */
+.statusBadge {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: var(--fw-medium);
+    display: inline-block;
+}
+
+.statusActive {
+    background: var(--color-green-100, #d1fae5);
+    color: var(--color-green-700, #065f46);
+}
+
+.statusInactive {
+    background: var(--color-red-100, #fee2e2);
+    color: var(--color-red-700, #991b1b);
+}
+
 /* ─── Card admin table (OnboardingCardsPage) ──────────────────────────────── */
 .cardAdminTable .fixedTableHeader,
 .cardAdminTable .fixedTableRow {
