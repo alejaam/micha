@@ -107,6 +107,7 @@ func NewServer(port string, deps ServerDependencies) Server {
 
 	catalogHandler := newSubscriptionCatalogHandler(deps.SubscriptionCatalog)
 	mux.Handle("GET /v1/subscription-services", protect(http.HandlerFunc(catalogHandler.handleListServices)))
+	mux.Handle("GET /v1/recurring-expenses/{recurring_expense_id}/catalog-links", protect(http.HandlerFunc(catalogHandler.handleListExpenseLinks)))
 	mux.Handle("POST /v1/recurring-expenses/{recurring_expense_id}/catalog-links", protect(http.HandlerFunc(catalogHandler.handleLinkService)))
 	mux.Handle("DELETE /v1/recurring-expenses/{recurring_expense_id}/catalog-links/{catalog_service_id}", protect(http.HandlerFunc(catalogHandler.handleUnlinkService)))
 	mux.Handle("GET /v1/households/{household_id}/subscription-kpi", protectHousehold(http.HandlerFunc(catalogHandler.handleGetKPI)))

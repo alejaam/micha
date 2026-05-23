@@ -15,9 +15,10 @@ import (
 
 // SubscriptionCatalogHandlerDeps groups all use case dependencies for the subscription catalog.
 type SubscriptionCatalogHandlerDeps struct {
-	ListServices    inbound.ListCatalogServicesUseCase
-	LinkService     inbound.LinkServiceUseCase
-	UnlinkService   inbound.UnlinkServiceUseCase
+	ListServices       inbound.ListCatalogServicesUseCase
+	LinkService        inbound.LinkServiceUseCase
+	UnlinkService      inbound.UnlinkServiceUseCase
+	GetLinksByExpense  inbound.ListLinksByExpenseUseCase
 	GetSubscriptionKPI inbound.GetSubscriptionKPIUseCase
 }
 
@@ -98,6 +99,28 @@ func (h subscriptionCatalogHandler) handleUnlinkService(w http.ResponseWriter, r
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// handleListExpenseLinks handles GET /v1/recurring-expenses/{recurring_expense_id}/catalog-links.
+func (h subscriptionCatalogHandler) handleListExpenseLinks(w http.ResponseWriter, r *http.Request) {
+	recurringExpenseID := r.PathValue("recurring_expense_id")
+	if _, err := uuid.Parse(recurringExpenseID); err != nil {
+		writeError(w, http.StatusBadRequest, "INVALID_ID", "recurring_expense_id must be a valid UUID")
+		return
+	}
+
+	links, err := h.deps.GetLinksByExpense.Execute(r.Context(), recurringExpenseID)
+	if err != nil {
+		slog.Error("subscription catalog handler: list expense links", "error", err)
+		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "failed to list catalog links")
+		return
+	}
+
+	items := make([]map[string]any, 0, len(links))
+	for _, l := range links {
+		items = append(items, catalogLinkJSON(l))
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"data": items})
 }
 
 // handleGetKPI handles GET /v1/households/{household_id}/subscription-kpi.

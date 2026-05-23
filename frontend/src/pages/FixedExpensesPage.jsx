@@ -1,10 +1,13 @@
 import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BottomSheet } from '../components/BottomSheet'
+import { SubscriptionCatalogSelector } from '../components/SubscriptionCatalogSelector'
+import { SubscriptionKPIPanel } from '../components/SubscriptionKPIPanel'
 import { useAppShell } from '../context/AppShellContext'
 import { useRecurringExpensesCRUD } from '../hooks/useRecurringExpensesCRUD'
 import { Banner } from '../ui/Banner'
 import { EmptyState } from '../ui/EmptyState'
+import { listExpenseCatalogLinks } from '../api'
 import { formatCurrency } from '../utils'
 
 const EXPENSE_TYPE_LABELS = {
@@ -57,6 +60,9 @@ export function FixedExpensesPage() {
     const [formData, setFormData] = useState(() => defaultFormPayload(householdId))
     const [submitting, setSubmitting] = useState(false)
     const [localError, setLocalError] = useState(null)
+    const [catalogExpenseId, setCatalogExpenseId] = useState(null)
+    const [catalogLinkedIds, setCatalogLinkedIds] = useState([])
+    const [showKPIPanel, setShowKPIPanel] = useState(false)
 
     // Reset form when household changes
     useEffect(() => {
@@ -151,6 +157,26 @@ export function FixedExpensesPage() {
         if (!window.confirm(`¿Eliminar "${item.description}"?`)) return
         await deleteItem(item.id)
     }, [deleteItem])
+
+    const handleOpenCatalog = useCallback(async (item) => {
+        setCatalogExpenseId(item.id)
+        try {
+            const links = await listExpenseCatalogLinks({ recurringExpenseId: item.id })
+            setCatalogLinkedIds(Array.isArray(links) ? links.map((l) => l.catalog_service_id) : [])
+        } catch {
+            setCatalogLinkedIds([])
+        }
+    }, [])
+
+    const handleCloseCatalog = useCallback(() => {
+        setCatalogExpenseId(null)
+        setCatalogLinkedIds([])
+    }, [])
+
+    const handleCatalogSave = useCallback(() => {
+        // Refresh the expense list to get updated state
+        loadItems()
+    }, [loadItems])
 
     const handleCancel = useCallback(() => {
         setShowForm(false)
@@ -373,6 +399,15 @@ export function FixedExpensesPage() {
                                             <button
                                                 type="button"
                                                 className="btn btnGhost btnSm btnIcon"
+                                                title="Asociar servicios"
+                                                onClick={() => handleOpenCatalog(item)}
+                                                aria-label={`Asociar servicios a ${item.description}`}
+                                            >
+                                                🔗
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn btnGhost btnSm btnIcon"
                                                 title="Editar"
                                                 onClick={() => handleEdit(item)}
                                                 aria-label={`Editar ${item.description}`}
@@ -420,6 +455,13 @@ export function FixedExpensesPage() {
                                     <button
                                         type="button"
                                         className="btn btnGhost btnSm"
+                                        onClick={() => handleOpenCatalog(item)}
+                                    >
+                                        🔗 Asociar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btnGhost btnSm"
                                         onClick={() => handleEdit(item)}
                                     >
                                         ✏️ Editar
@@ -437,6 +479,35 @@ export function FixedExpensesPage() {
                     </div>
                 )}
             </section>
+
+            {/* ─── KPI Panel ─── */}
+            {householdId && items.length > 0 && (
+                <div className="u-mt-3">
+                    <button
+                        type="button"
+                        className="btn btnGhost"
+                        onClick={() => setShowKPIPanel((prev) => !prev)}
+                    >
+                        {showKPIPanel ? 'Ocultar' : 'Mostrar'} análisis de suscripciones
+                    </button>
+                    {showKPIPanel && (
+                        <div className="u-mt-2">
+                            <SubscriptionKPIPanel householdId={householdId} />
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* ─── Catalog Selector ─── */}
+            {catalogExpenseId && (
+                <SubscriptionCatalogSelector
+                    open={!!catalogExpenseId}
+                    recurringExpenseId={catalogExpenseId}
+                    linkedServiceIds={catalogLinkedIds}
+                    onClose={handleCloseCatalog}
+                    onSave={handleCatalogSave}
+                />
+            )}
         </motion.div>
     )
 }

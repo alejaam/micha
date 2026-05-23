@@ -170,9 +170,10 @@ func main() {
 
 	// Subscription catalog use cases and handler dependencies.
 	subscriptionCatalogDeps := httpadapter.SubscriptionCatalogHandlerDeps{
-		ListServices:    subscriptioncatalogapp.NewListCatalogServicesUseCase(subscriptionCatalogRepo),
-		LinkService:     subscriptioncatalogapp.NewLinkServiceUseCase(subscriptionCatalogRepo),
-		UnlinkService:   subscriptioncatalogapp.NewUnlinkServiceUseCase(subscriptionCatalogRepo),
+		ListServices:       subscriptioncatalogapp.NewListCatalogServicesUseCase(subscriptionCatalogRepo),
+		LinkService:        subscriptioncatalogapp.NewLinkServiceUseCase(subscriptionCatalogRepo),
+		UnlinkService:      subscriptioncatalogapp.NewUnlinkServiceUseCase(subscriptionCatalogRepo),
+		GetLinksByExpense:  subscriptioncatalogapp.NewListLinksByExpenseUseCase(subscriptionCatalogRepo),
 		GetSubscriptionKPI: subscriptioncatalogapp.NewGetSubscriptionKPIUseCase(subscriptionCatalogRepo),
 	}
 

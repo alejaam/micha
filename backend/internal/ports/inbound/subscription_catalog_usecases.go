@@ -23,6 +23,11 @@ type LinkServiceUseCase interface {
 	Execute(ctx context.Context, input LinkServiceInput) (subscriptioncatalog.CatalogLink, error)
 }
 
+// ListLinksByExpenseUseCase returns all catalog links for a recurring expense.
+type ListLinksByExpenseUseCase interface {
+	Execute(ctx context.Context, recurringExpenseID string) ([]subscriptioncatalog.CatalogLink, error)
+}
+
 // UnlinkServiceUseCase removes a catalog service link from a recurring expense.
 type UnlinkServiceUseCase interface {
 	Execute(ctx context.Context, recurringExpenseID, catalogServiceID string) error

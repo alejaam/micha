@@ -398,3 +398,47 @@ export async function listPeriods({ householdId, limit = 20, offset = 0 }) {
     return parseResponse(response)
 }
 
+// ─── Subscription Catalog ─────────────────────────────────────────────────────
+
+export async function listSubscriptionServices() {
+    const response = await fetch(`${API_BASE_URL}/v1/subscription-services`, {
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
+export async function linkCatalogService({ recurringExpenseId, catalogServiceId, customPriceCents }) {
+    const body = { catalog_service_id: catalogServiceId }
+    if (typeof customPriceCents === 'number') {
+        body.custom_price_cents = customPriceCents
+    }
+    const response = await fetch(`${API_BASE_URL}/v1/recurring-expenses/${recurringExpenseId}/catalog-links`, {
+        method: 'POST',
+        headers: buildProtectedHeaders(),
+        body: JSON.stringify(body),
+    })
+    return parseResponse(response)
+}
+
+export async function unlinkCatalogService({ recurringExpenseId, catalogServiceId }) {
+    const response = await fetch(`${API_BASE_URL}/v1/recurring-expenses/${recurringExpenseId}/catalog-links/${catalogServiceId}`, {
+        method: 'DELETE',
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
+export async function getSubscriptionKPI({ householdId }) {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/subscription-kpi`, {
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
+export async function listExpenseCatalogLinks({ recurringExpenseId }) {
+    const response = await fetch(`${API_BASE_URL}/v1/recurring-expenses/${recurringExpenseId}/catalog-links`, {
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
