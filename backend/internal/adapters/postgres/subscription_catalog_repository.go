@@ -9,8 +9,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"micha/backend/internal/domain/subscriptioncatalog"
 	"micha/backend/internal/domain/shared"
+	"micha/backend/internal/domain/subscriptioncatalog"
 	"micha/backend/internal/ports/outbound"
 )
 

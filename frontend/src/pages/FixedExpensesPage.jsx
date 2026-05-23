@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { BottomSheet } from '../components/BottomSheet'
 import { SubscriptionCatalogSelector } from '../components/SubscriptionCatalogSelector'
 import { SubscriptionKPIPanel } from '../components/SubscriptionKPIPanel'
 import { useAppShell } from '../context/AppShellContext'

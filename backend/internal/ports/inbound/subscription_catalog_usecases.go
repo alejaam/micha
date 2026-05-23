@@ -35,16 +35,16 @@ type UnlinkServiceUseCase interface {
 
 // SubscriptionKPIOutput contains the KPI calculation result.
 type SubscriptionKPIOutput struct {
-	TotalSpentCents      int64              `json:"total_spent_cents"`
-	StandaloneTotalCents int64              `json:"standalone_total_cents"`
-	NetSavingsCents      int64              `json:"net_savings_cents"`
-	OverlapWarnings      []OverlapWarning   `json:"overlap_warnings"`
+	TotalSpentCents      int64            `json:"total_spent_cents"`
+	StandaloneTotalCents int64            `json:"standalone_total_cents"`
+	NetSavingsCents      int64            `json:"net_savings_cents"`
+	OverlapWarnings      []OverlapWarning `json:"overlap_warnings"`
 }
 
 // OverlapWarning indicates a catalog service linked to multiple recurring expenses.
 type OverlapWarning struct {
-	CatalogServiceID   string   `json:"catalog_service_id"`
-	ServiceName        string   `json:"service_name"`
+	CatalogServiceID    string   `json:"catalog_service_id"`
+	ServiceName         string   `json:"service_name"`
 	RecurringExpenseIDs []string `json:"recurring_expense_ids"`
 }
 

@@ -34,7 +34,7 @@ func (u GetSubscriptionKPIUseCase) Execute(ctx context.Context, householdID stri
 	var standaloneTotalCents int64
 
 	// Track unique expense IDs to avoid double-counting total_spent
-	expenseAmounts := make(map[string]int64)   // expenseID → amountCents
+	expenseAmounts := make(map[string]int64)      // expenseID → amountCents
 	serviceCountByExpense := make(map[string]int) // expenseID → count of linked services
 
 	// For overlap detection: serviceID → set of expenseIDs

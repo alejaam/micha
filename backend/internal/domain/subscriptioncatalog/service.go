@@ -8,14 +8,14 @@ import (
 )
 
 var (
-	ErrInvalidName             = errors.New("service name is required")
-	ErrInvalidSlug             = errors.New("service slug is required")
-	ErrInvalidPrice            = errors.New("standalone price must be greater than zero")
-	ErrInvalidCustomPrice      = errors.New("custom price must be greater than zero when provided")
-	ErrCatalogServiceNotFound  = errors.New("catalog service not found")
-	ErrLinkAlreadyExists       = errors.New("service already linked to this recurring expense")
-	ErrLinkNotFound            = errors.New("catalog link not found")
-	ErrInvalidID               = errors.New("invalid id")
+	ErrInvalidName            = errors.New("service name is required")
+	ErrInvalidSlug            = errors.New("service slug is required")
+	ErrInvalidPrice           = errors.New("standalone price must be greater than zero")
+	ErrInvalidCustomPrice     = errors.New("custom price must be greater than zero when provided")
+	ErrCatalogServiceNotFound = errors.New("catalog service not found")
+	ErrLinkAlreadyExists      = errors.New("service already linked to this recurring expense")
+	ErrLinkNotFound           = errors.New("catalog link not found")
+	ErrInvalidID              = errors.New("invalid id")
 )
 
 // ID is the unique identifier for a subscription service.
@@ -129,13 +129,13 @@ func (s SubscriptionService) Attributes() SubscriptionServiceAttributes {
 }
 
 // ID returns the service ID.
-func (s SubscriptionService) ID() ID                         { return s.id }
-func (s SubscriptionService) Name() string                   { return s.name }
-func (s SubscriptionService) Slug() string                   { return s.slug }
-func (s SubscriptionService) Region() string                 { return s.region }
-func (s SubscriptionService) Currency() string               { return s.currency }
-func (s SubscriptionService) StandalonePriceCents() int64    { return s.standalonePriceCents }
-func (s SubscriptionService) IconURL() string                { return s.iconURL }
-func (s SubscriptionService) IsBundle() bool                 { return s.isBundle }
-func (s SubscriptionService) CreatedAt() time.Time           { return s.createdAt }
-func (s SubscriptionService) UpdatedAt() time.Time           { return s.updatedAt }
+func (s SubscriptionService) ID() ID                      { return s.id }
+func (s SubscriptionService) Name() string                { return s.name }
+func (s SubscriptionService) Slug() string                { return s.slug }
+func (s SubscriptionService) Region() string              { return s.region }
+func (s SubscriptionService) Currency() string            { return s.currency }
+func (s SubscriptionService) StandalonePriceCents() int64 { return s.standalonePriceCents }
+func (s SubscriptionService) IconURL() string             { return s.iconURL }
+func (s SubscriptionService) IsBundle() bool              { return s.isBundle }
+func (s SubscriptionService) CreatedAt() time.Time        { return s.createdAt }
+func (s SubscriptionService) UpdatedAt() time.Time        { return s.updatedAt }

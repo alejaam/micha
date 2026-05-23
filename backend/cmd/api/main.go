@@ -179,12 +179,12 @@ func main() {
 
 	// Server dependencies grouped by resource.
 	serverDeps := httpadapter.ServerDependencies{
-		Auth:               authDeps,
-		Expense:            expenseDeps,
-		RecurringExpense:   recurringExpenseDeps,
+		Auth:                authDeps,
+		Expense:             expenseDeps,
+		RecurringExpense:    recurringExpenseDeps,
 		SubscriptionCatalog: subscriptionCatalogDeps,
-		Household:        householdDeps,
-		Member:           memberDeps,
+		Household:           householdDeps,
+		Member:              memberDeps,
 		MemberFinance: httpadapter.MemberFinanceHandlerDeps{
 			CalculateRemainingSalary: memberapp.NewCalculateRemainingSalaryUseCase(householdRepo, memberRepo, expenseRepo, installmentRepo),
 		},

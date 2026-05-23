@@ -44,7 +44,7 @@ func TestGetSubscriptionKPIUseCase_Execute(t *testing.T) {
 			},
 			wantTotalSpent:   21900,
 			wantStandalone:   29900,
-			wantSavings:      8000,  // 29900 - 21900
+			wantSavings:      8000, // 29900 - 21900
 			wantOverlapCount: 0,
 		},
 		{
@@ -85,7 +85,7 @@ func TestGetSubscriptionKPIUseCase_Execute(t *testing.T) {
 				},
 			},
 			wantTotalSpent:   32900,
-			wantStandalone:   7900, // custom price overrides standalone
+			wantStandalone:   7900,   // custom price overrides standalone
 			wantSavings:      -25000, // 7900 - 32900 = negative savings
 			wantOverlapCount: 0,
 		},
@@ -132,7 +132,7 @@ func TestGetSubscriptionKPIUseCase_Execute(t *testing.T) {
 			wantOverlapCount: 1, // one overlap warning
 		},
 		{
-			name: "no links returns empty KPI",
+			name:             "no links returns empty KPI",
 			links:            []outbound.RecurringExpenseLink{},
 			wantTotalSpent:   0,
 			wantStandalone:   0,

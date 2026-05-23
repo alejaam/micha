@@ -8,21 +8,21 @@ import (
 
 // ServerDependencies groups all resource-level dependencies for the HTTP server.
 type ServerDependencies struct {
-	Auth               AuthHandlerDeps
-	Expense            ExpenseHandlerDeps
-	RecurringExpense   RecurringExpenseHandlerDeps
-	Household          HouseholdHandlerDeps
-	Member             MemberHandlerDeps
-	MemberFinance      MemberFinanceHandlerDeps
-	Card               CardHandlerDeps
-	Settlement         SettlementHandlerDeps
-	Category           CategoryHandlerDeps
-	SplitConfig        SplitConfigHandlerDeps
-	Period             PeriodHandlerDeps
+	Auth                AuthHandlerDeps
+	Expense             ExpenseHandlerDeps
+	RecurringExpense    RecurringExpenseHandlerDeps
+	Household           HouseholdHandlerDeps
+	Member              MemberHandlerDeps
+	MemberFinance       MemberFinanceHandlerDeps
+	Card                CardHandlerDeps
+	Settlement          SettlementHandlerDeps
+	Category            CategoryHandlerDeps
+	SplitConfig         SplitConfigHandlerDeps
+	Period              PeriodHandlerDeps
 	SubscriptionCatalog SubscriptionCatalogHandlerDeps
-	JWTValidator       outbound.TokenValidator
-	MemberRepo         outbound.MemberRepository
-	AllowedOrigins     []string
+	JWTValidator        outbound.TokenValidator
+	MemberRepo          outbound.MemberRepository
+	AllowedOrigins      []string
 }
 
 // Server is the primary HTTP adapter.

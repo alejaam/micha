@@ -146,15 +146,15 @@ func (h subscriptionCatalogHandler) handleGetKPI(w http.ResponseWriter, r *http.
 func subscriptionServiceJSON(s subscriptioncatalog.SubscriptionService) map[string]any {
 	attrs := s.Attributes()
 	m := map[string]any{
-		"id":                      string(attrs.ID),
-		"name":                    attrs.Name,
-		"slug":                    attrs.Slug,
-		"region":                  attrs.Region,
-		"currency":                attrs.Currency,
-		"standalone_price_cents":  attrs.StandalonePriceCents,
-		"icon_url":                attrs.IconURL,
-		"is_bundle":               attrs.IsBundle,
-		"created_at":              attrs.CreatedAt,
+		"id":                     string(attrs.ID),
+		"name":                   attrs.Name,
+		"slug":                   attrs.Slug,
+		"region":                 attrs.Region,
+		"currency":               attrs.Currency,
+		"standalone_price_cents": attrs.StandalonePriceCents,
+		"icon_url":               attrs.IconURL,
+		"is_bundle":              attrs.IsBundle,
+		"created_at":             attrs.CreatedAt,
 	}
 	return m
 }
@@ -183,5 +183,3 @@ func writeCatalogLinkError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "an internal error occurred")
 	}
 }
-
-

@@ -30,10 +30,10 @@ type SubscriptionCatalogRepository interface {
 
 // RecurringExpenseLink is a joined result from recurring_expense + catalog_link + subscription_service.
 type RecurringExpenseLink struct {
-	RecurringExpenseID string
-	ServiceID          string
-	ServiceName        string
+	RecurringExpenseID   string
+	ServiceID            string
+	ServiceName          string
 	StandalonePriceCents int64
-	CustomPriceCents   *int64
-	ExpenseAmountCents int64
+	CustomPriceCents     *int64
+	ExpenseAmountCents   int64
 }
