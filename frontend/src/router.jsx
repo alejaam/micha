@@ -12,6 +12,7 @@ import { ProtectedOnboardingLayout } from './layouts/ProtectedOnboardingLayout'
 import { BalancesPage } from './pages/BalancesPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { ExpensesPage } from './pages/ExpensesPage'
+import { FixedExpensesPage } from './pages/FixedExpensesPage'
 import { InstallmentsPage } from './pages/InstallmentsPage'
 import { LoginPage } from './pages/LoginPage'
 import { OnboardingCardsPage } from './pages/OnboardingCardsPage'
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
             { path: 'expenses', element: <ExpensesPage /> },
             { path: 'balances', element: <BalancesPage /> },
             { path: 'installments', element: <InstallmentsPage /> },
+            { path: 'fixed-expenses', element: <FixedExpensesPage /> },
             { path: 'rules', element: <RulesPage /> },
             { path: 'dashboard', element: <Navigate to="/" replace /> },
             { path: 'movements', element: <Navigate to="/expenses" replace /> },

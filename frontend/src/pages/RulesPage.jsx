@@ -65,7 +65,7 @@ export function RulesPage() {
                         <button
                             type="button"
                             className="btn btnPrimary"
-                            onClick={() => navigate('/onboarding/fixed-expenses')}
+                            onClick={() => navigate('/fixed-expenses')}
                             disabled={isMutationLocked}
                         >
                             Gestionar gastos fijos
