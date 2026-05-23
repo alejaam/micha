@@ -176,6 +176,9 @@ func (r *RecurringExpense) Patch(
 	amountCents *int64,
 	categoryID *string,
 	isActive *bool,
+	recurrencePattern *RecurrencePattern,
+	startDate *time.Time,
+	endDate **time.Time,
 ) error {
 	if amountCents != nil {
 		if *amountCents <= 0 {
@@ -192,6 +195,31 @@ func (r *RecurringExpense) Patch(
 	if isActive != nil {
 		r.isActive = *isActive
 	}
+	if recurrencePattern != nil {
+		if *recurrencePattern != RecurrencePatternMonthly &&
+			*recurrencePattern != RecurrencePatternBiweekly &&
+			*recurrencePattern != RecurrencePatternWeekly {
+			return ErrInvalidRecurrencePattern
+		}
+		r.recurrencePattern = *recurrencePattern
+	}
+	if startDate != nil {
+		r.startDate = *startDate
+	}
+	if endDate != nil {
+		r.endDate = *endDate
+	}
+
+	// Revalidate date range
+	if r.endDate != nil && r.endDate.Before(r.startDate) {
+		return ErrInvalidDateRange
+	}
+
+	// Revalidate next generation date
+	if r.nextGenerationDate.Before(r.startDate) {
+		r.nextGenerationDate = r.startDate
+	}
+
 	r.updatedAt = time.Now()
 	return nil
 }

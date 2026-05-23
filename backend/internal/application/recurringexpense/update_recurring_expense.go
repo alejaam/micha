@@ -43,7 +43,21 @@ func (u UpdateRecurringExpenseUseCase) Execute(ctx context.Context, cmd inbound.
 		categoryID = &resolved
 	}
 
-	if err := re.Patch(cmd.Description, cmd.AmountCents, categoryID, cmd.IsActive); err != nil {
+	var recurrencePattern *recurringexpense.RecurrencePattern
+	if cmd.RecurrencePattern != nil {
+		rp := recurringexpense.RecurrencePattern(*cmd.RecurrencePattern)
+		recurrencePattern = &rp
+	}
+
+	if err := re.Patch(
+		cmd.Description,
+		cmd.AmountCents,
+		categoryID,
+		cmd.IsActive,
+		recurrencePattern,
+		cmd.StartDate,
+		cmd.EndDate,
+	); err != nil {
 		return recurringexpense.RecurringExpense{}, fmt.Errorf("update recurring expense: %w", err)
 	}
 

@@ -17,7 +17,7 @@ export function BottomNav({ householdId }) {
         { path: '/', icon: HomeIcon, iconActive: HomeIconSolid, label: 'Vista', exact: true },
         { path: '/expenses', icon: ArrowsRightLeftIcon, iconActive: ArrowsRightLeftIconSolid, label: 'Movimientos' },
         { path: '/balances', icon: BanknotesIcon, iconActive: BanknotesIconSolid, label: 'Balances' },
-        { path: '/installments', icon: CalendarDaysIcon, iconActive: CalendarDaysIconSolid, label: 'Plazos' },
+        { path: '/fixed-expenses', icon: CalendarDaysIcon, iconActive: CalendarDaysIconSolid, label: 'Gastos fijos' },
         { path: '/rules', icon: Cog6ToothIcon, iconActive: Cog6ToothIconSolid, label: 'Config' },
     ]
 

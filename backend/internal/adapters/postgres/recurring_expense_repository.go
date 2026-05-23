@@ -106,7 +106,6 @@ func (r RecurringExpenseRepository) ListDueForGeneration(ctx context.Context, as
 			FROM recurring_expenses
 			WHERE deleted_at IS NULL
 				AND is_active = true
-				AND is_agnostic = false
 				AND next_generation_date <= $1
 				AND (end_date IS NULL OR end_date >= $1)
 			ORDER BY next_generation_date ASC`,

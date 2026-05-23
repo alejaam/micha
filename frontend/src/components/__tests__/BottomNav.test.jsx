@@ -19,7 +19,7 @@ describe('BottomNav', () => {
     expect(screen.getByText('Vista')).toBeInTheDocument()
     expect(screen.getByText('Movimientos')).toBeInTheDocument()
     expect(screen.getByText('Balances')).toBeInTheDocument()
-    expect(screen.getByText('Plazos')).toBeInTheDocument()
+    expect(screen.getByText('Gastos fijos')).toBeInTheDocument()
     expect(screen.getByText('Config')).toBeInTheDocument()
   })
 

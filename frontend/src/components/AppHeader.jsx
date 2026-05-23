@@ -98,8 +98,8 @@ export function AppHeader({
           <NavLink to="/balances" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
             Balances
           </NavLink>
-          <NavLink to="/installments" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
-            Plazos
+          <NavLink to="/fixed-expenses" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
+            Gastos fijos
           </NavLink>
           <NavLink to="/rules" className={({ isActive }) => `headerNavLink${isActive ? ' active' : ''}`}>
             Reglas

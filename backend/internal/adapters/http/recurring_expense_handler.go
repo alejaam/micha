@@ -149,21 +149,53 @@ func (h recurringExpenseHandler) handleUpdate(w http.ResponseWriter, r *http.Req
 	}
 
 	var body struct {
-		Description *string `json:"description"`
-		AmountCents *int64  `json:"amount_cents"`
-		CategoryID  *string `json:"category_id"`
-		IsActive    *bool   `json:"is_active"`
+		Description       *string  `json:"description"`
+		AmountCents       *int64   `json:"amount_cents"`
+		CategoryID        *string  `json:"category_id"`
+		IsActive          *bool    `json:"is_active"`
+		RecurrencePattern *string  `json:"recurrence_pattern"`
+		StartDate         *string  `json:"start_date"`
+		EndDate           **string `json:"end_date"`
 	}
 	if err := decodeJSON(r, w, &body); err != nil {
 		return
 	}
 
+	var startDate *time.Time
+	if body.StartDate != nil {
+		parsedStart, parseErr := time.Parse(time.DateOnly, *body.StartDate)
+		if parseErr != nil {
+			writeError(w, http.StatusBadRequest, "INVALID_START_DATE", "start_date must be in YYYY-MM-DD format")
+			return
+		}
+		startDate = &parsedStart
+	}
+
+	var endDate **time.Time
+	if body.EndDate != nil {
+		if *body.EndDate == nil {
+			var nilTime *time.Time
+			endDate = &nilTime
+		} else {
+			parsedEnd, parseErr := time.Parse(time.DateOnly, **body.EndDate)
+			if parseErr != nil {
+				writeError(w, http.StatusBadRequest, "INVALID_END_DATE", "end_date must be in YYYY-MM-DD format")
+				return
+			}
+			ptrToParsed := &parsedEnd
+			endDate = &ptrToParsed
+		}
+	}
+
 	re, err := h.deps.Update.Execute(r.Context(), inbound.UpdateRecurringExpenseCommand{
-		ID:          id,
-		Description: body.Description,
-		AmountCents: body.AmountCents,
-		CategoryID:  body.CategoryID,
-		IsActive:    body.IsActive,
+		ID:                id,
+		Description:       body.Description,
+		AmountCents:       body.AmountCents,
+		CategoryID:        body.CategoryID,
+		IsActive:          body.IsActive,
+		RecurrencePattern: body.RecurrencePattern,
+		StartDate:         startDate,
+		EndDate:           endDate,
 	})
 	if err != nil {
 		writeRecurringExpenseError(w, err)

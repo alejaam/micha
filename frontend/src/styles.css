@@ -234,6 +234,11 @@ ul {
     align-content: start;
 }
 
+/* Utility: span all columns in a grid (useful when pageGrid is multi-column on desktop) */
+.spanAll {
+    grid-column: 1 / -1;
+}
+
 /* ─── Card ──────────────────────────────────────────────────────────────────── */
 .card {
     min-width: 0;
@@ -2191,6 +2196,10 @@ html, body {
     .headerNav {
         display: inline-flex;
     }
+
+    .fixedExpensesTableWrapper {
+        overflow-x: visible;
+    }
 }
 
 @media (min-width: 1040px) {
@@ -2519,6 +2528,426 @@ html {
     text-align: right;
     flex-shrink: 0;
     color: var(--color-text-2);
+}
+
+/* ─── FixedExpensesPage table ────────────────────────────────────────────── */
+.fixedExpensesTableWrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.fixedExpensesTableWrapper table.fixedExpensesTable {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    table-layout: fixed;
+    border: none;
+    border-radius: 0;
+}
+
+.fixedExpensesTableWrapper table.fixedExpensesTable th,
+.fixedExpensesTableWrapper table.fixedExpensesTable td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-soft);
+    vertical-align: middle;
+}
+
+.fixedExpensesTableWrapper table.fixedExpensesTable thead th {
+    background: var(--color-anil-50);
+    color: var(--color-anil-600);
+    font-weight: var(--fw-bold);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    position: sticky;
+    top: 0;
+}
+
+.fixedExpensesTableWrapper table.fixedExpensesTable thead th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.fixedExpensesTableWrapper table.fixedExpensesTable thead th.sortable:hover {
+    background: var(--color-anil-100);
+}
+
+.fixedExpensesTableWrapper table.fixedExpensesTable tbody tr:hover {
+    background: var(--color-surface-2);
+}
+
+.fixedExpensesTableWrapper .sortIcon {
+    color: var(--color-anil-400);
+    font-size: 0.7rem;
+}
+
+/* Column-specific styles */
+.col-description {
+    /* Takes up remaining space */
+    white-space: normal;
+    word-break: break-word;
+    color: var(--color-text-1);
+    font-weight: var(--fw-medium);
+}
+.col-amount {
+    width: 130px;
+    text-align: right;
+    white-space: nowrap;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-1);
+}
+.col-type {
+    width: 90px;
+    text-align: center;
+    white-space: nowrap;
+}
+.col-frequency {
+    width: 110px;
+    text-align: center;
+    white-space: nowrap;
+}
+.col-status {
+    width: 110px;
+    text-align: center;
+}
+.col-actions {
+    width: 140px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.col-actions button {
+    margin: 0 4px;
+}
+
+
+/* ─── Mobile cards (<640px) ──────────────────────────────────────────────── */
+.fixedExpensesCards {
+    display: none;
+}
+
+@media (max-width: 639px) {
+    .fixedExpensesTableWrapper {
+        display: none;
+    }
+
+    .fixedExpensesCards {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .fixedExpenseCard {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border-soft);
+        border-radius: var(--radius-md);
+        padding: 14px;
+        transition: background var(--dur-fast);
+    }
+
+    .fixedExpenseCard:hover {
+        background: var(--color-surface-2);
+    }
+
+    .fixedExpenseCardHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+
+    .fixedExpenseCardTitle {
+        font-weight: var(--fw-semibold);
+        color: var(--color-text-1);
+        font-size: 0.95rem;
+    }
+
+    .fixedExpenseCardAmount {
+        font-weight: var(--fw-bold);
+        color: var(--color-text-1);
+        font-size: 0.95rem;
+        flex-shrink: 0;
+        margin-left: 8px;
+    }
+
+    .fixedExpenseCardMeta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+
+    .fixedExpenseCardTag {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: var(--color-anil-50);
+        color: var(--color-anil-600);
+    }
+
+    .fixedExpenseCardActions {
+        display: flex;
+        gap: 8px;
+        border-top: 1px solid var(--color-border-soft);
+        padding-top: 10px;
+    }
+}
+
+/* Status badges */
+.statusBadge {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: var(--fw-medium);
+    display: inline-block;
+}
+
+.statusActive {
+    background: var(--color-green-100, #d1fae5);
+    color: var(--color-green-700, #065f46);
+}
+
+.statusInactive {
+    background: var(--color-red-100, #fee2e2);
+    color: var(--color-red-700, #991b1b);
+}
+
+/* ─── SubscriptionCatalogSelector ──────────────────────────────────────────── */
+.catalogModal {
+    max-width: 520px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.catalogServiceList {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.catalogServiceItem {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-soft);
+    cursor: pointer;
+    transition: background var(--dur-fast), border-color var(--dur-fast);
+}
+
+.catalogServiceItem:hover {
+    background: var(--color-surface-2);
+}
+
+.catalogServiceItem--linked {
+    border-color: var(--color-anil-300);
+    background: var(--color-anil-50);
+}
+
+.catalogServiceItemMain {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.catalogServiceCheckbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-anil-500);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.catalogServiceInfo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.catalogServiceName {
+    font-weight: var(--fw-medium);
+    color: var(--color-text-1);
+    font-size: 0.9rem;
+}
+
+.catalogServiceBadge {
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--color-amber-100, #fef3c7);
+    color: var(--color-amber-700, #92400e);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.catalogServicePrice {
+    font-size: 0.85rem;
+    color: var(--color-text-2);
+    margin-left: auto;
+}
+
+.catalogServiceOverride {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--color-border-soft);
+}
+
+.catalogServiceOverrideLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--color-text-3);
+}
+
+.catalogServiceOverrideInput {
+    width: 140px !important;
+    font-size: 0.8rem !important;
+}
+
+.catalogSection {
+    margin-bottom: 16px;
+}
+
+.catalogSection:last-child {
+    margin-bottom: 0;
+}
+
+.catalogSectionTitle {
+    font-size: 0.8rem;
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-3);
+    margin-bottom: 8px;
+}
+
+/* Modal system */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.modalContent {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-border-soft);
+}
+
+.modalTitle {
+    font-size: 1.05rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-1);
+    margin: 0;
+}
+
+.modalBody {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+}
+
+.modalFooter {
+    padding: 12px 20px;
+    border-top: 1px solid var(--color-border-soft);
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* ─── SubscriptionKPIPanel ────────────────────────────────────────────────── */
+.kpiGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.kpiItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-2);
+}
+
+.kpiLabel {
+    font-size: 0.75rem;
+    color: var(--color-text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.kpiValue {
+    font-size: 1.1rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-text-1);
+}
+
+.kpiOverlaps {
+    border-top: 1px solid var(--color-border-soft);
+    padding-top: 12px;
+}
+
+.kpiOverlapsTitle {
+    font-size: 0.85rem;
+    font-weight: var(--fw-bold);
+    color: var(--color-amber-600, #d97706);
+    margin-bottom: 8px;
+}
+
+.kpiOverlapsList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.kpiOverlapItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--color-amber-50, #fffbeb);
+    font-size: 0.85rem;
+}
+
+.kpiOverlapService {
+    font-weight: var(--fw-medium);
+    color: var(--color-text-1);
+}
+
+.kpiOverlapCount {
+    font-size: 0.8rem;
+    color: var(--color-amber-600, #d97706);
 }
 
 /* ─── Card admin table (OnboardingCardsPage) ──────────────────────────────── */
@@ -3603,7 +4032,7 @@ html {
 .feedItem:last-child { border-bottom: none; }
 .feedItemAvatar { width: 36px; height: 36px; border-radius: 50%; background: var(--color-anil-50); color: var(--color-anil-500); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: var(--fw-semibold); flex-shrink: 0; }
 .feedItemBody { flex: 1; min-width: 0; }
-.feedItemName { font-weight: var(--fw-medium); color: var(--color-text-1); font-size: 0.9rem; }
+.feedItemName { font-weight: var(--fw-medium); color: var(--color-text-1); font-size: 0.9rem; margin-inline-end: 0.5rem;}
 .feedItemDesc { font-size: 0.8rem; color: var(--color-text-3); }
 .feedItemMeta { display: flex; align-items: center; gap: var(--sp-xs); }
 .feedItemType { font-size: 0.85rem; }

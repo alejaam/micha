@@ -145,20 +145,45 @@ export function DashboardPage() {
                         </button>
                     </section>
 
-                    {/* ─── 3. CategoriesGrid ─── */}
+                    {/* ─── 3. Gastos fijos shortcut ─── */}
+                    {hasRecurringFixed && (
+                        <section className="card" aria-label="Gastos fijos">
+                            <div className="listHeader">
+                                <h2 className="listTitle">Gastos fijos</h2>
+                                {recurringItems.filter((i) => i.expense_type === 'fixed').length > 0 && (
+                                    <span className="listCount">
+                                        {recurringItems.filter((i) => i.expense_type === 'fixed').length} registrados
+                                    </span>
+                                )}
+                            </div>
+                            <p className="u-text-sm u-text-dim u-mb-3">
+                                Gestiona las suscripciones, renta y demás gastos recurrentes.
+                            </p>
+                            <button
+                                type="button"
+                                className="btn btnPrimary"
+                                onClick={() => navigate('/fixed-expenses')}
+                                style={{ width: '100%' }}
+                            >
+                                Gestionar gastos fijos →
+                            </button>
+                        </section>
+                    )}
+
+                    {/* ─── 5. CategoriesGrid ─── */}
                     <CategoriesGrid
                         categoryTotals={categoryTotals}
                         currency={activeCurrency}
                     />
 
-                    {/* ─── 4. MSI progress list ─── */}
+                    {/* ─── 6. MSI progress list ─── */}
                     <MSI
                         items={items}
                         msiProgress={msiProgress}
                         currency={activeCurrency}
                     />
 
-                    {/* ─── 5. PeriodHistory ─── */}
+                    {/* ─── 7. PeriodHistory ─── */}
                     <PeriodHistory householdId={householdId} />
                 </>
             )}

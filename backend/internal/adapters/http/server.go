@@ -8,20 +8,21 @@ import (
 
 // ServerDependencies groups all resource-level dependencies for the HTTP server.
 type ServerDependencies struct {
-	Auth             AuthHandlerDeps
-	Expense          ExpenseHandlerDeps
-	RecurringExpense RecurringExpenseHandlerDeps
-	Household        HouseholdHandlerDeps
-	Member           MemberHandlerDeps
-	MemberFinance    MemberFinanceHandlerDeps
-	Card             CardHandlerDeps
-	Settlement       SettlementHandlerDeps
-	Category         CategoryHandlerDeps
-	SplitConfig      SplitConfigHandlerDeps
-	Period           PeriodHandlerDeps
-	JWTValidator     outbound.TokenValidator
-	MemberRepo       outbound.MemberRepository
-	AllowedOrigins   []string
+	Auth                AuthHandlerDeps
+	Expense             ExpenseHandlerDeps
+	RecurringExpense    RecurringExpenseHandlerDeps
+	Household           HouseholdHandlerDeps
+	Member              MemberHandlerDeps
+	MemberFinance       MemberFinanceHandlerDeps
+	Card                CardHandlerDeps
+	Settlement          SettlementHandlerDeps
+	Category            CategoryHandlerDeps
+	SplitConfig         SplitConfigHandlerDeps
+	Period              PeriodHandlerDeps
+	SubscriptionCatalog SubscriptionCatalogHandlerDeps
+	JWTValidator        outbound.TokenValidator
+	MemberRepo          outbound.MemberRepository
+	AllowedOrigins      []string
 }
 
 // Server is the primary HTTP adapter.
@@ -103,6 +104,13 @@ func NewServer(port string, deps ServerDependencies) Server {
 
 	sch := newSplitConfigHandler(deps.SplitConfig)
 	mux.Handle("PUT /v1/households/{household_id}/split-config", protectHousehold(http.HandlerFunc(sch.handleUpdate)))
+
+	catalogHandler := newSubscriptionCatalogHandler(deps.SubscriptionCatalog)
+	mux.Handle("GET /v1/subscription-services", protect(http.HandlerFunc(catalogHandler.handleListServices)))
+	mux.Handle("GET /v1/recurring-expenses/{recurring_expense_id}/catalog-links", protect(http.HandlerFunc(catalogHandler.handleListExpenseLinks)))
+	mux.Handle("POST /v1/recurring-expenses/{recurring_expense_id}/catalog-links", protect(http.HandlerFunc(catalogHandler.handleLinkService)))
+	mux.Handle("DELETE /v1/recurring-expenses/{recurring_expense_id}/catalog-links/{catalog_service_id}", protect(http.HandlerFunc(catalogHandler.handleUnlinkService)))
+	mux.Handle("GET /v1/households/{household_id}/subscription-kpi", protectHousehold(http.HandlerFunc(catalogHandler.handleGetKPI)))
 
 	ph := newPeriodHandler(deps.Period)
 	mux.Handle("GET /v1/households/{household_id}/periods/current", protectHousehold(http.HandlerFunc(ph.handleGetCurrent)))
