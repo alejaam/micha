@@ -62,7 +62,7 @@
     --shadow-md: 0 4px 8px rgba(15, 23, 42, .08);
     --shadow-lg: 0 8px 16px rgba(15, 23, 42, .10);
     --shadow-xl: 0 12px 24px rgba(15, 23, 42, .12);
-    --shadow-glow: 0 0 12px rgba(59, 130, 246, .15);
+    --shadow-glow: 0 0 12px rgba(26, 58, 74, .15);
     --shadow-inner: inset 0 1px 2px rgba(15, 23, 42, .04);
 
     /* Motion — Smooth, responsive */
@@ -435,7 +435,7 @@ ul {
 .householdInput:focus-visible {
     outline: none;
     border-color: var(--color-anil-500);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, .18);
+    box-shadow: 0 0 0 3px rgba(26, 58, 74, .15);
 }
 
 /* ─── User Menu / Avatar Dropdown ─────────────────────────────────────────── */
@@ -757,7 +757,7 @@ ul {
 .input:focus-visible {
     outline: none;
     border-color: var(--color-anil-500);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, .15);
+    box-shadow: 0 0 0 3px rgba(26, 58, 74, .15);
 }
 
 .input::placeholder {
@@ -1364,9 +1364,9 @@ ul {
 }
 
 @keyframes periodFlash {
-    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-    30% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15); }
-    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    0% { box-shadow: 0 0 0 0 rgba(26, 58, 74, 0); }
+    30% { box-shadow: 0 0 0 4px rgba(26, 58, 74, 0.15); }
+    100% { box-shadow: 0 0 0 0 rgba(26, 58, 74, 0); }
 }
 
 .appHeader--flash {
@@ -1550,7 +1550,7 @@ ul {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: var(--shadow-lg), 0 4px 20px rgba(139, 92, 246, .4);
+    box-shadow: var(--shadow-lg), 0 4px 20px rgba(26, 58, 74, .3);
     transition:
         transform var(--dur-fast) var(--ease-spring),
         box-shadow var(--dur-fast);
@@ -1559,7 +1559,7 @@ ul {
 
 .fab:hover {
     transform: scale(1.08) translateY(-2px);
-    box-shadow: var(--shadow-xl), 0 8px 30px rgba(139, 92, 246, .5);
+    box-shadow: var(--shadow-xl), 0 8px 30px rgba(26, 58, 74, .4);
 }
 
 .fab:active {
@@ -3067,7 +3067,7 @@ html {
     justify-content: space-between;
     gap: 14px;
     padding: 16px 20px;
-    background: linear-gradient(135deg, var(--color-anil-50), rgba(139, 92, 246, .05));
+    background: linear-gradient(135deg, var(--color-anil-50), rgba(26, 58, 74, .06));
     border: 1px solid var(--color-anil-100);
     border-radius: var(--radius-md);
     transition: all var(--dur-fast) var(--ease-out);
