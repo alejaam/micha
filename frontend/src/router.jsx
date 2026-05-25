@@ -15,6 +15,7 @@ import { ExpensesPage } from './pages/ExpensesPage'
 import { FixedExpensesPage } from './pages/FixedExpensesPage'
 import { InstallmentsPage } from './pages/InstallmentsPage'
 import { LoginPage } from './pages/LoginPage'
+import { CardsPage } from './pages/CardsPage'
 import { OnboardingCardsPage } from './pages/OnboardingCardsPage'
 import { OnboardingFixedExpensesPage } from './pages/OnboardingFixedExpensesPage'
 import { OnboardingHouseholdPage } from './pages/OnboardingHouseholdPage'
@@ -41,6 +42,8 @@ const router = createBrowserRouter([
             { path: 'balances', element: <BalancesPage /> },
             { path: 'installments', element: <InstallmentsPage /> },
             { path: 'fixed-expenses', element: <FixedExpensesPage /> },
+            { path: 'cards', element: <CardsPage /> },
+            { path: 'settings/household', element: <OnboardingHouseholdPage /> },
             { path: 'rules', element: <RulesPage /> },
             { path: 'dashboard', element: <Navigate to="/" replace /> },
             { path: 'movements', element: <Navigate to="/expenses" replace /> },

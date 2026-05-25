@@ -400,37 +400,62 @@ export function OnboardingFixedExpensesPage() {
 
             {/* ── Actions ────────────────────────────────────────────────── */}
             <div className="u-flex u-gap-4 u-mt-6">
-                {isOnboarding ? (
-                    <>
+            <div className="u-flex u-justify-between u-items-center u-mb-4">
+                <h3 className="sectionTitle">Añadir nuevos</h3>
+                <div className="u-flex u-gap-2">
+                    {!isOnboarding ? (
                         <button
                             type="button"
-                            className="btn u-flex-1"
-                            onClick={() => navigate('/', { replace: true })}
+                            className="btn btnGhost btnSm"
+                            onClick={() => navigate('/rules')}
                             disabled={saving}
                         >
-                            Saltar por ahora
+                            Volver a ajustes
                         </button>
-                        <button
-                            type="button"
-                            className="btn btnPrimary u-flex-1"
-                            onClick={handleSave}
-                            disabled={saving || !hasValidSelection}
-                        >
-                            {saving ? 'Guardando...' : 'Guardar y continuar'}
-                        </button>
-                    </>
-                ) : (
-                    selectedKeys.length > 0 && (
-                        <button
-                            type="button"
-                            className="btn btnPrimary"
-                            onClick={handleSave}
-                            disabled={saving || !hasValidSelection}
-                        >
-                            {saving ? 'Guardando...' : 'Guardar gastos fijos'}
-                        </button>
-                    )
-                )}
+                    ) : (
+                    <button
+                        type="button"
+                        className="btn btnGhost btnSm"
+                        onClick={() => navigate('/onboarding/cards', { replace: true })}
+                        disabled={saving}
+                    >
+                        Volver
+                    </button>
+                    )}
+                    <button
+                        type="button"
+                        className="btn btnGhost btnSm"
+                        onClick={() => navigate('/', { replace: true })}
+                        disabled={saving}
+                    >
+                        Ir al dashboard
+                    </button>
+                </div>
+            </div>
+
+            {isOnboarding ? (
+                selectedKeys.length > 0 && (
+                    <button
+                        type="button"
+                        className="btn btnPrimary u-flex-1"
+                        onClick={handleSave}
+                        disabled={saving || !hasValidSelection}
+                    >
+                        {saving ? 'Guardando...' : 'Guardar y continuar'}
+                    </button>
+                )
+            ) : (
+                selectedKeys.length > 0 && (
+                    <button
+                        type="button"
+                        className="btn btnPrimary"
+                        onClick={handleSave}
+                        disabled={saving || !hasValidSelection}
+                    >
+                        {saving ? 'Guardando...' : 'Guardar gastos fijos'}
+                    </button>
+                )
+            )}
             </div>
         </section>
     )

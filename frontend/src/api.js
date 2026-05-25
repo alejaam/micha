@@ -115,6 +115,26 @@ export async function createHousehold({ name, settlementMode = 'equal', currency
     return parseResponse(response)
 }
 
+export async function updateHousehold({ householdId, name, settlementMode = 'equal', currency = 'MXN', closingDay = 15, periodFrequency = 'monthly' }) {
+    if (!householdId) {
+        throw new Error('householdId is required')
+    }
+
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}`, {
+        method: 'PUT',
+        headers: buildProtectedHeaders(),
+        body: JSON.stringify({
+            name,
+            settlement_mode: settlementMode,
+            currency,
+            closing_day: closingDay,
+            period_frequency: periodFrequency,
+        }),
+    })
+
+    return parseResponse(response)
+}
+
 export async function createMember({ householdId, name, email, monthlySalaryCents = 0 }) {
     const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/members`, {
         method: 'POST',

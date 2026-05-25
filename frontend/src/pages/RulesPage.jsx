@@ -46,7 +46,7 @@ export function RulesPage() {
                         <button
                             type="button"
                             className="btn btnPrimary"
-                            onClick={() => navigate('/onboarding/cards')}
+                            onClick={() => navigate('/cards')}
                             disabled={isMutationLocked}
                         >
                             Gestionar tarjetas
@@ -86,7 +86,7 @@ export function RulesPage() {
                         <button
                             type="button"
                             className="btn btnPrimary"
-                            onClick={() => navigate('/onboarding/household')}
+                            onClick={() => navigate('/settings/household')}
                             disabled={isMutationLocked}
                         >
                             Editar ajustes del hogar
