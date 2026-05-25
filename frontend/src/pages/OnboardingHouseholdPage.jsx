@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { createHousehold } from '../api'
+import { useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { createHousehold, updateHousehold } from '../api'
 import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
@@ -24,15 +24,46 @@ const SETTLEMENT_HINTS = {
 
 export function OnboardingHouseholdPage() {
     const { handleProtectedError } = useAuth()
-    const { setHouseholdId, loadHouseholds } = useAppShell()
+    const { householdId, selectedHousehold, setHouseholdId, loadHouseholds } = useAppShell()
     const navigate = useNavigate()
+    const location = useLocation()
+
+    const isOnboarding = location.pathname.startsWith('/onboarding/')
+
+    const initial = useMemo(() => {
+        if (isOnboarding) {
+            return {
+                name: '',
+                settlementMode: 'equal',
+                currency: 'MXN',
+                closingDay: 15,
+                periodFrequency: 'monthly',
+            }
+        }
+        return {
+            name: selectedHousehold?.name ?? '',
+            settlementMode: selectedHousehold?.settlement_mode ?? 'equal',
+            currency: selectedHousehold?.currency ?? 'MXN',
+            closingDay: selectedHousehold?.closing_day ?? 15,
+            periodFrequency: selectedHousehold?.period_frequency ?? 'monthly',
+        }
+    }, [isOnboarding, selectedHousehold])
 
     // Household state
-    const [hhName, setHhName] = useState('')
-    const [settlementMode, setSettlementMode] = useState('equal')
-    const [currency, setCurrency] = useState('MXN')
-    const [closingDay, setClosingDay] = useState(15)
-    const [periodFrequency, setPeriodFrequency] = useState('monthly')
+    const [hhName, setHhName] = useState(initial.name)
+    const [settlementMode, setSettlementMode] = useState(initial.settlementMode)
+    const [currency, setCurrency] = useState(initial.currency)
+    const [closingDay, setClosingDay] = useState(initial.closingDay)
+    const [periodFrequency, setPeriodFrequency] = useState(initial.periodFrequency)
+
+    useEffect(() => {
+        if (isOnboarding) return
+        setHhName(initial.name)
+        setSettlementMode(initial.settlementMode)
+        setCurrency(initial.currency)
+        setClosingDay(initial.closingDay)
+        setPeriodFrequency(initial.periodFrequency)
+    }, [isOnboarding, initial])
 
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState('')
@@ -45,7 +76,26 @@ export function OnboardingHouseholdPage() {
         setError('')
         
         try {
-            // 1. Create household
+            if (!isOnboarding) {
+                if (!householdId) {
+                    throw new Error('No hay hogar seleccionado para editar')
+                }
+
+                await updateHousehold({
+                    householdId,
+                    name: hhName.trim(),
+                    settlementMode,
+                    currency,
+                    closingDay: Number(closingDay),
+                    periodFrequency,
+                })
+
+                await loadHouseholds()
+                navigate('/rules')
+                return
+            }
+
+            // Onboarding: create household
             const hhOut = await createHousehold({
                 name: hhName.trim(),
                 settlementMode,
@@ -53,7 +103,7 @@ export function OnboardingHouseholdPage() {
                 closingDay: Number(closingDay),
                 periodFrequency,
             })
-            
+
             const createdHouseholdId = hhOut?.household_id ?? hhOut?.id ?? ''
             if (!createdHouseholdId) {
                 throw new Error('El hogar fue creado pero no se devolvió el ID')
@@ -67,7 +117,7 @@ export function OnboardingHouseholdPage() {
 
             // 3. Continue to member onboarding
             navigate('/onboarding/member', { replace: true })
-            
+
         } catch (err) {
             if (!handleProtectedError(err)) setError(err.message)
         } finally {
@@ -76,16 +126,22 @@ export function OnboardingHouseholdPage() {
     }
 
     return (
-        <section className="card onboardingCard" aria-label="Crea tu hogar">
+        <section className={`card ${isOnboarding ? 'onboardingCard' : ''}`} aria-label={isOnboarding ? 'Crea tu hogar' : 'Editar hogar'}>
             <div className="onboardingHeader">
-                <p className="authEyebrow">Primeros pasos</p>
-                <h2 className="authTitle">Configura tu hogar</h2>
-                <p className="authMeta">Un hogar agrupa todos los gastos compartidos y los miembros.</p>
+                <p className="authEyebrow">{isOnboarding ? 'Primeros pasos' : 'Administración'}</p>
+                <h2 className="authTitle">{isOnboarding ? 'Configura tu hogar' : 'Editar hogar'}</h2>
+                <p className="authMeta">
+                    {isOnboarding
+                        ? 'Un hogar agrupa todos los gastos compartidos y los miembros.'
+                        : 'Actualiza el nombre, moneda y configuración del periodo.'}
+                </p>
             </div>
 
-            <Banner type="info">
-                Bienvenido a micha. Para comenzar, necesitas crear tu primer hogar. Este paso es obligatorio.
-            </Banner>
+            {isOnboarding ? (
+                <Banner type="info">
+                    Bienvenido a micha. Para comenzar, necesitas crear tu primer hogar. Este paso es obligatorio.
+                </Banner>
+            ) : null}
 
             {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
 
@@ -158,13 +214,28 @@ export function OnboardingHouseholdPage() {
                     </FormField>
                 </div>
 
-                <button
-                    type="submit"
-                    className="btn btnPrimary btnFull u-mt-6"
-                    disabled={busy || !hhName.trim()}
-                >
-                    {busy ? <><span className="spinIcon" aria-hidden>⟳</span> Creando hogar…</> : 'Crear hogar →'}
-                </button>
+                <div className="u-flex u-gap-4 u-mt-6">
+                    {!isOnboarding ? (
+                        <button
+                            type="button"
+                            className="btn u-flex-1"
+                            onClick={() => navigate('/rules')}
+                            disabled={busy}
+                        >
+                            Volver a ajustes
+                        </button>
+                    ) : null}
+
+                    <button
+                        type="submit"
+                        className={`btn btnPrimary u-flex-1 ${isOnboarding ? 'btnFull' : ''}`}
+                        disabled={busy || !hhName.trim()}
+                    >
+                        {busy
+                            ? <><span className="spinIcon" aria-hidden>⟳</span> {isOnboarding ? 'Creando hogar…' : 'Guardando…'}</>
+                            : (isOnboarding ? 'Crear hogar →' : 'Guardar cambios')}
+                    </button>
+                </div>
             </form>
         </section>
     )

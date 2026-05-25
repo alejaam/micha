@@ -1462,6 +1462,8 @@ ul {
     font-size: 0.65rem;
     color: var(--color-text-4);
     font-weight: var(--fw-medium);
+    text-align: center;
+    line-height: 1.2;
 }
 
 .pillNavItem.active .pillNavLabel {
