@@ -37,7 +37,7 @@ export function OnboardingHouseholdPage() {
                 settlementMode: 'equal',
                 currency: 'MXN',
                 closingDay: 15,
-                periodFrequency: 'monthly',
+                periodFrequency: 'biweekly',
             }
         }
         return {
@@ -45,7 +45,7 @@ export function OnboardingHouseholdPage() {
             settlementMode: selectedHousehold?.settlement_mode ?? 'equal',
             currency: selectedHousehold?.currency ?? 'MXN',
             closingDay: selectedHousehold?.closing_day ?? 15,
-            periodFrequency: selectedHousehold?.period_frequency ?? 'monthly',
+            periodFrequency: selectedHousehold?.period_frequency ?? 'biweekly',
         }
     }, [isOnboarding, selectedHousehold])
 

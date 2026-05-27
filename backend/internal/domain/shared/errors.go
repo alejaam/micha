@@ -23,4 +23,6 @@ var (
 	ErrInvalidDateRange = errors.New("invalid date range")
 	// ErrInvalidStatus is returned when a status value is not recognized.
 	ErrInvalidStatus = errors.New("invalid status")
+	// ErrFuturePeriod is returned when a period close would create a next period in the future.
+	ErrFuturePeriod = errors.New("period close rejected: next period would start in the future")
 )

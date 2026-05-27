@@ -60,20 +60,33 @@ func (u InitializePeriodUseCase) Execute(ctx context.Context, input inbound.Init
 	// 3. Create initial period based on household config.
 	now := u.now()
 	closingDay := h.Attributes().ClosingDay
+	frequency := h.Attributes().PeriodFrequency
 
 	var start, end time.Time
-	if now.Day() <= closingDay {
-		// We are before the closing day of the current month.
-		// Period started last month on day+1.
-		lastMonth := now.AddDate(0, -1, 0)
-		start = time.Date(lastMonth.Year(), lastMonth.Month(), closingDay+1, 0, 0, 0, 0, now.Location())
-		end = time.Date(now.Year(), now.Month(), closingDay, 23, 59, 59, 999999999, now.Location())
+	if frequency == "biweekly" {
+		// Biweekly: 1-15 and 16-last-day-of-month
+		if now.Day() <= 15 {
+			start = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+			end = time.Date(now.Year(), now.Month(), 15, 23, 59, 59, 999999999, now.Location())
+		} else {
+			start = time.Date(now.Year(), now.Month(), 16, 0, 0, 0, 0, now.Location())
+			end = time.Date(now.Year(), now.Month()+1, 0, 23, 59, 59, 999999999, now.Location())
+		}
 	} else {
-		// We are after the closing day.
-		// Period started this month on day+1.
-		start = time.Date(now.Year(), now.Month(), closingDay+1, 0, 0, 0, 0, now.Location())
-		nextMonth := now.AddDate(0, 1, 0)
-		end = time.Date(nextMonth.Year(), nextMonth.Month(), closingDay, 23, 59, 59, 999999999, now.Location())
+		// Monthly: based on closingDay
+		if now.Day() <= closingDay {
+			// We are before the closing day of the current month.
+			// Period started last month on day+1.
+			lastMonth := now.AddDate(0, -1, 0)
+			start = time.Date(lastMonth.Year(), lastMonth.Month(), closingDay+1, 0, 0, 0, 0, now.Location())
+			end = time.Date(now.Year(), now.Month(), closingDay, 23, 59, 59, 999999999, now.Location())
+		} else {
+			// We are after the closing day.
+			// Period started this month on day+1.
+			start = time.Date(now.Year(), now.Month(), closingDay+1, 0, 0, 0, 0, now.Location())
+			nextMonth := now.AddDate(0, 1, 0)
+			end = time.Date(nextMonth.Year(), nextMonth.Month(), closingDay, 23, 59, 59, 999999999, now.Location())
+		}
 	}
 
 	p, err := period.New(

@@ -75,6 +75,20 @@ func (u ClosePeriodUseCase) Execute(ctx context.Context, input inbound.ClosePeri
 		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: %w", shared.ErrForbidden)
 	}
 
+	// 3.5. Minimum duration guard: a period must last at least 7 days before it can be closed.
+	now := u.now()
+	if now.Sub(p.StartDate()) < period.MinimumPeriodDuration {
+		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: %w", period.ErrPeriodTooShort)
+	}
+
+	// 3.6. Future-period guard: reject if the next period would start in the future.
+	nextStart := p.EndDate().Add(24 * time.Hour)
+	nextStartNorm := time.Date(nextStart.Year(), nextStart.Month(), nextStart.Day(), 0, 0, 0, 0, time.UTC)
+	todayNorm := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	if nextStartNorm.After(todayNorm) {
+		return inbound.ClosePeriodOutput{}, fmt.Errorf("close period: %w", shared.ErrFuturePeriod)
+	}
+
 	// 4. Consensus Check (non-force requires unanimous approval).
 	if !input.Force {
 		if err := u.validateConsensus(ctx, input.HouseholdID, input.PeriodID); err != nil {
@@ -83,8 +97,6 @@ func (u ClosePeriodUseCase) Execute(ctx context.Context, input inbound.ClosePeri
 	}
 
 	// 4-7. Execute transactional operations (close period, create next, rollovers).
-	now := u.now()
-
 	var nextPeriodID string
 	if err := u.txManager.Run(ctx, func(txCtx context.Context) error {
 		pAttrs := p.Attributes()
@@ -97,14 +109,19 @@ func (u ClosePeriodUseCase) Execute(ctx context.Context, input inbound.ClosePeri
 		}
 
 		// 5. Create Rollover (Next Period).
-		nextStart := p.EndDate().Add(24 * time.Hour)
-
 		var nextEnd time.Time
 		if h.Attributes().PeriodFrequency == "biweekly" {
-			nextEnd = nextStart.AddDate(0, 0, 14) // Sumar 14 días para que el total sean 15
+			// Biweekly: 1-15 and 16-last-day-of-month
+			if nextStart.Day() == 1 {
+				nextEnd = time.Date(nextStart.Year(), nextStart.Month(), 15, 23, 59, 59, 999999999, nextStart.Location())
+			} else {
+				// nextStart is 16th → end is last day of month
+				nextEnd = time.Date(nextStart.Year(), nextStart.Month()+1, 0, 23, 59, 59, 999999999, nextStart.Location())
+			}
 		} else {
-			// Mensual: misma fecha el próximo mes
-			nextEnd = nextStart.AddDate(0, 1, -1)
+			// Monthly: closingDay of next month
+			closingDay := h.Attributes().ClosingDay
+			nextEnd = time.Date(nextStart.Year(), nextStart.Month()+1, closingDay, 23, 59, 59, 999999999, nextStart.Location())
 		}
 
 		nextPeriod, err := period.New(

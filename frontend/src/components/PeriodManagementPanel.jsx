@@ -94,7 +94,13 @@ export function PeriodManagementPanel({
             const nextMonthName = monthNames[(now.getMonth() + 1) % 12]
             onStatusChange({ message: `Periodo de ${currentMonthName} cerrado. Bienvenido a ${nextMonthName}.` })
         } catch (err) {
-            setError(err.message)
+            if (err.code === 'FUTURE_PERIOD') {
+                setError('No puedes cerrar este periodo porque el siguiente comenzaría en el futuro.')
+            } else if (err.code === 'PERIOD_TOO_SHORT') {
+                setError('El periodo debe estar abierto al menos 7 días antes de cerrar.')
+            } else {
+                setError(err.message)
+            }
         } finally {
             setSubmitting(false)
         }
@@ -115,7 +121,7 @@ export function PeriodManagementPanel({
                     <div>
                         <h3 className="sectionTitle">Comenzar seguimiento</h3>
                         <p className="authMeta">
-                            Parece que este hogar aún no tiene un periodo activo. Inicializa el mes actual para empezar.
+                            Parece que este hogar aún no tiene un periodo activo. Inicializa el periodo actual para empezar.
                         </p>
                     </div>
                     <button
@@ -124,7 +130,7 @@ export function PeriodManagementPanel({
                         onClick={handleInitialize}
                         disabled={submitting}
                     >
-                        {submitting ? 'Iniciando...' : 'Empezar mes actual'}
+                        {submitting ? 'Iniciando...' : 'Empezar periodo actual'}
                     </button>
                 </div>
                 {error && <p className="formHint formHintError">{error}</p>}
@@ -142,7 +148,7 @@ export function PeriodManagementPanel({
                     <div>
                         <h3 className="sectionTitle">Cierre de periodo</h3>
                         <p className="authMeta">
-                            ¿Terminaron de registrar los gastos del mes? Inicia la revisión para conciliar saldos.
+                            ¿Terminaron de registrar los gastos del periodo? Inicia la revisión para conciliar saldos.
                         </p>
                     </div>
                     <button
@@ -212,7 +218,7 @@ export function PeriodManagementPanel({
                             onClick={() => handleFinalClose(false)}
                             disabled={submitting}
                         >
-                            {submitting ? 'Cerrando...' : 'Finalizar y abrir nuevo mes'}
+                            {submitting ? 'Cerrando...' : 'Finalizar y abrir nuevo periodo'}
                         </button>
                     </div>
                 )}

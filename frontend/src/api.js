@@ -99,7 +99,7 @@ export async function loginUser({ email, password }) {
     return parseResponse(response)
 }
 
-export async function createHousehold({ name, settlementMode = 'equal', currency = 'MXN', closingDay = 15, periodFrequency = 'monthly' }) {
+export async function createHousehold({ name, settlementMode = 'equal', currency = 'MXN', closingDay = 15, periodFrequency = 'biweekly' }) {
     const response = await fetch(`${API_BASE_URL}/v1/households`, {
         method: 'POST',
         headers: buildProtectedHeaders(),
@@ -115,7 +115,7 @@ export async function createHousehold({ name, settlementMode = 'equal', currency
     return parseResponse(response)
 }
 
-export async function updateHousehold({ householdId, name, settlementMode = 'equal', currency = 'MXN', closingDay = 15, periodFrequency = 'monthly' }) {
+export async function updateHousehold({ householdId, name, settlementMode = 'equal', currency = 'MXN', closingDay = 15, periodFrequency = 'biweekly' }) {
     if (!householdId) {
         throw new Error('householdId is required')
     }

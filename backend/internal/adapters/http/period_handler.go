@@ -139,6 +139,10 @@ func (h *PeriodHandler) handleClose(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, shared.ErrForbidden):
 			writeError(w, http.StatusForbidden, "FORBIDDEN", err.Error())
+		case errors.Is(err, shared.ErrFuturePeriod):
+			writeError(w, http.StatusBadRequest, "FUTURE_PERIOD", "next period would start in the future")
+		case errors.Is(err, period.ErrPeriodTooShort):
+			writeError(w, http.StatusBadRequest, "PERIOD_TOO_SHORT", "period must be open for at least 7 days before closing")
 		default:
 			writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
 		}

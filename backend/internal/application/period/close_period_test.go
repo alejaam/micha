@@ -501,3 +501,171 @@ func TestClosePeriodUseCase_NonOwnerWithConsensusStillGetsForbidden(t *testing.T
 		t.Errorf("expected ErrForbidden, got: %v", err)
 	}
 }
+
+func TestClosePeriodUseCase_CannotCloseBeforeMinimumDuration(t *testing.T) {
+	t.Parallel()
+
+	householdID := "hh-1"
+	periodID := "per-1"
+	ownerUserID := "user-owner"
+	ownerMemberID := "m-owner"
+
+	// Period started 3 days ago — too short to close
+	periodRepo := newMockPeriodRepo()
+	p, err := period.NewFromAttributes(period.PeriodAttributes{
+		ID:          period.ID(periodID),
+		HouseholdID: householdID,
+		StartDate:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+		EndDate:     time.Date(2026, 1, 31, 0, 0, 0, 0, time.UTC),
+		Status:      period.StatusReview,
+		CreatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+		UpdatedAt:   time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+	})
+	if err != nil {
+		t.Fatalf("failed to create test period: %v", err)
+	}
+	periodRepo.periods[p.ID()] = p
+
+	householdRepo := newMockHouseholdRepo()
+	householdRepo.households[householdID] = makeTestHouseholdWithOwner(t, householdID, ownerUserID)
+
+	memberRepo := &mockMemberRepo2{
+		members: []member.Member{
+			makeTestMember(t, ownerMemberID, householdID, ownerUserID),
+		},
+	}
+
+	// Full consensus
+	approvalRepo := &mockApprovalRepo{
+		approvals: []periodapproval.PeriodApproval{
+			makeApproval(t, ownerMemberID, periodID, periodapproval.ApprovalStatusApproved),
+		},
+	}
+
+	uc := NewClosePeriodUseCase(
+		periodRepo,
+		approvalRepo,
+		householdRepo,
+		memberRepo,
+		&mockExpenseRepo{},
+		&mockInstallmentRepo{},
+		&mockTxManager{},
+		&mockIDGen{},
+	)
+	// Today is only 3 days after start — should be rejected
+	uc.now = func() time.Time { return time.Date(2026, 1, 4, 0, 0, 0, 0, time.UTC) }
+
+	_, err = uc.Execute(context.Background(), inbound.ClosePeriodInput{
+		HouseholdID:   householdID,
+		PeriodID:      periodID,
+		CurrentUserID: ownerUserID,
+		Force:         false,
+	})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !errors.Is(err, period.ErrPeriodTooShort) {
+		t.Errorf("expected ErrPeriodTooShort, got: %v", err)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Future-period guard tests (SC-1, SC-2)
+// ---------------------------------------------------------------------------
+
+func TestClosePeriodUseCase_FuturePeriodGuard(t *testing.T) {
+	t.Parallel()
+
+	householdID := "hh-1"
+	periodID := "per-future"
+	ownerUserID := "user-owner"
+	ownerMemberID := "m-owner"
+
+	// Period ends Jan 31, so nextStart = Feb 1.
+	setup := func(t *testing.T, now time.Time) ClosePeriodUseCase {
+		t.Helper()
+
+		periodRepo := newMockPeriodRepo()
+		p := makeTestPeriodInReview(t, periodID, householdID)
+		periodRepo.periods[p.ID()] = p
+
+		householdRepo := newMockHouseholdRepo()
+		householdRepo.households[householdID] = makeTestHouseholdWithOwner(t, householdID, ownerUserID)
+
+		memberRepo := &mockMemberRepo2{
+			members: []member.Member{
+				makeTestMember(t, ownerMemberID, householdID, ownerUserID),
+			},
+		}
+
+		approvalRepo := &mockApprovalRepo{
+			approvals: []periodapproval.PeriodApproval{
+				makeApproval(t, ownerMemberID, periodID, periodapproval.ApprovalStatusApproved),
+			},
+		}
+
+		uc := NewClosePeriodUseCase(
+			periodRepo,
+			approvalRepo,
+			householdRepo,
+			memberRepo,
+			&mockExpenseRepo{},
+			&mockInstallmentRepo{},
+			&mockTxManager{},
+			&mockIDGen{},
+		)
+		uc.now = func() time.Time { return now }
+		return uc
+	}
+
+	tests := []struct {
+		name    string
+		now     time.Time
+		wantErr bool
+		want    error // specific sentinel error expected
+	}{
+		{
+			name:    "future period rejected when nextStart is after today",
+			now:     time.Date(2026, 1, 31, 14, 37, 22, 0, time.UTC),
+			wantErr: true,
+			want:    shared.ErrFuturePeriod,
+		},
+		{
+			name:    "boundary day allowed when nextStart equals today midnight",
+			now:     time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC),
+			wantErr: false,
+			want:    nil,
+		},
+		{
+			name:    "time-component safety: non-zero clock time on boundary day",
+			now:     time.Date(2026, 2, 1, 14, 37, 22, 0, time.UTC),
+			wantErr: false,
+			want:    nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			uc := setup(t, tt.now)
+			_, err := uc.Execute(context.Background(), inbound.ClosePeriodInput{
+				HouseholdID:   householdID,
+				PeriodID:      periodID,
+				CurrentUserID: ownerUserID,
+				Force:         true,
+			})
+
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				if !errors.Is(err, tt.want) {
+					t.Errorf("expected error %v, got: %v", tt.want, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("expected no error, got: %v", err)
+				}
+			}
+		})
+	}
+}

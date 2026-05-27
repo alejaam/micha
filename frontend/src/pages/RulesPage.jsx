@@ -59,7 +59,7 @@ export function RulesPage() {
                         <h2 className="listTitle">Gastos Fijos</h2>
                     </div>
                     <p className="u-text-sm u-text-dim u-mb-3">
-                        Configura gastos mensuales recurrentes como renta, servicios o suscripciones.
+                        Configura gastos recurrentes como renta, servicios o suscripciones.
                     </p>
                     <div className="u-flex u-flex-col u-gap-3">
                         <button
