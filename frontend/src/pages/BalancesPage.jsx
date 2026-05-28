@@ -15,8 +15,6 @@ export function BalancesPage() {
         currentPeriod,
         reloadPeriod,
         handleReload: reloadShell,
-        consensus,
-        loadConsensus,
         isLoadingPeriod,
     } = useAppShell()
 
@@ -32,7 +30,6 @@ export function BalancesPage() {
         activeCurrency,
         householdId,
         selectedHousehold,
-        isMutationLocked,
         fixedTotalCents,
         loadSettlement,
         setSettlementYear,
@@ -90,14 +87,11 @@ export function BalancesPage() {
                 onStatusChange={({ message: statusMessage } = {}) => {
                     reloadPeriod()
                     reloadShell()
-                    const targetId = currentPeriod?.id
-                    if (targetId) loadConsensus(targetId)
                     if (statusMessage) setMessage(statusMessage)
                 }}
                 isOwner={isOwner}
                 members={members}
                 currentUserMemberId={currentMember?.id}
-                consensus={consensus}
             />
 
             <div className="dashboardCol">
@@ -131,14 +125,7 @@ export function BalancesPage() {
             </div>
 
             <FAB
-                onClick={() => {
-                    if (isMutationLocked) {
-                        setError('El periodo está en revisión o cerrado. Finaliza la conciliación para registrar cambios.')
-                        return
-                    }
-                    setModalOpen(true)
-                }}
-                disabled={isMutationLocked}
+                onClick={() => setModalOpen(true)}
             />
 
             {modalOpen && (
@@ -149,7 +136,6 @@ export function BalancesPage() {
                         if (success) setModalOpen(false)
                     }}
                     isSubmitting={submittingCreate}
-                    isMutationLocked={isMutationLocked}
                     members={members}
                     isLoadingMembers={loadingMembers}
                     defaultPaidByMemberId={currentMember?.id ?? ''}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { listExpenses } from '../api'
+import { useFocusRefetch } from './useFocusRefetch'
 
 export function useExpenses({ isAuthenticated, householdId, periodId, handleProtectedError, onErrorClear }) {
     const [items, setItems] = useState([])
@@ -30,6 +31,8 @@ export function useExpenses({ isAuthenticated, householdId, periodId, handleProt
 
         loadExpenses()
     }, [isAuthenticated, loadExpenses])
+
+    useFocusRefetch(loadExpenses)
 
     return {
         items,

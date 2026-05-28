@@ -4,7 +4,6 @@ import { getHealth } from './api'
 import { AppShellContext } from './context/AppShellContext'
 import { useAuth } from './context/AuthContext'
 import { useDashboardUxState } from './hooks/useDashboardUxState'
-import { useFocusRefetch } from './hooks/useFocusRefetch'
 import { useHouseholds } from './hooks/useHouseholds'
 import { useMembers } from './hooks/useMembers'
 import { AppLayout } from './layouts/AppLayout'
@@ -112,9 +111,6 @@ function AppShell() {
         setSelectedPeriodId,
         isLoadingPeriod,
     } = useDashboardUxState(householdId)
-
-    // Refetch data on tab focus and route change
-    useFocusRefetch()
 
     const selectedHousehold = useMemo(
         () => households.find((h) => h.id === householdId) ?? null,

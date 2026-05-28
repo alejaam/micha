@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { createRecurringExpense, deleteRecurringExpense, listRecurringExpenses, updateRecurringExpense } from '../api'
+import { createRecurringExpense, deleteRecurringExpense, listRecurringExpenses, listSubscriptionServices, updateRecurringExpense } from '../api'
 import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
@@ -18,15 +18,6 @@ const CATEGORY_OPTIONS = [
 
 const CATEGORY_LABEL_MAP = Object.fromEntries(CATEGORY_OPTIONS.map((c) => [c.value, c.label]))
 
-const FIXED_EXPENSE_OPTIONS = [
-    { key: 'rent', label: 'Renta', category: 'rent' },
-    { key: 'internet', label: 'Internet', category: 'other' },
-    { key: 'subscriptions', label: 'Suscripciones', category: 'streaming' },
-    { key: 'auto', label: 'Auto', category: 'auto' },
-    { key: 'mortgage', label: 'Hipoteca', category: 'rent' },
-    { key: 'other', label: 'Otro', category: 'other' },
-]
-
 function todayDateOnly() {
     return new Date().toISOString().slice(0, 10)
 }
@@ -36,6 +27,10 @@ export function OnboardingFixedExpensesPage() {
     const { handleProtectedError } = useAuth()
     const navigate = useNavigate()
     const location = useLocation()
+
+    // Catalog services from subscription_services API
+    const [catalogServices, setCatalogServices] = useState([])
+    const [loadingCatalog, setLoadingCatalog] = useState(false)
 
     // Creation form state
     const [selected, setSelected] = useState({})
@@ -71,17 +66,64 @@ export function OnboardingFixedExpensesPage() {
         loadRecurringExpenses()
     }, [loadRecurringExpenses])
 
+    // ── Fetch subscription services catalog ─────────────────────────────
+
+    useEffect(() => {
+        let cancelled = false
+        async function loadCatalog() {
+            setLoadingCatalog(true)
+            try {
+                const services = await listSubscriptionServices()
+                if (!cancelled && Array.isArray(services)) {
+                    setCatalogServices(services)
+                    // Pre-fill amounts with standalone_price_cents from catalog
+                    const amounts = {}
+                    for (const svc of services) {
+                        if (svc.standalone_price_cents > 0) {
+                            amounts[svc.slug] = (svc.standalone_price_cents / 100).toFixed(2)
+                        }
+                    }
+                    setAmountByKey((prev) => ({ ...prev, ...amounts }))
+                }
+            } catch (err) {
+                if (!cancelled) handleProtectedError(err)
+            } finally {
+                if (!cancelled) setLoadingCatalog(false)
+            }
+        }
+        loadCatalog()
+        return () => { cancelled = true }
+    }, [handleProtectedError])
+
     // Total monthly impact
     const totalMonthlyCents = useMemo(
         () => recurringItems.reduce((sum, item) => sum + (item.amount_cents || 0), 0),
         [recurringItems],
     )
 
+    // ── Build options: catalog services + "Otro" manual entry ──────────────
+
+    const serviceOptions = useMemo(() => {
+        const items = catalogServices.map((svc) => ({
+            key: svc.slug,
+            label: svc.name,
+            category: 'other',
+            isCatalog: true,
+        }))
+        items.push({
+            key: 'other',
+            label: 'Otro',
+            category: 'other',
+            isCatalog: false,
+        })
+        return items
+    }, [catalogServices])
+
     // ── Creation form logic ────────────────────────────────────────────────
 
     const selectedKeys = useMemo(
-        () => FIXED_EXPENSE_OPTIONS.filter((item) => selected[item.key]).map((item) => item.key),
-        [selected],
+        () => serviceOptions.filter((item) => selected[item.key]).map((item) => item.key),
+        [selected, serviceOptions],
     )
 
     function toggleOption(key) {
@@ -165,7 +207,7 @@ export function OnboardingFixedExpensesPage() {
         try {
             const startDate = todayDateOnly()
             for (const key of selectedKeys) {
-                const config = FIXED_EXPENSE_OPTIONS.find((item) => item.key === key)
+                const config = serviceOptions.find((item) => item.key === key)
                 if (!config) continue
                 const amountCents = dollarsToCents(amountByKey[key] ?? '')
                 if (amountCents === null) continue
@@ -353,39 +395,44 @@ export function OnboardingFixedExpensesPage() {
             {/* ── Quick-add form ──────────────────────────────────────────── */}
             <div className="u-mt-6">
                 <h3 className="sectionTitle">Agregar nuevo gasto fijo</h3>
-                <div className="formStack u-mt-2">
-                    {FIXED_EXPENSE_OPTIONS.map((item) => {
-                        const isChecked = !!selected[item.key]
-                        return (
-                            <div key={item.key} className="formSection">
-                                <label className="sharedToggleLabel" htmlFor={`fixed-${item.key}`}>
-                                    <input
-                                        id={`fixed-${item.key}`}
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={() => toggleOption(item.key)}
-                                        disabled={saving}
-                                    />
-                                    <span className="sharedToggleText">{item.label}</span>
-                                </label>
 
-                                {isChecked && (
-                                    <div className="inputWrap u-mt-2">
-                                        <span className="inputPrefix" aria-hidden>$</span>
+                {loadingCatalog ? (
+                    <p className="u-text-sm u-text-dim u-mt-2">Cargando servicios disponibles...</p>
+                ) : (
+                    <div className="formStack u-mt-2">
+                        {serviceOptions.map((item) => {
+                            const isChecked = !!selected[item.key]
+                            return (
+                                <div key={item.key} className="formSection">
+                                    <label className="sharedToggleLabel" htmlFor={`fixed-${item.key}`}>
                                         <input
-                                            className="input inputWithPrefix"
-                                            inputMode="decimal"
-                                            placeholder="0.00"
-                                            value={amountByKey[item.key] ?? ''}
-                                            onChange={(e) => handleAmountChange(item.key, e.target.value)}
+                                            id={`fixed-${item.key}`}
+                                            type="checkbox"
+                                            checked={isChecked}
+                                            onChange={() => toggleOption(item.key)}
                                             disabled={saving}
                                         />
-                                    </div>
-                                )}
-                            </div>
-                        )
-                    })}
-                </div>
+                                        <span className="sharedToggleText">{item.label}</span>
+                                    </label>
+
+                                    {isChecked && (
+                                        <div className="inputWrap u-mt-2">
+                                            <span className="inputPrefix" aria-hidden>$</span>
+                                            <input
+                                                className="input inputWithPrefix"
+                                                inputMode="decimal"
+                                                placeholder="0.00"
+                                                value={amountByKey[item.key] ?? ''}
+                                                onChange={(e) => handleAmountChange(item.key, e.target.value)}
+                                                disabled={saving}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
             </div>
 
             {/* ── Actions ────────────────────────────────────────────────── */}

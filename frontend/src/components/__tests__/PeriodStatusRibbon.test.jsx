@@ -6,13 +6,13 @@ import { PeriodStatusRibbon } from '../PeriodStatusRibbon'
 import { AuthProvider } from '../../context/AuthContext'
 
 describe('PeriodStatusRibbon', () => {
-  it('renders review variant with accessible status text', () => {
-    render(<PeriodStatusRibbon status="review" />)
+  it('renders open variant with accessible status text', () => {
+    render(<PeriodStatusRibbon status="open" />)
 
-    expect(screen.getByText('Revisión')).toBeInTheDocument()
+    expect(screen.getByText('Abierto')).toBeInTheDocument()
     expect(
       screen.getByRole('status', {
-        name: /estado del periodo: periodo en revisión/i,
+        name: /estado del periodo: periodo abierto/i,
       }),
     ).toBeInTheDocument()
   })
@@ -21,10 +21,15 @@ describe('PeriodStatusRibbon', () => {
     render(<PeriodStatusRibbon status="unexpected" />)
     expect(screen.getByText('Abierto')).toBeInTheDocument()
   })
+
+  it('renders closed variant', () => {
+    render(<PeriodStatusRibbon status="closed" />)
+    expect(screen.getByText('Cerrado')).toBeInTheDocument()
+  })
 })
 
-describe('AppHeader mutation lock wiring', () => {
-  it('marks invite member action as disabled while period is locked', () => {
+describe('AppHeader renders invite member link', () => {
+  it('renders the invite member link without lock styling', () => {
     render(
       <AuthProvider>
         <MemoryRouter>
@@ -37,15 +42,14 @@ describe('AppHeader mutation lock wiring', () => {
             onLogout={() => {}}
             isLoading={false}
             periodStatus="closed"
-            isMutationLocked
           />
         </MemoryRouter>
       </AuthProvider>,
     )
 
     const inviteLink = screen.getByRole('link', { name: /invitar nuevo miembro/i })
-    expect(inviteLink).toHaveAttribute('aria-disabled', 'true')
-    expect(inviteLink).toHaveClass('btnDisabled')
+    expect(inviteLink).toBeInTheDocument()
+    expect(inviteLink).not.toHaveClass('btnDisabled')
   })
 })
 

@@ -21,7 +21,6 @@ export function ExpensesPage() {
         currentMember,
         activeCurrency,
         householdId,
-        isMutationLocked,
         closedPeriods,
         selectedPeriodKey,
         comparisonSeries,
@@ -48,12 +47,8 @@ export function ExpensesPage() {
     const [quickAddOpen, setQuickAddOpen] = useState(false)
 
     const handleOpenQuickAdd = useCallback(() => {
-        if (isMutationLocked) {
-            setError('El periodo está bajo revisión o cerrado. Las acciones están deshabilitadas.')
-            return
-        }
         setQuickAddOpen(true)
-    }, [isMutationLocked, setError])
+    }, [setQuickAddOpen])
 
     return (
         <motion.div
@@ -99,20 +94,12 @@ export function ExpensesPage() {
                     onDelete={handleDelete}
                     onSave={handleSave}
                     currency={activeCurrency}
-                    isMutationLocked={isMutationLocked}
                     onQuickAdd={handleOpenQuickAdd}
                 />
             </div>
 
             <FAB
-                onClick={() => {
-                    if (isMutationLocked) {
-                        setError('El periodo está en revisión o cerrado. Finaliza la conciliación para registrar cambios.')
-                        return
-                    }
-                    setModalOpen(true)
-                }}
-                disabled={isMutationLocked}
+                onClick={() => setModalOpen(true)}
             />
 
             {modalOpen && (
@@ -123,7 +110,6 @@ export function ExpensesPage() {
                         if (success) setModalOpen(false)
                     }}
                     isSubmitting={submittingCreate}
-                    isMutationLocked={isMutationLocked}
                     members={members}
                     isLoadingMembers={loadingMembers}
                     defaultPaidByMemberId={currentMember?.id ?? ''}

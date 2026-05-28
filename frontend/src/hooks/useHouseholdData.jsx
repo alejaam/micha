@@ -169,11 +169,6 @@ function useHouseholdDataInternal() {
     })
 
     async function handleCreate(payload) {
-        if (isMutationLocked) {
-            setError('El periodo está en revisión o cerrado. Finaliza la conciliación para registrar cambios.')
-            return
-        }
-
         setMessage('')
         setError('')
         setSubmittingCreate(true)
@@ -201,11 +196,6 @@ function useHouseholdDataInternal() {
     }
 
     async function handleSave({ id, amountCents, description }) {
-        if (isMutationLocked) {
-            setError('El periodo está en revisión o cerrado. Finaliza la conciliación para editar gastos.')
-            return
-        }
-
         setMessage('')
         setError('')
         setSavingId(id)
@@ -222,11 +212,6 @@ function useHouseholdDataInternal() {
     }
 
     async function handleDelete(id) {
-        if (isMutationLocked) {
-            setError('El periodo está en revisión o cerrado. Finaliza la conciliación para eliminar gastos.')
-            return
-        }
-
         setMessage('')
         setError('')
         setDeletingId(id)

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getCurrentPeriod } from '../api';
+import { useFocusRefetch } from './useFocusRefetch';
 
 /**
  * Hook for managing the dashboard UI contextual state (ribbon status, active views).
@@ -39,6 +40,8 @@ export function useDashboardUxState(householdId) {
     useEffect(() => {
         loadPeriod();
     }, [loadPeriod]);
+
+    useFocusRefetch(loadPeriod)
 
     const openBottomSheet = () => setIsBottomSheetOpen(true);
     const closeBottomSheet = () => setIsBottomSheetOpen(false);

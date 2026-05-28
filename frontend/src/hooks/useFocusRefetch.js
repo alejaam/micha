@@ -1,36 +1,34 @@
 import { useEffect } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { useLocation } from 'react-router-dom'
 
 /**
- * useFocusRefetch — invalidates React Query caches when the tab gets focus
- * (visibilitychange) or when the route changes.
+ * useFocusRefetch — calls the provided load callback when the browser tab
+ * regains focus (visibilitychange) or when the window receives focus.
  *
- * @param {Array<Array<string>>} [queryKeys] — specific query keys to invalidate.
- *   Defaults to common project keys if not provided.
+ * @param {Function} loadCallback — async function to reload data.
  */
-export function useFocusRefetch(queryKeys = []) {
-    const queryClient = useQueryClient()
-    const location = useLocation()
-
+export function useFocusRefetch(loadCallback) {
     useEffect(() => {
-        const invalidate = () => {
-            const keys = queryKeys.length > 0 ? queryKeys : [['members'], ['expenses'], ['settlement'], ['periods']]
-            keys.forEach((key) => queryClient.invalidateQueries({ queryKey: key }))
-        }
+        if (!loadCallback) return
 
-        const handleVisibility = () => {
+        let timeoutId
+        const handleVisible = () => {
             if (document.visibilityState === 'visible') {
-                invalidate()
+                clearTimeout(timeoutId)
+                timeoutId = setTimeout(() => loadCallback(), 300)
             }
         }
 
-        document.addEventListener('visibilitychange', handleVisibility)
-        return () => document.removeEventListener('visibilitychange', handleVisibility)
-    }, [queryClient, queryKeys])
+        const handleFocus = () => {
+            clearTimeout(timeoutId)
+            timeoutId = setTimeout(() => loadCallback(), 300)
+        }
 
-    // Also invalidate on route change
-    useEffect(() => {
-        queryClient.invalidateQueries()
-    }, [location.pathname, queryClient])
+        document.addEventListener('visibilitychange', handleVisible)
+        window.addEventListener('focus', handleFocus)
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisible)
+            window.removeEventListener('focus', handleFocus)
+            clearTimeout(timeoutId)
+        }
+    }, [loadCallback])
 }

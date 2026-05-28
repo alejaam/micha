@@ -19,8 +19,7 @@ export function PeriodBar({ currentPeriod, balance = 0 }) {
 
     const statusLabel =
         status === 'open' ? 'Abierto'
-            : status === 'review' ? 'Revisión'
-                : 'Cerrado'
+            : 'Cerrado'
 
     const balanceLabel = balance >= 0
         ? formatCurrency(balance)
@@ -52,13 +51,11 @@ export function PeriodBar({ currentPeriod, balance = 0 }) {
  */
 const CHIP_LABELS = {
     open: 'Abierto',
-    review: 'Revisión',
     closed: 'Cerrado',
 }
 
 const CHIP_DESCRIPTIONS = {
     open: 'Periodo abierto — puedes registrar y editar gastos.',
-    review: 'Periodo en revisión — las acciones de edición están bloqueadas temporalmente.',
     closed: 'Periodo cerrado — ya no se permiten cambios en gastos.',
 }
 

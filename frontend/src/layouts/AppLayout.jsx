@@ -20,7 +20,6 @@ export function AppLayout() {
         handleReload,
         loadingHouseholds,
         periodStatus,
-        isMutationLocked,
         currentPeriod,
         selectedPeriodId,
         setSelectedPeriodId,
@@ -47,7 +46,6 @@ export function AppLayout() {
                     onLogout={logout}
                     isLoading={loadingHouseholds}
                     periodStatus={periodStatus}
-                    isMutationLocked={isMutationLocked}
                     currentPeriod={currentPeriod}
                     selectedPeriodId={selectedPeriodId}
                     onSelectPeriod={setSelectedPeriodId}
