@@ -11,9 +11,9 @@ import (
 )
 
 type PeriodHandlerDeps struct {
-	SimulateClose   inbound.SimulateClosePeriodUseCase
+	SimulateClose    inbound.SimulateClosePeriodUseCase
 	InitializePeriod inbound.InitializePeriodUseCase
-	PeriodRepo      outbound.PeriodRepository
+	PeriodRepo       outbound.PeriodRepository
 }
 
 type PeriodHandler struct {
@@ -77,11 +77,11 @@ func (h *PeriodHandler) handleSimulateClose(w http.ResponseWriter, r *http.Reque
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"data": map[string]any{
-			"next_period_start":  output.NextPeriodStart,
-			"next_period_end":    output.NextPeriodEnd,
-			"settlement_preview": output.SettlementPreview,
+			"next_period_start":   output.NextPeriodStart,
+			"next_period_end":     output.NextPeriodEnd,
+			"settlement_preview":  output.SettlementPreview,
 			"fixed_expense_count": output.FixedExpenseCount,
-			"installment_count":  output.InstallmentCount,
+			"installment_count":   output.InstallmentCount,
 		},
 	})
 }

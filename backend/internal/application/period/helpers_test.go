@@ -7,7 +7,6 @@ import (
 
 	"micha/backend/internal/domain/expense"
 	"micha/backend/internal/domain/household"
-	"micha/backend/internal/domain/installment"
 	"micha/backend/internal/domain/member"
 	"micha/backend/internal/domain/period"
 	"micha/backend/internal/domain/shared"
@@ -103,7 +102,7 @@ func (m *mockMemberRepo2) ListAllByHousehold(_ context.Context, householdID stri
 	return result, nil
 }
 
-func (m *mockMemberRepo2) Save(_ context.Context, _ member.Member) error     { return nil }
+func (m *mockMemberRepo2) Save(_ context.Context, _ member.Member) error { return nil }
 func (m *mockMemberRepo2) FindByID(_ context.Context, _ string) (member.Member, error) {
 	return member.Member{}, shared.ErrNotFound
 }
@@ -116,8 +115,8 @@ func (m *mockMemberRepo2) ListByHousehold(_ context.Context, _ string, _, _ int)
 func (m *mockMemberRepo2) ListHouseholdIDsByUserID(_ context.Context, _ string) ([]string, error) {
 	return nil, nil
 }
-func (m *mockMemberRepo2) Update(_ context.Context, _ member.Member) error  { return nil }
-func (m *mockMemberRepo2) Delete(_ context.Context, _ string) error         { return nil }
+func (m *mockMemberRepo2) Update(_ context.Context, _ member.Member) error { return nil }
+func (m *mockMemberRepo2) Delete(_ context.Context, _ string) error        { return nil }
 func (m *mockMemberRepo2) CountActiveByHousehold(_ context.Context, _ string) (int, error) {
 	return 0, nil
 }
@@ -144,26 +143,6 @@ func (m *mockExpenseRepo) SumPersonalByMemberAndPeriod(_ context.Context, _, _ s
 func (m *mockExpenseRepo) Update(_ context.Context, _ expense.Expense) error { return nil }
 func (m *mockExpenseRepo) AdoptOrphanExpenses(_ context.Context, _, _ string, _, _ time.Time) error {
 	return nil
-}
-
-type mockInstallmentRepo struct{}
-
-func (m *mockInstallmentRepo) ListByHouseholdAndPeriod(_ context.Context, _ string, _, _ time.Time) ([]installment.Installment, error) {
-	return nil, nil
-}
-func (m *mockInstallmentRepo) Save(_ context.Context, _ installment.Installment) error { return nil }
-func (m *mockInstallmentRepo) SaveAll(_ context.Context, _ []installment.Installment) error {
-	return nil
-}
-func (m *mockInstallmentRepo) ListByExpense(_ context.Context, _ string) ([]installment.Installment, error) {
-	return nil, nil
-}
-func (m *mockInstallmentRepo) DeleteByExpense(_ context.Context, _ string) error { return nil }
-
-type mockTxManager struct{}
-
-func (m *mockTxManager) Run(_ context.Context, fn func(ctx context.Context) error) error {
-	return fn(context.Background())
 }
 
 type mockIDGen struct{ counter int }

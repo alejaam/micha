@@ -103,7 +103,7 @@ func (m *mockSimMemberRepo) ListAllByHousehold(_ context.Context, householdID st
 	return result, nil
 }
 
-func (m *mockSimMemberRepo) Save(_ context.Context, _ member.Member) error     { return nil }
+func (m *mockSimMemberRepo) Save(_ context.Context, _ member.Member) error { return nil }
 func (m *mockSimMemberRepo) FindByID(_ context.Context, _ string) (member.Member, error) {
 	return member.Member{}, shared.ErrNotFound
 }
@@ -116,8 +116,8 @@ func (m *mockSimMemberRepo) ListByHousehold(_ context.Context, _ string, _, _ in
 func (m *mockSimMemberRepo) ListHouseholdIDsByUserID(_ context.Context, _ string) ([]string, error) {
 	return nil, nil
 }
-func (m *mockSimMemberRepo) Update(_ context.Context, _ member.Member) error  { return nil }
-func (m *mockSimMemberRepo) Delete(_ context.Context, _ string) error         { return nil }
+func (m *mockSimMemberRepo) Update(_ context.Context, _ member.Member) error { return nil }
+func (m *mockSimMemberRepo) Delete(_ context.Context, _ string) error        { return nil }
 func (m *mockSimMemberRepo) CountActiveByHousehold(_ context.Context, _ string) (int, error) {
 	return 0, nil
 }

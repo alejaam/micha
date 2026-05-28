@@ -35,11 +35,11 @@ type SimulateClosePeriodInput struct {
 
 // SimulateClosePeriodOutput contains the read-only projection of what would happen if the period closed.
 type SimulateClosePeriodOutput struct {
-	NextPeriodStart   time.Time        `json:"next_period_start"`
-	NextPeriodEnd     time.Time        `json:"next_period_end"`
+	NextPeriodStart   time.Time         `json:"next_period_start"`
+	NextPeriodEnd     time.Time         `json:"next_period_end"`
 	SettlementPreview []SettlementEntry `json:"settlement_preview"`
-	FixedExpenseCount int              `json:"fixed_expense_count"`
-	InstallmentCount  int              `json:"installment_count"`
+	FixedExpenseCount int               `json:"fixed_expense_count"`
+	InstallmentCount  int               `json:"installment_count"`
 }
 
 // SimulateClosePeriodUseCase contract for read-only period closure simulation.

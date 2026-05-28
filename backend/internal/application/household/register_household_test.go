@@ -293,10 +293,10 @@ func TestRegisterHousehold_InvalidName(t *testing.T) {
 	)
 
 	_, err := uc.Execute(context.Background(), inbound.RegisterHouseholdInput{
-		Name:            " ",
-		SettlementMode:  household.SettlementModeEqual,
-		Currency:        "MXN",
-		CurrentUserID:   "user-123",
+		Name:             " ",
+		SettlementMode:   household.SettlementModeEqual,
+		Currency:         "MXN",
+		CurrentUserID:    "user-123",
 		OwnerSalaryCents: 0,
 	})
 	if !errors.Is(err, household.ErrInvalidName) {

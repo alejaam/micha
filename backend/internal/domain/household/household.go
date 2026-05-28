@@ -63,8 +63,8 @@ func New(id ID, name string, ownerID string, settlementMode SettlementMode, curr
 		OwnerID:         ownerID,
 		SettlementMode:  settlementMode,
 		Currency:        currency,
-		ClosingDay:      15,          // Default
-		PeriodFrequency: "biweekly",  // Default (quincena)
+		ClosingDay:      15,         // Default
+		PeriodFrequency: "biweekly", // Default (quincena)
 		CreatedAt:       createdAt,
 		UpdatedAt:       createdAt,
 	})

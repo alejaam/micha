@@ -159,9 +159,9 @@ func main() {
 
 	// Period use cases and handler dependencies.
 	periodDeps := httpadapter.PeriodHandlerDeps{
-		SimulateClose:     periodapp.NewSimulateClosePeriodUseCase(periodRepo, householdRepo, memberRepo, expenseRepo, installmentRepo),
-		InitializePeriod:   periodapp.NewInitializePeriodUseCase(periodRepo, householdRepo, memberRepo, expenseRepo, idGen),
-		PeriodRepo:         periodRepo,
+		SimulateClose:    periodapp.NewSimulateClosePeriodUseCase(periodRepo, householdRepo, memberRepo, expenseRepo, installmentRepo),
+		InitializePeriod: periodapp.NewInitializePeriodUseCase(periodRepo, householdRepo, memberRepo, expenseRepo, idGen),
+		PeriodRepo:       periodRepo,
 	}
 
 	// Subscription catalog use cases and handler dependencies.

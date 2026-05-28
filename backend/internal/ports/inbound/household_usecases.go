@@ -8,12 +8,12 @@ import (
 
 // RegisterHouseholdInput contains required data to register a household.
 type RegisterHouseholdInput struct {
-	Name            string
-	SettlementMode  household.SettlementMode
-	Currency        string
-	ClosingDay      int
-	PeriodFrequency string
-	CurrentUserID   string
+	Name             string
+	SettlementMode   household.SettlementMode
+	Currency         string
+	ClosingDay       int
+	PeriodFrequency  string
+	CurrentUserID    string
 	OwnerSalaryCents int64
 }
 
