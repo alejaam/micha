@@ -66,4 +66,28 @@ func (r UserRepository) FindByEmail(ctx context.Context, email string) (user.Use
 	return u, nil
 }
 
+// FindByID retrieves a user by ID. Returns shared.ErrNotFound when absent.
+func (r UserRepository) FindByID(ctx context.Context, id string) (user.User, error) {
+	row := r.db.QueryRow(ctx,
+		`SELECT id, email, password_hash, created_at
+		 FROM users
+		 WHERE id = $1`,
+		id,
+	)
+
+	var attrs user.UserAttributes
+	if err := row.Scan(&attrs.ID, &attrs.Email, &attrs.PasswordHash, &attrs.CreatedAt); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return user.User{}, shared.ErrNotFound
+		}
+		return user.User{}, fmt.Errorf("user repository findByID: %w", err)
+	}
+
+	u, err := user.NewFromAttributes(attrs)
+	if err != nil {
+		return user.User{}, fmt.Errorf("user repository findByID: rehydrate: %w", err)
+	}
+	return u, nil
+}
+
 var _ outbound.UserRepository = UserRepository{}

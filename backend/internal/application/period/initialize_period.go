@@ -6,7 +6,6 @@ import (
 	"time"
 
 	appshared "micha/backend/internal/application/shared"
-	"micha/backend/internal/domain/period"
 	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
@@ -57,50 +56,22 @@ func (u InitializePeriodUseCase) Execute(ctx context.Context, input inbound.Init
 		return inbound.InitializePeriodOutput{}, fmt.Errorf("initialize period: household already has periods")
 	}
 
-	// 3. Create initial period based on household config.
+	// 3. Create initial period using shared helper.
 	now := u.now()
 	closingDay := h.Attributes().ClosingDay
+	frequency := h.Attributes().PeriodFrequency
 
-	var start, end time.Time
-	if now.Day() <= closingDay {
-		// We are before the closing day of the current month.
-		// Period started last month on day+1.
-		lastMonth := now.AddDate(0, -1, 0)
-		start = time.Date(lastMonth.Year(), lastMonth.Month(), closingDay+1, 0, 0, 0, 0, now.Location())
-		end = time.Date(now.Year(), now.Month(), closingDay, 23, 59, 59, 999999999, now.Location())
-	} else {
-		// We are after the closing day.
-		// Period started this month on day+1.
-		start = time.Date(now.Year(), now.Month(), closingDay+1, 0, 0, 0, 0, now.Location())
-		nextMonth := now.AddDate(0, 1, 0)
-		end = time.Date(nextMonth.Year(), nextMonth.Month(), closingDay, 23, 59, 59, 999999999, now.Location())
-	}
-
-	p, err := period.New(
-		period.ID(u.idGenerator.NewID()),
-		input.HouseholdID,
-		start,
-		end,
-		period.StatusOpen,
-		now,
-	)
+	result, err := CreateInitialPeriod(ctx, u.periodRepo, u.idGenerator, input.HouseholdID, closingDay, frequency, now)
 	if err != nil {
 		return inbound.InitializePeriodOutput{}, fmt.Errorf("initialize period: %w", err)
 	}
 
-	if err := u.periodRepo.Create(ctx, p); err != nil {
-		return inbound.InitializePeriodOutput{}, fmt.Errorf("initialize period: %w", err)
-	}
-
 	// 4. Adopt orphan expenses: link existing expenses in this date range to the new period.
-	// This is critical for legacy data rollover.
-	if err := u.expenseRepo.AdoptOrphanExpenses(ctx, input.HouseholdID, string(p.ID()), start, end); err != nil {
-		// Log and continue — we don't want to block period creation if this fails
-		// (e.g. if column doesn't exist yet)
+	if err := u.expenseRepo.AdoptOrphanExpenses(ctx, input.HouseholdID, result.PeriodID, result.StartDate, result.EndDate); err != nil {
 		fmt.Printf("Warning: failed to adopt orphan expenses: %v\n", err)
 	}
 
-	return inbound.InitializePeriodOutput{PeriodID: string(p.ID())}, nil
+	return inbound.InitializePeriodOutput{PeriodID: result.PeriodID}, nil
 }
 
 var _ inbound.InitializePeriodUseCase = InitializePeriodUseCase{}

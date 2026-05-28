@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { createRecurringExpense, deleteRecurringExpense, initializePeriod, listRecurringExpenses, updateRecurringExpense } from '../api'
+import { createRecurringExpense, deleteRecurringExpense, listRecurringExpenses, updateRecurringExpense } from '../api'
 import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
@@ -187,19 +187,9 @@ export function OnboardingFixedExpensesPage() {
             await loadRecurringExpenses()
 
             if (isOnboarding) {
-                try {
-                    await initializePeriod({ householdId })
-                    const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-                    const currentMonth = monthNames[new Date().getMonth()]
-                    setMessage(`Tu período de ${currentMonth} ha comenzado automáticamente. ¡Bienvenido a micha!`)
-                } catch (initErr) {
-                    if (initErr.message?.includes('already has periods')) {
-                        // Period already exists — not an error, just proceed
-                    } else {
-                        setError(initErr.message)
-                    }
-                }
-
+                const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+                const currentMonth = monthNames[new Date().getMonth()]
+                setMessage(`Tu período de ${currentMonth} ha comenzado automáticamente. ¡Bienvenido a micha!`)
                 navigate('/', { replace: true })
             } else {
                 // Clear form and show success message

@@ -14,11 +14,14 @@ type RegisterHouseholdInput struct {
 	ClosingDay      int
 	PeriodFrequency string
 	CurrentUserID   string
+	OwnerSalaryCents int64
 }
 
-// RegisterHouseholdOutput contains created household identifiers.
+// RegisterHouseholdOutput contains created identifiers for household, owner member, and initial period.
 type RegisterHouseholdOutput struct {
 	HouseholdID string
+	MemberID    string
+	PeriodID    string
 }
 
 // ListHouseholdsQuery holds pagination for listing households.

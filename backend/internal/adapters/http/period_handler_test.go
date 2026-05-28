@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	httpadapter "micha/backend/internal/adapters/http"
 	"micha/backend/internal/domain/period"
@@ -50,83 +51,84 @@ func (m *mockPeriodRepo) ListByHousehold(_ context.Context, _ string, _, _ int) 
 	return nil, nil
 }
 
-// --- Mocks for period use cases ---
+// --- Mock for SimulateClose ---
 
-type mockGetPeriodConsensus struct {
-	returnOutput inbound.GetPeriodConsensusOutput
+type mockSimulateClosePeriod struct {
+	returnOutput inbound.SimulateClosePeriodOutput
 	returnErr    error
-	lastInput    inbound.GetPeriodConsensusInput
 }
 
-func (m *mockGetPeriodConsensus) Execute(_ context.Context, input inbound.GetPeriodConsensusInput) (inbound.GetPeriodConsensusOutput, error) {
-	m.lastInput = input
+func (m *mockSimulateClosePeriod) Execute(_ context.Context, _ inbound.SimulateClosePeriodInput) (inbound.SimulateClosePeriodOutput, error) {
 	return m.returnOutput, m.returnErr
 }
 
-type mockTransitionToReview struct{}
+// --- Mock for InitializePeriod ---
 
-func (m *mockTransitionToReview) Execute(_ context.Context, _ inbound.TransitionToReviewInput) (inbound.TransitionToReviewOutput, error) {
-	return inbound.TransitionToReviewOutput{}, nil
+type mockInitializePeriod struct {
+	returnOutput inbound.InitializePeriodOutput
+	returnErr    error
 }
-
-type mockApprovePeriod struct{}
-
-func (m *mockApprovePeriod) Execute(_ context.Context, _ inbound.ApprovePeriodInput) (inbound.ApprovePeriodOutput, error) {
-	return inbound.ApprovePeriodOutput{}, nil
-}
-
-type mockClosePeriod struct{}
-
-func (m *mockClosePeriod) Execute(_ context.Context, _ inbound.ClosePeriodInput) (inbound.ClosePeriodOutput, error) {
-	return inbound.ClosePeriodOutput{}, nil
-}
-
-type mockInitializePeriod struct{}
 
 func (m *mockInitializePeriod) Execute(_ context.Context, _ inbound.InitializePeriodInput) (inbound.InitializePeriodOutput, error) {
-	return inbound.InitializePeriodOutput{}, nil
+	return m.returnOutput, m.returnErr
 }
 
-// --- Tests ---
+// --- Test helpers ---
 
-func TestPeriodHandler_GetConsensus_Success(t *testing.T) {
-	t.Parallel()
-
-	consensusUC := &mockGetPeriodConsensus{
-		returnOutput: inbound.GetPeriodConsensusOutput{
-			Approved: 3,
-			Total:    5,
-			Percent:  60.0,
-		},
+func newPeriodHandlerDeps(
+	simulateClose inbound.SimulateClosePeriodUseCase,
+	initPeriod inbound.InitializePeriodUseCase,
+	periodRepo outbound.PeriodRepository,
+) httpadapter.PeriodHandlerDeps {
+	return httpadapter.PeriodHandlerDeps{
+		SimulateClose:    simulateClose,
+		InitializePeriod: initPeriod,
+		PeriodRepo:       periodRepo,
 	}
+}
 
+func makeTestServerWithPeriodDeps(t *testing.T, periodDeps httpadapter.PeriodHandlerDeps) httpadapter.Server {
+	t.Helper()
 	memberRepo := newMockMemberRepo()
 	memberRepo.seedMember("m-1", "hh-1", "user-123")
-
 	validator := &mockTokenValidator{
 		returnUserID: "user-123",
 		returnEmail:  "test@example.com",
 	}
-
-	server := httpadapter.NewServer("8080", httpadapter.ServerDependencies{
+	return httpadapter.NewServer("8080", httpadapter.ServerDependencies{
 		Auth: httpadapter.AuthHandlerDeps{
 			Register: &mockRegisterUser{},
 			Login:    &mockLogin{},
 		},
-		Period: httpadapter.PeriodHandlerDeps{
-			TransitionToReview: &mockTransitionToReview{},
-			ApprovePeriod:      &mockApprovePeriod{},
-			ClosePeriod:        &mockClosePeriod{},
-			InitializePeriod:   &mockInitializePeriod{},
-			GetConsensus:       consensusUC,
-			PeriodRepo:         newMockPeriodRepository(),
-		},
+		Period:         periodDeps,
 		JWTValidator:   validator,
 		MemberRepo:     memberRepo,
 		AllowedOrigins: []string{"*"},
 	})
+}
 
-	req := makeJSONRequest(t, "GET", "/v1/households/hh-1/periods/per-1/consensus", nil)
+// --- Tests ---
+
+func TestPeriodHandler_SimulateClose_Success(t *testing.T) {
+	t.Parallel()
+
+	nextStart := time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)
+	nextEnd := time.Date(2026, 3, 15, 23, 59, 59, 999999999, time.UTC)
+
+	simulateUC := &mockSimulateClosePeriod{
+		returnOutput: inbound.SimulateClosePeriodOutput{
+			NextPeriodStart:   nextStart,
+			NextPeriodEnd:     nextEnd,
+			SettlementPreview: []inbound.SettlementEntry{},
+			FixedExpenseCount: 2,
+			InstallmentCount:  1,
+		},
+	}
+
+	deps := newPeriodHandlerDeps(simulateUC, &mockInitializePeriod{}, newMockPeriodRepository())
+	server := makeTestServerWithPeriodDeps(t, deps)
+
+	req := makeJSONRequest(t, "POST", "/v1/households/hh-1/periods/per-1/simulate-close", nil)
 	req.Header.Set("Authorization", "Bearer valid-token")
 	rec := httptest.NewRecorder()
 
@@ -142,57 +144,59 @@ func TestPeriodHandler_GetConsensus_Success(t *testing.T) {
 		t.Fatal("expected data object in response")
 	}
 
-	if data["approved"].(float64) != 3 {
-		t.Errorf("approved = %v; want 3", data["approved"])
+	if data["fixed_expense_count"].(float64) != 2 {
+		t.Errorf("fixed_expense_count = %v; want 2", data["fixed_expense_count"])
 	}
-	if data["total"].(float64) != 5 {
-		t.Errorf("total = %v; want 5", data["total"])
-	}
-	if data["percent"].(float64) != 60.0 {
-		t.Errorf("percent = %v; want 60", data["percent"])
+	if data["installment_count"].(float64) != 1 {
+		t.Errorf("installment_count = %v; want 1", data["installment_count"])
 	}
 }
 
-func TestPeriodHandler_GetConsensus_NotFound(t *testing.T) {
+func TestPeriodHandler_SimulateClose_Forbidden(t *testing.T) {
 	t.Parallel()
 
-	consensusUC := &mockGetPeriodConsensus{
-		returnErr: shared.ErrNotFound,
+	simulateUC := &mockSimulateClosePeriod{
+		returnErr: shared.ErrForbidden,
 	}
 
-	memberRepo := newMockMemberRepo()
-	memberRepo.seedMember("m-1", "hh-1", "user-123")
+	deps := newPeriodHandlerDeps(simulateUC, &mockInitializePeriod{}, newMockPeriodRepository())
+	server := makeTestServerWithPeriodDeps(t, deps)
 
-	validator := &mockTokenValidator{
-		returnUserID: "user-123",
-		returnEmail:  "test@example.com",
-	}
-
-	server := httpadapter.NewServer("8080", httpadapter.ServerDependencies{
-		Auth: httpadapter.AuthHandlerDeps{
-			Register: &mockRegisterUser{},
-			Login:    &mockLogin{},
-		},
-		Period: httpadapter.PeriodHandlerDeps{
-			TransitionToReview: &mockTransitionToReview{},
-			ApprovePeriod:      &mockApprovePeriod{},
-			ClosePeriod:        &mockClosePeriod{},
-			InitializePeriod:   &mockInitializePeriod{},
-			GetConsensus:       consensusUC,
-			PeriodRepo:         newMockPeriodRepository(),
-		},
-		JWTValidator:   validator,
-		MemberRepo:     memberRepo,
-		AllowedOrigins: []string{"*"},
-	})
-
-	req := makeJSONRequest(t, "GET", "/v1/households/hh-1/periods/per-1/consensus", nil)
+	req := makeJSONRequest(t, "POST", "/v1/households/hh-1/periods/per-1/simulate-close", nil)
 	req.Header.Set("Authorization", "Bearer valid-token")
 	rec := httptest.NewRecorder()
 
 	server.Handler().ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusNotFound {
-		t.Errorf("status = %d; want %d, body: %s", rec.Code, http.StatusNotFound, rec.Body.String())
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("status = %d; want %d, body: %s", rec.Code, http.StatusForbidden, rec.Body.String())
+	}
+}
+
+func TestPeriodHandler_SimulateClose_FuturePeriod(t *testing.T) {
+	t.Parallel()
+
+	simulateUC := &mockSimulateClosePeriod{
+		returnErr: shared.ErrFuturePeriod,
+	}
+
+	deps := newPeriodHandlerDeps(simulateUC, &mockInitializePeriod{}, newMockPeriodRepository())
+	server := makeTestServerWithPeriodDeps(t, deps)
+
+	req := makeJSONRequest(t, "POST", "/v1/households/hh-1/periods/per-1/simulate-close", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d; want %d, body: %s", rec.Code, http.StatusBadRequest, rec.Body.String())
+	}
+
+	resp := parseJSONResponse(t, rec)
+	if code, ok := resp["error"].(map[string]any)["code"]; ok {
+		if code != "FUTURE_PERIOD" {
+			t.Errorf("error code = %v; want FUTURE_PERIOD", code)
+		}
 	}
 }

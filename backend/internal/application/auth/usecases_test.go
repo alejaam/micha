@@ -44,6 +44,15 @@ func (m *mockUserRepo) FindByEmail(_ context.Context, email string) (user.User, 
 	return u, nil
 }
 
+func (m *mockUserRepo) FindByID(_ context.Context, id string) (user.User, error) {
+	for _, u := range m.byEmail {
+		if u.ID() == id {
+			return u, nil
+		}
+	}
+	return user.User{}, shared.ErrNotFound
+}
+
 // mockHasher implements outbound.PasswordHasher.
 type mockHasher struct {
 	hashErr   error

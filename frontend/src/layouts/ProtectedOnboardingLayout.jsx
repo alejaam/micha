@@ -8,19 +8,18 @@ const POST_ONBOARDING_PATHS = ['/onboarding/household', '/onboarding/cards', '/o
 /**
  * ProtectedOnboardingLayout — auth guard for onboarding routes.
  *
- * Flow: register → /onboarding/household → /onboarding/member → / (dashboard)
+ * Flow: register → /onboarding/household → /onboarding/cards → /onboarding/fixed-expenses → / (dashboard)
+ *
+ * The owner member and first period are auto-created during household registration,
+ * so there is no separate member-onboarding step.
  *
  * - Unauthenticated → redirect to /login
  * - No household → allow /onboarding/household creation
- * - Has household but NO member → redirect to /onboarding/member
- * - Has household AND member → redirect to / (onboarding complete)
- *
- * Post-onboarding management routes (/onboarding/cards, /onboarding/fixed-expenses)
- * are always allowed so users can reach them from RulesPage.
+ * - Has household → allow onboarding routes (cards, fixed-expenses) or redirect to dashboard
  */
 export function ProtectedOnboardingLayout() {
     const { isAuthenticated } = useAuth()
-    const { households, loadingHouseholds, members, loadingMembers } = useAppShell()
+    const { households, loadingHouseholds } = useAppShell()
     const { pathname } = useLocation()
 
     if (!isAuthenticated) {
@@ -36,21 +35,11 @@ export function ProtectedOnboardingLayout() {
         return <OnboardingLayout />
     }
 
-    // Has household — wait for members to load before redirecting
-    if (loadingMembers) {
-        return null
-    }
-
-    // Has household but no member → redirect to create the first member
-    if (members.length === 0) {
-        return <Navigate to="/onboarding/member" replace />
-    }
-
     // Allow post-onboarding management routes even when onboarding is complete
     if (POST_ONBOARDING_PATHS.includes(pathname)) {
         return <OnboardingLayout />
     }
 
-    // Has household AND member → onboarding complete, redirect to dashboard
+    // Has household → onboarding complete, redirect to dashboard
     return <Navigate to="/" replace />
 }

@@ -5,6 +5,7 @@ import { useAppShell } from '../context/AppShellContext'
 import { useAuth } from '../context/AuthContext'
 import { Banner } from '../ui/Banner'
 import { FormField } from '../ui/FormField'
+import { dollarsToCents, sanitizeAmountInput } from '../utils'
 
 const CURRENCIES = [
     { code: 'MXN', label: '🇲🇽 MXN — Peso Mexicano' },
@@ -37,7 +38,8 @@ export function OnboardingHouseholdPage() {
                 settlementMode: 'equal',
                 currency: 'MXN',
                 closingDay: 15,
-                periodFrequency: 'monthly',
+                periodFrequency: 'biweekly',
+                salary: '',
             }
         }
         return {
@@ -45,16 +47,17 @@ export function OnboardingHouseholdPage() {
             settlementMode: selectedHousehold?.settlement_mode ?? 'equal',
             currency: selectedHousehold?.currency ?? 'MXN',
             closingDay: selectedHousehold?.closing_day ?? 15,
-            periodFrequency: selectedHousehold?.period_frequency ?? 'monthly',
+            periodFrequency: selectedHousehold?.period_frequency ?? 'biweekly',
+            salary: '',
         }
     }, [isOnboarding, selectedHousehold])
 
-    // Household state
     const [hhName, setHhName] = useState(initial.name)
     const [settlementMode, setSettlementMode] = useState(initial.settlementMode)
     const [currency, setCurrency] = useState(initial.currency)
     const [closingDay, setClosingDay] = useState(initial.closingDay)
     const [periodFrequency, setPeriodFrequency] = useState(initial.periodFrequency)
+    const [salary, setSalary] = useState(initial.salary)
 
     useEffect(() => {
         if (isOnboarding) return
@@ -71,10 +74,10 @@ export function OnboardingHouseholdPage() {
     async function handleSubmit(e) {
         e.preventDefault()
         if (!hhName.trim()) return
-        
+
         setBusy(true)
         setError('')
-        
+
         try {
             if (!isOnboarding) {
                 if (!householdId) {
@@ -95,13 +98,15 @@ export function OnboardingHouseholdPage() {
                 return
             }
 
-            // Onboarding: create household
+            // Onboarding: create household with owner salary
+            const salaryCents = dollarsToCents(salary) || 0
             const hhOut = await createHousehold({
                 name: hhName.trim(),
                 settlementMode,
                 currency,
                 closingDay: Number(closingDay),
                 periodFrequency,
+                ownerSalaryCents: salaryCents,
             })
 
             const createdHouseholdId = hhOut?.household_id ?? hhOut?.id ?? ''
@@ -109,14 +114,11 @@ export function OnboardingHouseholdPage() {
                 throw new Error('El hogar fue creado pero no se devolvió el ID')
             }
 
-            // Keep the new ID locally
             setHouseholdId(createdHouseholdId)
-
-            // 2. Refresh households list
             await loadHouseholds()
 
-            // 3. Continue to member onboarding
-            navigate('/onboarding/member', { replace: true })
+            // Redirect to cards onboarding (skipping the separate member step)
+            navigate('/onboarding/cards', { replace: true })
 
         } catch (err) {
             if (!handleProtectedError(err)) setError(err.message)
@@ -212,6 +214,25 @@ export function OnboardingHouseholdPage() {
                             <option value="biweekly">Quincenal</option>
                         </select>
                     </FormField>
+
+                    {isOnboarding && (
+                        <FormField label="Tu salario mensual (opcional)" htmlFor="hhSalary">
+                            <div className="inputWrap">
+                                <span className="inputPrefix" aria-hidden>$</span>
+                                <input
+                                    id="hhSalary"
+                                    className="input inputWithPrefix"
+                                    type="text"
+                                    inputMode="decimal"
+                                    placeholder="0.00"
+                                    value={salary}
+                                    onChange={(e) => setSalary(sanitizeAmountInput(e.target.value))}
+                                    disabled={busy}
+                                />
+                            </div>
+                            <p className="formHint">Tu salario mensual bruto. Se usará para calcular la distribución proporcional de gastos.</p>
+                        </FormField>
+                    )}
                 </div>
 
                 <div className="u-flex u-gap-4 u-mt-6">

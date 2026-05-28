@@ -1,6 +1,7 @@
 package period
 
 import (
+	"errors"
 	"strings"
 	"time"
 
@@ -18,6 +19,13 @@ const (
 
 // ID is the unique identifier type for a period.
 type ID string
+
+// MinimumPeriodDuration is the shortest allowed lifespan for a period.
+const MinimumPeriodDuration = 7 * 24 * time.Hour
+
+var (
+	ErrPeriodTooShort = errors.New("period must last at least 7 days")
+)
 
 // PeriodAttributes is the flat DTO used for construction and rehydration.
 type PeriodAttributes struct {
@@ -68,6 +76,10 @@ func NewFromAttributes(attrs PeriodAttributes) (Period, error) {
 
 	if attrs.StartDate.After(attrs.EndDate) {
 		return Period{}, shared.ErrInvalidDateRange
+	}
+
+	if attrs.EndDate.Sub(attrs.StartDate) < MinimumPeriodDuration {
+		return Period{}, ErrPeriodTooShort
 	}
 
 	status := attrs.Status

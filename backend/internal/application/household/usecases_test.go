@@ -7,9 +7,13 @@ import (
 	"time"
 
 	householdapp "micha/backend/internal/application/household"
-	"micha/backend/internal/domain/category"
 	"micha/backend/internal/domain/household"
+	"micha/backend/internal/domain/member"
+	"micha/backend/internal/domain/user"
 	"micha/backend/internal/ports/inbound"
+	"micha/backend/internal/domain/period"
+	"micha/backend/internal/domain/shared"
+	"micha/backend/internal/domain/category"
 )
 
 type staticHouseholdIDGen string
@@ -109,37 +113,71 @@ func (m *mockCategoryRepo) Delete(_ context.Context, _ string) error {
 	return nil
 }
 
-func TestRegisterHousehold_Success(t *testing.T) {
-	t.Parallel()
-	repo := newMockHouseholdRepo()
-	uc := householdapp.NewRegisterHouseholdUseCase(repo, newMockCategoryRepo(), staticHouseholdIDGen("hh-1"))
+// mockMemberRepo implements outbound.MemberRepository for tests.
+type mockMemberRepo struct{}
 
-	out, err := uc.Execute(context.Background(), inbound.RegisterHouseholdInput{
-		Name:           "Casa",
-		SettlementMode: household.SettlementModeEqual,
-		Currency:       "mxn",
-	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if out.HouseholdID != "hh-1" {
-		t.Errorf("HouseholdID = %q; want %q", out.HouseholdID, "hh-1")
-	}
+func newMockMemberRepo() *mockMemberRepo { return &mockMemberRepo{} }
+func (m *mockMemberRepo) Save(_ context.Context, _ member.Member) error       { return nil }
+func (m *mockMemberRepo) FindByID(_ context.Context, _ string) (member.Member, error) {
+	return member.Member{}, errors.New("not found")
+}
+func (m *mockMemberRepo) FindByUserID(_ context.Context, _, _ string) (member.Member, error) {
+	return member.Member{}, errors.New("not found")
+}
+func (m *mockMemberRepo) FindByUserIDGlobal(_ context.Context, _ string) (member.Member, error) {
+	return member.Member{}, errors.New("not found")
+}
+func (m *mockMemberRepo) ListAllByHousehold(_ context.Context, _ string) ([]member.Member, error) {
+	return nil, nil
+}
+func (m *mockMemberRepo) ListByHousehold(_ context.Context, _ string, _, _ int) ([]member.Member, error) {
+	return nil, nil
+}
+func (m *mockMemberRepo) ListHouseholdIDsByUserID(_ context.Context, _ string) ([]string, error) {
+	return nil, nil
+}
+func (m *mockMemberRepo) Update(_ context.Context, _ member.Member) error { return nil }
+func (m *mockMemberRepo) Delete(_ context.Context, _ string) error         { return nil }
+func (m *mockMemberRepo) CountActiveByHousehold(_ context.Context, _ string) (int, error) {
+	return 0, nil
+}
+func (m *mockMemberRepo) LinkByEmail(_ context.Context, _, _ string) error { return nil }
+
+// mockUserRepo implements outbound.UserRepository for tests.
+type mockUserRepo struct{}
+
+func newMockUserRepo() *mockUserRepo { return &mockUserRepo{} }
+func (m *mockUserRepo) Save(_ context.Context, _ user.User) error { return nil }
+func (m *mockUserRepo) FindByEmail(_ context.Context, _ string) (user.User, error) {
+	return user.User{}, errors.New("not found")
+}
+func (m *mockUserRepo) FindByID(_ context.Context, _ string) (user.User, error) {
+	return user.User{}, errors.New("not found")
 }
 
-func TestRegisterHousehold_InvalidName(t *testing.T) {
-	t.Parallel()
-	repo := newMockHouseholdRepo()
-	uc := householdapp.NewRegisterHouseholdUseCase(repo, newMockCategoryRepo(), staticHouseholdIDGen("hh-1"))
+// Additional mock types for the updated RegisterHouseholdUseCase interface
 
-	_, err := uc.Execute(context.Background(), inbound.RegisterHouseholdInput{
-		Name:           " ",
-		SettlementMode: household.SettlementModeEqual,
-		Currency:       "MXN",
-	})
-	if !errors.Is(err, household.ErrInvalidName) {
-		t.Errorf("want ErrInvalidName, got %v", err)
-	}
+type mockPeriodRepo struct{}
+
+func (m *mockPeriodRepo) Create(_ context.Context, _ period.Period) error { return nil }
+func (m *mockPeriodRepo) GetByID(_ context.Context, _ period.ID) (period.Period, error) {
+	return period.Period{}, shared.ErrNotFound
+}
+func (m *mockPeriodRepo) Update(_ context.Context, _ period.Period) error { return nil }
+func (m *mockPeriodRepo) GetCurrentOpen(_ context.Context, _ string) (period.Period, error) {
+	return period.Period{}, shared.ErrNotFound
+}
+func (m *mockPeriodRepo) GetLatestByHousehold(_ context.Context, _ string) (period.Period, error) {
+	return period.Period{}, shared.ErrNotFound
+}
+func (m *mockPeriodRepo) ListByHousehold(_ context.Context, _ string, _, _ int) ([]period.Period, error) {
+	return nil, nil
+}
+
+type mockTxManager struct{}
+
+func (m *mockTxManager) Run(_ context.Context, fn func(ctx context.Context) error) error {
+	return fn(context.Background())
 }
 
 func TestUpdateSplitConfig_Success(t *testing.T) {

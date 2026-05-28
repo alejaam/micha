@@ -7,7 +7,8 @@ import { formatCurrency } from '../utils'
  * @param {object} currentPeriod - { startDate, endDate, status }
  * @param {number} balance       - positive = debt (total spent), negative = owed (overpaid surplus)
  */
-export function PeriodBar({ currentPeriod = {}, balance = 0 }) {
+export function PeriodBar({ currentPeriod, balance = 0 }) {
+    if (!currentPeriod) return null
     const { startDate, endDate, status = 'open' } = currentPeriod
 
     const formatDate = (iso) => {

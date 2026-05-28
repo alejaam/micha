@@ -1,57 +1,9 @@
 package inbound
 
-import "context"
-
-// TransitionToReviewInput defines the required data to move a period to review status.
-type TransitionToReviewInput struct {
-	HouseholdID   string
-	PeriodID      string
-	CurrentUserID string
-}
-
-type TransitionToReviewOutput struct {
-	Success bool
-}
-
-// TransitionToReviewUseCase contract.
-type TransitionToReviewUseCase interface {
-	Execute(ctx context.Context, input TransitionToReviewInput) (TransitionToReviewOutput, error)
-}
-
-// ApprovePeriodInput defines the required data to approve or object a period.
-type ApprovePeriodInput struct {
-	HouseholdID   string
-	PeriodID      string
-	CurrentUserID string
-	Status        string // "approved" | "objected"
-	Comment       string
-}
-
-type ApprovePeriodOutput struct {
-	ApprovalID string
-}
-
-// ApprovePeriodUseCase contract.
-type ApprovePeriodUseCase interface {
-	Execute(ctx context.Context, input ApprovePeriodInput) (ApprovePeriodOutput, error)
-}
-
-// ClosePeriodInput defines the required data to close a period and trigger rollover.
-type ClosePeriodInput struct {
-	HouseholdID   string
-	PeriodID      string
-	CurrentUserID string
-	Force         bool // If true, owner can close even with objections
-}
-
-type ClosePeriodOutput struct {
-	NextPeriodID string
-}
-
-// ClosePeriodUseCase contract.
-type ClosePeriodUseCase interface {
-	Execute(ctx context.Context, input ClosePeriodInput) (ClosePeriodOutput, error)
-}
+import (
+	"context"
+	"time"
+)
 
 // InitializePeriodInput defines data to create the very first period.
 type InitializePeriodInput struct {
@@ -67,20 +19,30 @@ type InitializePeriodUseCase interface {
 	Execute(ctx context.Context, input InitializePeriodInput) (InitializePeriodOutput, error)
 }
 
-// GetPeriodConsensusInput defines the data needed to query period consensus.
-type GetPeriodConsensusInput struct {
-	HouseholdID string
-	PeriodID    string
+// SettlementEntry represents a single transfer between members in a settlement projection.
+type SettlementEntry struct {
+	FromMemberID string `json:"from_member_id"`
+	ToMemberID   string `json:"to_member_id"`
+	AmountCents  int64  `json:"amount_cents"`
 }
 
-// GetPeriodConsensusOutput contains the consensus summary for a period.
-type GetPeriodConsensusOutput struct {
-	Approved int     `json:"approved"`
-	Total    int     `json:"total"`
-	Percent  float64 `json:"percent"`
+// SimulateClosePeriodInput defines data to simulate closing a period (read-only).
+type SimulateClosePeriodInput struct {
+	HouseholdID   string
+	PeriodID      string
+	CurrentUserID string
 }
 
-// GetPeriodConsensusUseCase contract.
-type GetPeriodConsensusUseCase interface {
-	Execute(ctx context.Context, input GetPeriodConsensusInput) (GetPeriodConsensusOutput, error)
+// SimulateClosePeriodOutput contains the read-only projection of what would happen if the period closed.
+type SimulateClosePeriodOutput struct {
+	NextPeriodStart   time.Time        `json:"next_period_start"`
+	NextPeriodEnd     time.Time        `json:"next_period_end"`
+	SettlementPreview []SettlementEntry `json:"settlement_preview"`
+	FixedExpenseCount int              `json:"fixed_expense_count"`
+	InstallmentCount  int              `json:"installment_count"`
+}
+
+// SimulateClosePeriodUseCase contract for read-only period closure simulation.
+type SimulateClosePeriodUseCase interface {
+	Execute(ctx context.Context, input SimulateClosePeriodInput) (SimulateClosePeriodOutput, error)
 }

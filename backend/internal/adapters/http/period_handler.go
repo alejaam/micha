@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 
-	appshared "micha/backend/internal/application/shared"
 	"micha/backend/internal/domain/period"
 	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
@@ -12,31 +11,22 @@ import (
 )
 
 type PeriodHandlerDeps struct {
-	TransitionToReview inbound.TransitionToReviewUseCase
-	ApprovePeriod      inbound.ApprovePeriodUseCase
-	ClosePeriod        inbound.ClosePeriodUseCase
-	InitializePeriod   inbound.InitializePeriodUseCase
-	GetConsensus       inbound.GetPeriodConsensusUseCase
-	PeriodRepo         outbound.PeriodRepository
+	SimulateClose   inbound.SimulateClosePeriodUseCase
+	InitializePeriod inbound.InitializePeriodUseCase
+	PeriodRepo      outbound.PeriodRepository
 }
 
 type PeriodHandler struct {
-	transitionToReview inbound.TransitionToReviewUseCase
-	approvePeriod      inbound.ApprovePeriodUseCase
-	closePeriod        inbound.ClosePeriodUseCase
-	initializePeriod   inbound.InitializePeriodUseCase
-	getConsensus       inbound.GetPeriodConsensusUseCase
-	periodRepo         outbound.PeriodRepository
+	simulateClose    inbound.SimulateClosePeriodUseCase
+	initializePeriod inbound.InitializePeriodUseCase
+	periodRepo       outbound.PeriodRepository
 }
 
 func newPeriodHandler(deps PeriodHandlerDeps) *PeriodHandler {
 	return &PeriodHandler{
-		transitionToReview: deps.TransitionToReview,
-		approvePeriod:      deps.ApprovePeriod,
-		closePeriod:        deps.ClosePeriod,
-		initializePeriod:   deps.InitializePeriod,
-		getConsensus:       deps.GetConsensus,
-		periodRepo:         deps.PeriodRepo,
+		simulateClose:    deps.SimulateClose,
+		initializePeriod: deps.InitializePeriod,
+		periodRepo:       deps.PeriodRepo,
 	}
 }
 
@@ -61,12 +51,12 @@ func (h *PeriodHandler) handleInitialize(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusCreated, output)
 }
 
-func (h *PeriodHandler) handleTransitionToReview(w http.ResponseWriter, r *http.Request) {
+func (h *PeriodHandler) handleSimulateClose(w http.ResponseWriter, r *http.Request) {
 	householdID := r.PathValue("household_id")
 	periodID := r.PathValue("period_id")
 	userID, _ := UserIDFromContext(r.Context())
 
-	output, err := h.transitionToReview.Execute(r.Context(), inbound.TransitionToReviewInput{
+	output, err := h.simulateClose.Execute(r.Context(), inbound.SimulateClosePeriodInput{
 		HouseholdID:   householdID,
 		PeriodID:      periodID,
 		CurrentUserID: userID,
@@ -75,111 +65,45 @@ func (h *PeriodHandler) handleTransitionToReview(w http.ResponseWriter, r *http.
 		switch {
 		case errors.Is(err, shared.ErrForbidden):
 			writeError(w, http.StatusForbidden, "FORBIDDEN", err.Error())
+		case errors.Is(err, shared.ErrFuturePeriod):
+			writeError(w, http.StatusBadRequest, "FUTURE_PERIOD", "next period would start in the future")
+		case errors.Is(err, period.ErrPeriodTooShort):
+			writeError(w, http.StatusBadRequest, "PERIOD_TOO_SHORT", "period must be open for at least 7 days before closing")
 		default:
 			writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
 		}
 		return
 	}
 
-	writeJSON(w, http.StatusOK, output)
-}
-
-func (h *PeriodHandler) handleApprove(w http.ResponseWriter, r *http.Request) {
-	householdID := r.PathValue("household_id")
-	periodID := r.PathValue("period_id")
-	userID, _ := UserIDFromContext(r.Context())
-
-	var input struct {
-		Status  string `json:"status"`
-		Comment string `json:"comment"`
-	}
-	if err := decodeJSON(r, w, &input); err != nil {
-		return
-	}
-
-	output, err := h.approvePeriod.Execute(r.Context(), inbound.ApprovePeriodInput{
-		HouseholdID:   householdID,
-		PeriodID:      periodID,
-		CurrentUserID: userID,
-		Status:        input.Status,
-		Comment:       input.Comment,
+	writeJSON(w, http.StatusOK, map[string]any{
+		"data": map[string]any{
+			"next_period_start":  output.NextPeriodStart,
+			"next_period_end":    output.NextPeriodEnd,
+			"settlement_preview": output.SettlementPreview,
+			"fixed_expense_count": output.FixedExpenseCount,
+			"installment_count":  output.InstallmentCount,
+		},
 	})
-	if err != nil {
-		switch {
-		case errors.Is(err, shared.ErrForbidden):
-			writeError(w, http.StatusForbidden, "FORBIDDEN", err.Error())
-		default:
-			writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
-		}
-		return
-	}
-
-	writeJSON(w, http.StatusOK, output)
-}
-
-func (h *PeriodHandler) handleClose(w http.ResponseWriter, r *http.Request) {
-	householdID := r.PathValue("household_id")
-	periodID := r.PathValue("period_id")
-	userID, _ := UserIDFromContext(r.Context())
-
-	var input struct {
-		Force bool `json:"force"`
-	}
-	if err := decodeJSON(r, w, &input); err != nil {
-		return
-	}
-
-	output, err := h.closePeriod.Execute(r.Context(), inbound.ClosePeriodInput{
-		HouseholdID:   householdID,
-		PeriodID:      periodID,
-		CurrentUserID: userID,
-		Force:         input.Force,
-	})
-	if err != nil {
-		switch {
-		case errors.Is(err, shared.ErrForbidden):
-			writeError(w, http.StatusForbidden, "FORBIDDEN", err.Error())
-		default:
-			writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error())
-		}
-		return
-	}
-
-	writeJSON(w, http.StatusOK, output)
 }
 
 func (h *PeriodHandler) handleGetCurrent(w http.ResponseWriter, r *http.Request) {
 	householdID := r.PathValue("household_id")
-	userID, _ := UserIDFromContext(r.Context())
 
 	p, err := h.periodRepo.GetLatestByHousehold(r.Context(), householdID)
 	if err != nil {
-		// If it's a 'not found' error, return 200 with null data
 		if err.Error() == "not found" || err.Error() == "no rows in result set" {
 			writeJSON(w, http.StatusOK, map[string]any{"data": nil})
 			return
 		}
-		// If it's a real DB error (e.g. missing table), return 500 so we can diagnose
 		writeError(w, http.StatusInternalServerError, "DB_ERROR", err.Error())
 		return
 	}
 
 	attrs := p.Attributes()
 
-	// Natural Closing: If period is OPEN but EndDate has passed, transition to REVIEW automatically.
-	if attrs.Status == period.StatusOpen && appshared.Now().After(attrs.EndDate) {
-		_, err := h.transitionToReview.Execute(r.Context(), inbound.TransitionToReviewInput{
-			HouseholdID:   householdID,
-			PeriodID:      string(attrs.ID),
-			CurrentUserID: userID,
-		})
-		if err == nil {
-			// Reload period to return the updated status
-			if updated, reloadErr := h.periodRepo.GetByID(r.Context(), attrs.ID); reloadErr == nil {
-				attrs = updated.Attributes()
-			}
-		}
-	}
+	// Natural Closing: If period is OPEN but EndDate has passed, just report it as is.
+	// The review/approval workflow has been removed — the period stays open until
+	// a future close mechanism is implemented.
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"data": map[string]any{
@@ -191,24 +115,6 @@ func (h *PeriodHandler) handleGetCurrent(w http.ResponseWriter, r *http.Request)
 			"created_at":   attrs.CreatedAt,
 			"updated_at":   attrs.UpdatedAt,
 		},
-	})
-}
-
-func (h *PeriodHandler) handleGetConsensus(w http.ResponseWriter, r *http.Request) {
-	householdID := r.PathValue("household_id")
-	periodID := r.PathValue("period_id")
-
-	output, err := h.getConsensus.Execute(r.Context(), inbound.GetPeriodConsensusInput{
-		HouseholdID: householdID,
-		PeriodID:    periodID,
-	})
-	if err != nil {
-		writeError(w, http.StatusNotFound, "NOT_FOUND", "period not found")
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"data": output,
 	})
 }
 
