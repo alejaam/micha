@@ -97,6 +97,7 @@ func seedUser(t *testing.T, repo *mockUserRepo, id, email, password string) {
 		ID:           id,
 		Email:        email,
 		PasswordHash: hash,
+		Name:         "Seed User",
 		CreatedAt:    time.Now(),
 	})
 	if err != nil {
@@ -114,6 +115,7 @@ func TestRegisterUser_Success(t *testing.T) {
 
 	out, err := uc.Execute(context.Background(), inbound.RegisterUserInput{
 		Email:    "ale@example.com",
+		Name:     "Ale Jaam",
 		Password: "secret123",
 	})
 	if err != nil {
@@ -138,23 +140,28 @@ func TestRegisterUser_TableDriven(t *testing.T) {
 	}{
 		{
 			name:    "empty email",
-			input:   inbound.RegisterUserInput{Email: "", Password: "secret"},
+			input:   inbound.RegisterUserInput{Email: "", Name: "Ale Jaam", Password: "secret"},
 			wantErr: true,
 		},
 		{
 			name:    "empty password",
-			input:   inbound.RegisterUserInput{Email: "ale@example.com", Password: ""},
+			input:   inbound.RegisterUserInput{Email: "ale@example.com", Name: "Ale Jaam", Password: ""},
+			wantErr: true,
+		},
+		{
+			name:    "empty name",
+			input:   inbound.RegisterUserInput{Email: "ale@example.com", Name: "", Password: "secret"},
 			wantErr: true,
 		},
 		{
 			name:    "hasher error",
-			input:   inbound.RegisterUserInput{Email: "ale@example.com", Password: "secret"},
+			input:   inbound.RegisterUserInput{Email: "ale@example.com", Name: "Ale Jaam", Password: "secret"},
 			hashErr: errors.New("bcrypt failed"),
 			wantErr: true,
 		},
 		{
 			name:    "repo save error",
-			input:   inbound.RegisterUserInput{Email: "ale@example.com", Password: "secret"},
+			input:   inbound.RegisterUserInput{Email: "ale@example.com", Name: "Ale Jaam", Password: "secret"},
 			saveErr: errors.New("db error"),
 			wantErr: true,
 		},

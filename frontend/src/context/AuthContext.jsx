@@ -59,8 +59,8 @@ export function AuthProvider({ children }) {
         setToken(nextToken)
     }, [])
 
-    const register = useCallback(async ({ email, password }) => {
-        await registerUser({ email, password })
+    const register = useCallback(async ({ email, name, password }) => {
+        await registerUser({ email, name, password })
     }, [])
 
     const handleProtectedError = useCallback(

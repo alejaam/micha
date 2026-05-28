@@ -13,17 +13,19 @@ var baseAttrs = user.UserAttributes{
 	ID:           "user-1",
 	Email:        "alice@example.com",
 	PasswordHash: "$2a$12$somehashvalue",
+	Name:         "Alice",
 	CreatedAt:    time.Now(),
 }
 
 func TestNew_ValidUser(t *testing.T) {
 	t.Parallel()
 
-	u, err := user.New(baseAttrs.ID, baseAttrs.Email, baseAttrs.PasswordHash, baseAttrs.CreatedAt)
+	u, err := user.New(baseAttrs.ID, baseAttrs.Email, baseAttrs.PasswordHash, baseAttrs.Name, baseAttrs.CreatedAt)
 	require.NoError(t, err)
 	require.Equal(t, baseAttrs.ID, u.ID())
 	require.Equal(t, baseAttrs.Email, u.Email())
 	require.Equal(t, baseAttrs.PasswordHash, u.PasswordHash())
+	require.Equal(t, baseAttrs.Name, u.Name())
 }
 
 func TestNew_InvalidEmail(t *testing.T) {
@@ -41,7 +43,7 @@ func TestNew_InvalidEmail(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := user.New("id-1", tc.email, "somehash", time.Now())
+			_, err := user.New("id-1", tc.email, "somehash", "Alice", time.Now())
 			require.ErrorIs(t, err, user.ErrInvalidEmail)
 		})
 	}
@@ -50,8 +52,29 @@ func TestNew_InvalidEmail(t *testing.T) {
 func TestNew_WeakPassword(t *testing.T) {
 	t.Parallel()
 
-	_, err := user.New("id-1", "alice@example.com", "", time.Now())
+	_, err := user.New("id-1", "alice@example.com", "", "Alice", time.Now())
 	require.ErrorIs(t, err, user.ErrWeakPassword)
+}
+
+func TestNew_InvalidName(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name     string
+		userName string
+	}{
+		{"empty", ""},
+		{"whitespace only", "   \t\n"},
+		{"too long", string(make([]byte, 101))},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			_, err := user.New("id-1", "alice@example.com", "somehash", tc.userName, time.Now())
+			require.ErrorIs(t, err, user.ErrInvalidName)
+		})
+	}
 }
 
 func TestNewFromAttributes_ValidUser(t *testing.T) {
@@ -64,6 +87,7 @@ func TestNewFromAttributes_ValidUser(t *testing.T) {
 	require.Equal(t, baseAttrs.ID, attrs.ID)
 	require.Equal(t, baseAttrs.Email, attrs.Email)
 	require.Equal(t, baseAttrs.PasswordHash, attrs.PasswordHash)
+	require.Equal(t, baseAttrs.Name, attrs.Name)
 }
 
 func TestNewFromAttributes_InvalidEmail(t *testing.T) {
@@ -96,3 +120,27 @@ func TestNewFromAttributes_WeakPassword(t *testing.T) {
 	_, err := user.NewFromAttributes(attrs)
 	require.ErrorIs(t, err, user.ErrWeakPassword)
 }
+
+func TestNewFromAttributes_InvalidName(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name     string
+		userName string
+	}{
+		{"empty", ""},
+		{"whitespace only", "   \t\n"},
+		{"too long", string(make([]byte, 101))},
+	}
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			attrs := baseAttrs
+			attrs.Name = tc.userName
+			_, err := user.NewFromAttributes(attrs)
+			require.ErrorIs(t, err, user.ErrInvalidName)
+		})
+	}
+}
+

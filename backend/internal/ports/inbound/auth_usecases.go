@@ -5,6 +5,7 @@ import "context"
 // RegisterUserInput contains the data required to create a new user account.
 type RegisterUserInput struct {
 	Email    string
+	Name     string
 	Password string
 }
 

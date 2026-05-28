@@ -137,6 +137,7 @@ func newMockRegUserRepo(email string) *mockRegUserRepo {
 		ID:           "u-1",
 		Email:        email,
 		PasswordHash: "hashed-password",
+		Name:         "Test User",
 		CreatedAt:    time.Now(),
 	})
 	if err != nil {
@@ -255,6 +256,9 @@ func TestRegisterHousehold_Success(t *testing.T) {
 	// Verify owner member was created with salary
 	if len(memberRepo.members) != 1 {
 		t.Fatalf("expected 1 member, got %d", len(memberRepo.members))
+	}
+	if memberRepo.members[0].Name() != "Test User" {
+		t.Errorf("Name = %q; want Test User", memberRepo.members[0].Name())
 	}
 	if memberRepo.members[0].MonthlySalaryCents() != 5000000 {
 		t.Errorf("MonthlySalaryCents = %d; want 5000000", memberRepo.members[0].MonthlySalaryCents())

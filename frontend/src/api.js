@@ -79,11 +79,11 @@ export async function listHouseholds({ limit = 100, offset = 0 } = {}) {
     return parseResponse(response)
 }
 
-export async function registerUser({ email, password }) {
+export async function registerUser({ email, name, password }) {
     const response = await fetch(`${API_BASE_URL}/v1/auth/register`, {
         method: 'POST',
         headers: JSON_HEADERS,
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, name, password }),
     })
 
     return parseResponse(response)

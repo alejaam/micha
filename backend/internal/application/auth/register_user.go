@@ -36,7 +36,7 @@ func (u RegisterUserUseCase) Execute(ctx context.Context, input inbound.Register
 		return inbound.RegisterUserOutput{}, fmt.Errorf("register user: %w", err)
 	}
 
-	newUser, err := user.New(u.idGen.NewID(), input.Email, hash, u.now())
+	newUser, err := user.New(u.idGen.NewID(), input.Email, hash, input.Name, u.now())
 	if err != nil {
 		return inbound.RegisterUserOutput{}, fmt.Errorf("register user: %w", err)
 	}

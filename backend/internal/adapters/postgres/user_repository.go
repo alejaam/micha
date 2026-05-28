@@ -28,9 +28,9 @@ func NewUserRepository(db *pgxpool.Pool) UserRepository {
 func (r UserRepository) Save(ctx context.Context, u user.User) error {
 	attrs := u.Attributes()
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO users (id, email, password_hash, created_at)
-		 VALUES ($1, $2, $3, $4)`,
-		attrs.ID, attrs.Email, attrs.PasswordHash, attrs.CreatedAt,
+		`INSERT INTO users (id, email, password_hash, name, created_at)
+		 VALUES ($1, $2, $3, $4, $5)`,
+		attrs.ID, attrs.Email, attrs.PasswordHash, attrs.Name, attrs.CreatedAt,
 	)
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -45,14 +45,14 @@ func (r UserRepository) Save(ctx context.Context, u user.User) error {
 // FindByEmail retrieves a user by email. Returns shared.ErrNotFound when absent.
 func (r UserRepository) FindByEmail(ctx context.Context, email string) (user.User, error) {
 	row := r.db.QueryRow(ctx,
-		`SELECT id, email, password_hash, created_at
+		`SELECT id, email, password_hash, name, created_at
 		 FROM users
 		 WHERE email = $1`,
 		email,
 	)
 
 	var attrs user.UserAttributes
-	if err := row.Scan(&attrs.ID, &attrs.Email, &attrs.PasswordHash, &attrs.CreatedAt); err != nil {
+	if err := row.Scan(&attrs.ID, &attrs.Email, &attrs.PasswordHash, &attrs.Name, &attrs.CreatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return user.User{}, shared.ErrNotFound
 		}
@@ -69,14 +69,14 @@ func (r UserRepository) FindByEmail(ctx context.Context, email string) (user.Use
 // FindByID retrieves a user by ID. Returns shared.ErrNotFound when absent.
 func (r UserRepository) FindByID(ctx context.Context, id string) (user.User, error) {
 	row := r.db.QueryRow(ctx,
-		`SELECT id, email, password_hash, created_at
+		`SELECT id, email, password_hash, name, created_at
 		 FROM users
 		 WHERE id = $1`,
 		id,
 	)
 
 	var attrs user.UserAttributes
-	if err := row.Scan(&attrs.ID, &attrs.Email, &attrs.PasswordHash, &attrs.CreatedAt); err != nil {
+	if err := row.Scan(&attrs.ID, &attrs.Email, &attrs.PasswordHash, &attrs.Name, &attrs.CreatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return user.User{}, shared.ErrNotFound
 		}

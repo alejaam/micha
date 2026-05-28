@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
 	appshared "micha/backend/internal/application/shared"
@@ -147,10 +146,7 @@ func (u RegisterHouseholdUseCase) createOwnerMember(ctx context.Context, househo
 	}
 
 	email := usr.Email()
-	name := email
-	if at := strings.Index(email, "@"); at > 0 {
-		name = strings.ToUpper(email[:1]) + email[1:at]
-	}
+	name := usr.Name()
 
 	memberID := u.idGenerator.NewID()
 	m, err := member.NewWithUserID(
