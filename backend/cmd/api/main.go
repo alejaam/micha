@@ -80,7 +80,6 @@ func main() {
 	userRepo := postgres.NewUserRepository(pool)
 	subscriptionCatalogRepo := postgres.NewSubscriptionCatalogRepository(pool)
 	periodRepo := postgres.NewPeriodRepository(pool)
-	periodApprovalRepo := postgres.NewPeriodApprovalRepository(pool)
 	idGen := uuidGenerator{}
 	txManager := postgres.NewTransactionManager(pool)
 
@@ -125,7 +124,7 @@ func main() {
 
 	// Household use cases and handler dependencies.
 	householdDeps := httpadapter.HouseholdHandlerDeps{
-		Register: householdapp.NewRegisterHouseholdUseCase(householdRepo, categoryRepo, idGen),
+		Register: householdapp.NewRegisterHouseholdUseCase(householdRepo, categoryRepo, memberRepo, userRepo, periodRepo, txManager, idGen),
 		List:     householdapp.NewListHouseholdsUseCase(householdRepo),
 		Get:      householdapp.NewGetHouseholdUseCase(householdRepo),
 		Update:   householdapp.NewUpdateHouseholdUseCase(householdRepo),
@@ -160,12 +159,9 @@ func main() {
 
 	// Period use cases and handler dependencies.
 	periodDeps := httpadapter.PeriodHandlerDeps{
-		TransitionToReview: periodapp.NewTransitionToReviewUseCase(periodRepo, memberRepo),
-		ApprovePeriod:      periodapp.NewApprovePeriodUseCase(periodApprovalRepo, periodRepo, memberRepo, idGen),
-		ClosePeriod:        periodapp.NewClosePeriodUseCase(periodRepo, periodApprovalRepo, householdRepo, memberRepo, expenseRepo, installmentRepo, txManager, idGen),
-		InitializePeriod:   periodapp.NewInitializePeriodUseCase(periodRepo, householdRepo, memberRepo, expenseRepo, idGen),
-		GetConsensus:       periodapp.NewGetPeriodConsensusUseCase(periodRepo, periodApprovalRepo, memberRepo),
-		PeriodRepo:         periodRepo,
+		SimulateClose:    periodapp.NewSimulateClosePeriodUseCase(periodRepo, householdRepo, memberRepo, expenseRepo, installmentRepo),
+		InitializePeriod: periodapp.NewInitializePeriodUseCase(periodRepo, householdRepo, memberRepo, expenseRepo, idGen),
+		PeriodRepo:       periodRepo,
 	}
 
 	// Subscription catalog use cases and handler dependencies.

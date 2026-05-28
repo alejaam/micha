@@ -85,11 +85,11 @@ export function SettlementPanel({
   })
 
   return (
-    <section className="card" aria-label="Liquidación mensual">
+    <section className="card" aria-label="Liquidación del periodo">
       <h2 className="sectionTitle">
         <span className="sectionTitleIcon" aria-hidden>🧮</span>
-        Liquidación mensual
-        <Tooltip text="Muestra quién debe a quién por los gastos compartidos este mes. Basado en proporción de ingresos o división igualitaria." position="right" />
+        Liquidación del periodo
+        <Tooltip text="Muestra quién debe a quién por los gastos compartidos este periodo. Basado en proporción de ingresos o división igualitaria." position="right" />
         {isCurrentMonth && <span className="currentPeriodBadge">actual</span>}
         {settlement && <span className="sectionBadge" style={{ marginLeft: isCurrentMonth ? '8px' : 'auto' }}>
             {settlement.effective_settlement_mode === 'exact' ? 'División exacta' : 'Proporcional a ingresos'}
@@ -143,9 +143,9 @@ export function SettlementPanel({
             type="button"
             className="btn btnGhost btnSm"
             onClick={onResetToCurrentMonth}
-            aria-label="Volver al mes actual"
+            aria-label="Volver al periodo actual"
           >
-            📅 Mes actual
+            📅 Periodo actual
           </button>
         )}
       </div>

@@ -5,6 +5,7 @@ import { OnboardingFixedExpensesPage } from '../OnboardingFixedExpensesPage'
 
 const mockCreateRecurringExpense = vi.fn()
 const mockListRecurringExpenses = vi.fn()
+const mockListSubscriptionServices = vi.fn()
 const mockUpdateRecurringExpense = vi.fn()
 const mockDeleteRecurringExpense = vi.fn()
 const mockNavigate = vi.fn()
@@ -17,6 +18,7 @@ vi.mock('../../api', async () => {
         ...actual,
         createRecurringExpense: (...args) => mockCreateRecurringExpense(...args),
         listRecurringExpenses: (...args) => mockListRecurringExpenses(...args),
+        listSubscriptionServices: (...args) => mockListSubscriptionServices(...args),
         updateRecurringExpense: (...args) => mockUpdateRecurringExpense(...args),
         deleteRecurringExpense: (...args) => mockDeleteRecurringExpense(...args),
     }
@@ -42,15 +44,20 @@ describe('OnboardingFixedExpensesPage', () => {
     beforeEach(() => {
         mockCreateRecurringExpense.mockReset()
         mockListRecurringExpenses.mockReset()
+        mockListSubscriptionServices.mockReset()
         mockUpdateRecurringExpense.mockReset()
         mockDeleteRecurringExpense.mockReset()
         mockNavigate.mockReset()
         mockUseAppShell.mockReturnValue({ householdId: 'hh-1' })
         mockUseAuth.mockReturnValue({ handleProtectedError: () => false })
         mockListRecurringExpenses.mockResolvedValue([])
+        mockListSubscriptionServices.mockResolvedValue([
+            { id: 'svc-1', slug: 'rent', name: 'Renta', standalone_price_cents: 120000, currency: 'MXN', is_bundle: false },
+            { id: 'svc-2', slug: 'internet', name: 'Internet', standalone_price_cents: 59900, currency: 'MXN', is_bundle: false },
+        ])
     })
 
-    it('creates agnostic recurring fixed expenses for selected options', async () => {
+    it('creates agnostic recurring fixed expenses for selected catalog services', async () => {
         mockCreateRecurringExpense.mockResolvedValue({})
 
         render(
@@ -59,8 +66,14 @@ describe('OnboardingFixedExpensesPage', () => {
             </MemoryRouter>,
         )
 
-        fireEvent.click(screen.getByLabelText('Renta'))
-        fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '1250.50' } })
+        // Wait for catalog to load
+        const rentCheckbox = await screen.findByLabelText('Renta')
+        fireEvent.click(rentCheckbox)
+
+        // Amount should be pre-filled from catalog standalone_price_cents (120000 → 1200.00)
+        const amountInput = screen.getByDisplayValue('1200.00')
+        fireEvent.change(amountInput, { target: { value: '1250.50' } })
+
         fireEvent.click(screen.getByRole('button', { name: 'Guardar y continuar' }))
 
         await waitFor(() => expect(mockCreateRecurringExpense).toHaveBeenCalledTimes(1))
@@ -69,7 +82,7 @@ describe('OnboardingFixedExpensesPage', () => {
             isAgnostic: true,
             expenseType: 'fixed',
             recurrencePattern: 'monthly',
-            category: 'rent',
+            category: 'other',
             amountCents: 125050,
         }))
         expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true })

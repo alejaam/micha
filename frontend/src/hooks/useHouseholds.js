@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, useRef } from 'react'
 import { listHouseholds } from '../api'
+import { useFocusRefetch } from './useFocusRefetch'
 
 export function useHouseholds({ isAuthenticated, handleProtectedError }) {
     const [householdId, setHouseholdId] = useState('')
@@ -44,6 +45,8 @@ export function useHouseholds({ isAuthenticated, handleProtectedError }) {
 
         loadHouseholds()
     }, [isAuthenticated, loadHouseholds])
+
+    useFocusRefetch(loadHouseholds)
 
     return {
         householdId,

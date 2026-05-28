@@ -22,7 +22,6 @@ export function ExpenseList({
   onDelete,
   onSave,
   currency = 'MXN',
-  isMutationLocked = false,
   onQuickAdd,
 }) {
   const totalCents = useMemo(
@@ -77,8 +76,7 @@ export function ExpenseList({
               animIndex={index}
               isDeleting={deletingId === item.id}
               isSaving={savingId === item.id}
-              isMutationLocked={isMutationLocked}
-              onDelete={onDelete}
+               onDelete={onDelete}
               onSave={onSave}
               currency={currency}
             />

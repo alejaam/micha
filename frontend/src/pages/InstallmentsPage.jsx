@@ -19,7 +19,6 @@ export function InstallmentsPage() {
         currentMember,
         activeCurrency,
         householdId,
-        isMutationLocked,
         msiProgress,
         handleCreate,
         message,
@@ -67,14 +66,7 @@ export function InstallmentsPage() {
             />
 
             <FAB
-                onClick={() => {
-                    if (isMutationLocked) {
-                        setError('El periodo está bajo revisión o cerrado. Las acciones están deshabilitadas.')
-                        return
-                    }
-                    setModalOpen(true)
-                }}
-                disabled={isMutationLocked}
+                onClick={() => setModalOpen(true)}
             />
 
             {modalOpen && (
@@ -85,7 +77,6 @@ export function InstallmentsPage() {
                         if (success) setModalOpen(false)
                     }}
                     isSubmitting={submittingCreate}
-                    isMutationLocked={isMutationLocked}
                     members={members}
                     isLoadingMembers={loadingMembers}
                     defaultPaidByMemberId={currentMember?.id ?? ''}

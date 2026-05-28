@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getSettlement } from '../api'
+import { useFocusRefetch } from './useFocusRefetch'
 
 export function useSettlement({
     isAuthenticated,
@@ -60,6 +61,8 @@ export function useSettlement({
 
         loadSettlement()
     }, [isAuthenticated, loadSettlement])
+
+    useFocusRefetch(loadSettlement)
 
     const resetToCurrentMonth = useCallback(() => {
         const now = new Date()

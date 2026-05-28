@@ -13,7 +13,6 @@ export function RulesPage() {
         loadingMembers,
         currentMember,
         householdId,
-        isMutationLocked,
         handleCreate,
         message,
         setMessage,
@@ -47,7 +46,6 @@ export function RulesPage() {
                             type="button"
                             className="btn btnPrimary"
                             onClick={() => navigate('/cards')}
-                            disabled={isMutationLocked}
                         >
                             Gestionar tarjetas
                         </button>
@@ -59,14 +57,13 @@ export function RulesPage() {
                         <h2 className="listTitle">Gastos Fijos</h2>
                     </div>
                     <p className="u-text-sm u-text-dim u-mb-3">
-                        Configura gastos mensuales recurrentes como renta, servicios o suscripciones.
+                        Configura gastos recurrentes como renta, servicios o suscripciones.
                     </p>
                     <div className="u-flex u-flex-col u-gap-3">
                         <button
                             type="button"
                             className="btn btnPrimary"
                             onClick={() => navigate('/fixed-expenses')}
-                            disabled={isMutationLocked}
                         >
                             Gestionar gastos fijos
                         </button>
@@ -87,7 +84,6 @@ export function RulesPage() {
                             type="button"
                             className="btn btnPrimary"
                             onClick={() => navigate('/settings/household')}
-                            disabled={isMutationLocked}
                         >
                             Editar ajustes del hogar
                         </button>
@@ -95,7 +91,6 @@ export function RulesPage() {
                             type="button"
                             className="btn btnPrimary"
                             onClick={() => navigate('/members/new')}
-                            disabled={isMutationLocked}
                         >
                             Invitar nuevos miembros
                         </button>
@@ -104,14 +99,7 @@ export function RulesPage() {
             </div>
 
             <FAB
-                onClick={() => {
-                    if (isMutationLocked) {
-                        setError('El periodo está en revisión o cerrado. Finaliza la conciliación para registrar cambios.')
-                        return
-                    }
-                    setModalOpen(true)
-                }}
-                disabled={isMutationLocked}
+                onClick={() => setModalOpen(true)}
             />
 
             {modalOpen && (
@@ -122,7 +110,6 @@ export function RulesPage() {
                         if (success) setModalOpen(false)
                     }}
                     isSubmitting={submittingCreate}
-                    isMutationLocked={isMutationLocked}
                     members={members}
                     isLoadingMembers={loadingMembers}
                     defaultPaidByMemberId={currentMember?.id ?? ''}

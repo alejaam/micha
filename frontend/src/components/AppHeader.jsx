@@ -6,13 +6,24 @@ import { PeriodStatusRibbon } from './PeriodStatusRibbon'
 import { useAuth } from '../context/AuthContext'
 import { UserMenu } from './UserMenu'
 
+const MONTH_NAMES = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+]
+
 function formatPeriodName(period) {
   if (!period) return 'Sin periodo activo'
-  const raw = period?.start_date || period?.startDate || period?.StartDate
-  if (!raw) return 'Periodo actual'
-  const start = new Date(raw)
-  if (isNaN(start.getTime())) return 'Periodo actual'
-  return new Intl.DateTimeFormat('es-MX', { month: 'long', year: 'numeric' }).format(start)
+  const rawStart = period?.start_date || period?.startDate
+  const rawEnd = period?.end_date || period?.endDate
+  if (!rawStart || !rawEnd) return 'Periodo actual'
+  const start = new Date(rawStart)
+  const end = new Date(rawEnd)
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'Periodo actual'
+  const dayStart = start.getDate()
+  const dayEnd = end.getDate()
+  const month = MONTH_NAMES[start.getMonth()]
+  const year = start.getFullYear()
+  return `${dayStart}–${dayEnd} ${month} ${year}`
 }
 
 /**
@@ -28,7 +39,6 @@ export function AppHeader({
   isLoading,
   households = [],
   periodStatus = 'open',
-  isMutationLocked = false,
   currentPeriod = null,
   selectedPeriodId = null,
   onSelectPeriod = null,
@@ -126,15 +136,8 @@ export function AppHeader({
         {householdId && (
           <Link
             to="/members/new"
-            className={`btn btnGhost btnSm${isMutationLocked ? ' btnDisabled' : ''}`}
+            className="btn btnGhost btnSm"
             aria-label="Invitar nuevo miembro"
-            aria-disabled={isMutationLocked}
-            tabIndex={isMutationLocked ? -1 : 0}
-            onClick={(event) => {
-              if (isMutationLocked) {
-                event.preventDefault()
-              }
-            }}
           >
             + Miembro
           </Link>

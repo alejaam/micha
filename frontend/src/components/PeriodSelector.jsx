@@ -1,3 +1,8 @@
+const MONTH_NAMES_SHORT = [
+  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+]
+
 /**
  * PeriodSelector — dropdown to select a historical period or return to current.
  *
@@ -9,11 +14,17 @@
  */
 function formatPeriodLabel(period) {
   if (!period) return 'Periodo'
-  const raw = period?.start_date || period?.startDate || period?.StartDate
-  if (!raw) return 'Periodo'
-  const start = new Date(raw)
-  if (isNaN(start.getTime())) return 'Periodo'
-  return new Intl.DateTimeFormat('es-MX', { month: 'long', year: 'numeric' }).format(start)
+  const rawStart = period?.start_date || period?.startDate
+  const rawEnd = period?.end_date || period?.endDate
+  if (!rawStart || !rawEnd) return 'Periodo'
+  const start = new Date(rawStart)
+  const end = new Date(rawEnd)
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'Periodo'
+  const dayStart = start.getDate()
+  const dayEnd = end.getDate()
+  const month = MONTH_NAMES_SHORT[start.getMonth()]
+  const year = start.getFullYear()
+  return `${dayStart}–${dayEnd} ${month} ${year}`
 }
 
 function parseStatus(period) {
@@ -30,6 +41,15 @@ export function PeriodSelector({ periods = [], selectedPeriodId, currentPeriodId
 
   // Filter out null/undefined periods to prevent "undefined is not an object" errors
   const validPeriods = periods.filter(Boolean)
+
+  // Show placeholder when no periods exist
+  if (!currentPeriodId && validPeriods.length === 0) {
+    return (
+      <div className="periodSelector periodSelector--empty">
+        <span className="periodSelectorPlaceholder">Sin periodos aún</span>
+      </div>
+    )
+  }
 
   return (
     <div className="periodSelector">
