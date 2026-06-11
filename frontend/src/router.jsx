@@ -106,13 +106,9 @@ function AppShell() {
         currentPeriod,
         periodStatus,
         setPeriodStatus,
-        isMutationLocked,
         loadPeriod: reloadPeriod,
         selectedPeriodId,
         setSelectedPeriodId,
-        consensus,
-        consensusLoading,
-        loadConsensus,
         isLoadingPeriod,
     } = useDashboardUxState(householdId)
 
@@ -139,7 +135,6 @@ function AppShell() {
         handleReload,
         periodStatus,
         setPeriodStatus,
-        isMutationLocked,
         currentPeriod,
         reloadPeriod,
         members,
@@ -147,9 +142,6 @@ function AppShell() {
         loadMembers,
         selectedPeriodId,
         setSelectedPeriodId,
-        consensus,
-        consensusLoading,
-        loadConsensus,
         isLoadingPeriod,
     }), [
         health,
@@ -162,7 +154,6 @@ function AppShell() {
         handleReload,
         periodStatus,
         setPeriodStatus,
-        isMutationLocked,
         currentPeriod,
         reloadPeriod,
         members,
@@ -170,9 +161,6 @@ function AppShell() {
         loadMembers,
         selectedPeriodId,
         setSelectedPeriodId,
-        consensus,
-        consensusLoading,
-        loadConsensus,
         isLoadingPeriod,
     ])
 

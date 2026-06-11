@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { ConsensusProgressRing } from './ConsensusProgressRing'
 import { FormField } from '../ui/FormField'
 import { dollarsToCents, formatCurrency, formatRelativeDate } from '../utils'
 
@@ -22,7 +21,6 @@ export function ExpenseItem({
   onSave,
   animIndex,
   currency = 'MXN',
-  isMutationLocked = false,
 }) {
   const [editing, setEditing]         = useState(false)
   const [draftAmount, setDraftAmount] = useState('')
@@ -82,20 +80,12 @@ export function ExpenseItem({
 
           <div className="expenseRight">
             <span className="expenseAmount">{formatCurrency(item.amount_cents, item.currency || currency)}</span>
-            {hasMsi ? (
-              <ConsensusProgressRing
-                approved={currentInstallment}
-                total={totalInstallments}
-                label="MSI"
-                source="derived"
-              />
-            ) : null}
             <div className="expenseActions">
               <button
                 type="button"
                 className="btn btnGhost btnSm btnIcon"
                 onClick={startEdit}
-                disabled={isDeleting || isMutationLocked}
+                disabled={isDeleting}
                 aria-label={`Edit ${item.description}`}
                 title="Edit"
               >
@@ -105,7 +95,7 @@ export function ExpenseItem({
                 type="button"
                 className="btn btnGhostDanger btnSm btnIcon"
                 onClick={() => onDelete(item.id)}
-                disabled={isDeleting || isMutationLocked}
+                disabled={isDeleting}
                 aria-label={`Delete ${item.description}`}
                 title="Delete"
               >

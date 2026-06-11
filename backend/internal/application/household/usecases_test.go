@@ -7,14 +7,9 @@ import (
 	"time"
 
 	householdapp "micha/backend/internal/application/household"
-	"micha/backend/internal/domain/category"
 	"micha/backend/internal/domain/household"
 	"micha/backend/internal/ports/inbound"
 )
-
-type staticHouseholdIDGen string
-
-func (s staticHouseholdIDGen) NewID() string { return string(s) }
 
 type mockHouseholdRepo struct {
 	households map[string]household.Household
@@ -83,65 +78,6 @@ func (m *mockHouseholdRepo) ListByUserID(_ context.Context, _ string, limit, off
 	return result[offset:end], nil
 }
 
-// mockCategoryRepo implements outbound.CategoryRepository for tests.
-type mockCategoryRepo struct {
-	categories []category.Category
-}
-
-func newMockCategoryRepo() *mockCategoryRepo {
-	return &mockCategoryRepo{}
-}
-
-func (m *mockCategoryRepo) Save(_ context.Context, c category.Category) error {
-	m.categories = append(m.categories, c)
-	return nil
-}
-
-func (m *mockCategoryRepo) FindBySlug(_ context.Context, _, _ string) (category.Category, error) {
-	return category.Category{}, errors.New("not found")
-}
-
-func (m *mockCategoryRepo) ListByHousehold(_ context.Context, _ string) ([]category.Category, error) {
-	return m.categories, nil
-}
-
-func (m *mockCategoryRepo) Delete(_ context.Context, _ string) error {
-	return nil
-}
-
-func TestRegisterHousehold_Success(t *testing.T) {
-	t.Parallel()
-	repo := newMockHouseholdRepo()
-	uc := householdapp.NewRegisterHouseholdUseCase(repo, newMockCategoryRepo(), staticHouseholdIDGen("hh-1"))
-
-	out, err := uc.Execute(context.Background(), inbound.RegisterHouseholdInput{
-		Name:           "Casa",
-		SettlementMode: household.SettlementModeEqual,
-		Currency:       "mxn",
-	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if out.HouseholdID != "hh-1" {
-		t.Errorf("HouseholdID = %q; want %q", out.HouseholdID, "hh-1")
-	}
-}
-
-func TestRegisterHousehold_InvalidName(t *testing.T) {
-	t.Parallel()
-	repo := newMockHouseholdRepo()
-	uc := householdapp.NewRegisterHouseholdUseCase(repo, newMockCategoryRepo(), staticHouseholdIDGen("hh-1"))
-
-	_, err := uc.Execute(context.Background(), inbound.RegisterHouseholdInput{
-		Name:           " ",
-		SettlementMode: household.SettlementModeEqual,
-		Currency:       "MXN",
-	})
-	if !errors.Is(err, household.ErrInvalidName) {
-		t.Errorf("want ErrInvalidName, got %v", err)
-	}
-}
-
 func TestUpdateSplitConfig_Success(t *testing.T) {
 	t.Parallel()
 	repo := newMockHouseholdRepo()
@@ -162,7 +98,6 @@ func TestUpdateSplitConfig_Success(t *testing.T) {
 	}
 
 	updated, _ := repo.FindByID(context.Background(), "hh-1")
-	// SplitConfig is managed by the adapter; verify update succeeded without errors
 	_ = updated
 }
 

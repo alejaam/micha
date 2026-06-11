@@ -42,6 +42,15 @@ export function PeriodSelector({ periods = [], selectedPeriodId, currentPeriodId
   // Filter out null/undefined periods to prevent "undefined is not an object" errors
   const validPeriods = periods.filter(Boolean)
 
+  // Show placeholder when no periods exist
+  if (!currentPeriodId && validPeriods.length === 0) {
+    return (
+      <div className="periodSelector periodSelector--empty">
+        <span className="periodSelectorPlaceholder">Sin periodos aún</span>
+      </div>
+    )
+  }
+
   return (
     <div className="periodSelector">
       <select

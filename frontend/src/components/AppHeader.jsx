@@ -39,7 +39,6 @@ export function AppHeader({
   isLoading,
   households = [],
   periodStatus = 'open',
-  isMutationLocked = false,
   currentPeriod = null,
   selectedPeriodId = null,
   onSelectPeriod = null,
@@ -137,15 +136,8 @@ export function AppHeader({
         {householdId && (
           <Link
             to="/members/new"
-            className={`btn btnGhost btnSm${isMutationLocked ? ' btnDisabled' : ''}`}
+            className="btn btnGhost btnSm"
             aria-label="Invitar nuevo miembro"
-            aria-disabled={isMutationLocked}
-            tabIndex={isMutationLocked ? -1 : 0}
-            onClick={(event) => {
-              if (isMutationLocked) {
-                event.preventDefault()
-              }
-            }}
           >
             + Miembro
           </Link>

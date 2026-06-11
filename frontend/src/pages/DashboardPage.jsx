@@ -33,7 +33,6 @@ export function DashboardPage() {
         currentMember,
         activeCurrency,
         householdId,
-        isMutationLocked,
         categoryTotals,
         msiProgress,
         handleCreate,
@@ -48,12 +47,8 @@ export function DashboardPage() {
     const [quickAddOpen, setQuickAddOpen] = useState(false)
 
     const handleOpenQuickAdd = useCallback(() => {
-        if (isMutationLocked) {
-            setError('El periodo está bajo revisión o cerrado. Las acciones están deshabilitadas.')
-            return
-        }
         setQuickAddOpen(true)
-    }, [isMutationLocked, setError])
+    }, [setQuickAddOpen])
 
     // Redirect to onboarding if needed
     if (!householdId) {
@@ -189,14 +184,7 @@ export function DashboardPage() {
             )}
 
             <FAB
-                onClick={() => {
-                    if (isMutationLocked) {
-                        setError('El periodo está bajo revisión o cerrado. Las acciones están deshabilitadas.')
-                        return
-                    }
-                    setModalOpen(true)
-                }}
-                disabled={isMutationLocked}
+                onClick={() => setModalOpen(true)}
             />
 
             <AnimatePresence>
@@ -208,7 +196,6 @@ export function DashboardPage() {
                             if (success) setModalOpen(false)
                         }}
                         isSubmitting={submittingCreate}
-                        isMutationLocked={isMutationLocked}
                         members={members}
                         isLoadingMembers={loadingMembers}
                         defaultPaidByMemberId={currentMember?.id ?? ''}

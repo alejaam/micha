@@ -32,11 +32,12 @@ func newHouseholdHandler(deps HouseholdHandlerDeps) householdHandler {
 // handleCreate handles POST /v1/households.
 func (h householdHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Name            string `json:"name"`
-		SettlementMode  string `json:"settlement_mode"`
-		Currency        string `json:"currency"`
-		ClosingDay      int    `json:"closing_day"`
-		PeriodFrequency string `json:"period_frequency"`
+		Name             string `json:"name"`
+		SettlementMode   string `json:"settlement_mode"`
+		Currency         string `json:"currency"`
+		ClosingDay       int    `json:"closing_day"`
+		PeriodFrequency  string `json:"period_frequency"`
+		OwnerSalaryCents int64  `json:"owner_salary_cents"`
 	}
 	if err := decodeJSON(r, w, &body); err != nil {
 		return
@@ -45,12 +46,13 @@ func (h householdHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserIDFromContext(r.Context())
 
 	out, err := h.deps.Register.Execute(r.Context(), inbound.RegisterHouseholdInput{
-		Name:            body.Name,
-		SettlementMode:  household.SettlementMode(body.SettlementMode),
-		Currency:        body.Currency,
-		ClosingDay:      body.ClosingDay,
-		PeriodFrequency: body.PeriodFrequency,
-		CurrentUserID:   userID,
+		Name:             body.Name,
+		SettlementMode:   household.SettlementMode(body.SettlementMode),
+		Currency:         body.Currency,
+		ClosingDay:       body.ClosingDay,
+		PeriodFrequency:  body.PeriodFrequency,
+		CurrentUserID:    userID,
+		OwnerSalaryCents: body.OwnerSalaryCents,
 	})
 	if err != nil {
 		writeErrorFromHouseholdDomain(w, err)
@@ -58,7 +60,11 @@ func (h householdHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"data": map[string]string{"household_id": out.HouseholdID},
+		"data": map[string]string{
+			"household_id": out.HouseholdID,
+			"member_id":    out.MemberID,
+			"period_id":    out.PeriodID,
+		},
 	})
 }
 

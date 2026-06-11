@@ -39,6 +39,7 @@ func TestAuthHandler_Register_Success(t *testing.T) {
 
 	req := makeJSONRequest(t, "POST", "/v1/auth/register", map[string]string{
 		"email":    "test@example.com",
+		"name":     "Alice",
 		"password": "SecurePass123!",
 	})
 	rec := httptest.NewRecorder()
@@ -61,6 +62,46 @@ func TestAuthHandler_Register_Success(t *testing.T) {
 	// Verify input was passed correctly
 	if registerUC.lastInput.Email != "test@example.com" {
 		t.Errorf("input email = %q; want test@example.com", registerUC.lastInput.Email)
+	}
+	if registerUC.lastInput.Name != "Alice" {
+		t.Errorf("input name = %q; want Alice", registerUC.lastInput.Name)
+	}
+}
+
+func TestAuthHandler_Register_InvalidName(t *testing.T) {
+	t.Parallel()
+
+	registerUC := &mockRegisterUser{
+		returnErr: user.ErrInvalidName,
+	}
+
+	server := httpadapter.NewServer("8080", httpadapter.ServerDependencies{
+		Auth: httpadapter.AuthHandlerDeps{
+			Register: registerUC,
+			Login:    &mockLogin{},
+		},
+		JWTValidator:   &mockTokenValidator{},
+		MemberRepo:     newMockMemberRepo(),
+		AllowedOrigins: []string{"*"},
+	})
+
+	req := makeJSONRequest(t, "POST", "/v1/auth/register", map[string]string{
+		"email":    "test@example.com",
+		"password": "SecurePass123!",
+		"name":     "",
+	})
+	rec := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d; want %d", rec.Code, http.StatusBadRequest)
+	}
+
+	resp := parseJSONResponse(t, rec)
+	errObj, _ := resp["error"].(map[string]any)
+	if errObj["code"] != "INVALID_NAME" {
+		t.Errorf("code = %v; want INVALID_NAME", errObj["code"])
 	}
 }
 

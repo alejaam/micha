@@ -9,7 +9,7 @@ context: |
 strict_tdd: true
 
 testing:
-  detected: "2026-04-23"
+  detected: "2026-05-28"
   strict_tdd_mode: enabled
   test_runner:
     framework: "go test + vitest"
@@ -31,6 +31,7 @@ testing:
     linter:
       available: true
       command: "cd frontend && npm run lint; cd backend && golangci-lint run ./..."
+      note: "golangci-lint currently panics on backend due to Go 1.24 toolchain incompatibility"
     type_checker:
       available: true
       command: "cd backend && go vet ./..."

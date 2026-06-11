@@ -7,6 +7,7 @@ import { FormField } from '../ui/FormField'
 export function RegisterPage() {
     const { register, login } = useAuth()
     const navigate = useNavigate()
+    const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
@@ -15,6 +16,7 @@ export function RegisterPage() {
 
     const passwordsMatch = password === confirmPassword
     const canSubmit =
+        name.trim() !== '' &&
         email.trim() !== '' &&
         password.trim() !== '' &&
         confirmPassword.trim() !== '' &&
@@ -30,7 +32,7 @@ export function RegisterPage() {
         setBusy(true)
         setError('')
         try {
-            await register({ email: email.trim(), password })
+            await register({ email: email.trim(), name: name.trim(), password })
             // Auto-login with the same credentials — no need to type them again
             await login({ email: email.trim(), password })
             navigate('/onboarding/household', { replace: true })
@@ -57,6 +59,19 @@ export function RegisterPage() {
             {error ? <Banner type="error">{error}</Banner> : null}
 
             <form className="formStack" onSubmit={handleSubmit} noValidate>
+                <FormField label="Nombre completo" htmlFor="regName">
+                    <input
+                        id="regName"
+                        className="input"
+                        type="text"
+                        autoComplete="name"
+                        placeholder="Tu Nombre"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        disabled={busy}
+                    />
+                </FormField>
+
                 <FormField label="Correo electrónico" htmlFor="regEmail">
                     <input
                         id="regEmail"

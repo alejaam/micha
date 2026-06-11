@@ -79,11 +79,11 @@ export async function listHouseholds({ limit = 100, offset = 0 } = {}) {
     return parseResponse(response)
 }
 
-export async function registerUser({ email, password }) {
+export async function registerUser({ email, name, password }) {
     const response = await fetch(`${API_BASE_URL}/v1/auth/register`, {
         method: 'POST',
         headers: JSON_HEADERS,
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, name, password }),
     })
 
     return parseResponse(response)
@@ -99,7 +99,7 @@ export async function loginUser({ email, password }) {
     return parseResponse(response)
 }
 
-export async function createHousehold({ name, settlementMode = 'equal', currency = 'MXN', closingDay = 15, periodFrequency = 'biweekly' }) {
+export async function createHousehold({ name, settlementMode = 'equal', currency = 'MXN', closingDay = 15, periodFrequency = 'biweekly', ownerSalaryCents = 0 }) {
     const response = await fetch(`${API_BASE_URL}/v1/households`, {
         method: 'POST',
         headers: buildProtectedHeaders(),
@@ -109,6 +109,7 @@ export async function createHousehold({ name, settlementMode = 'equal', currency
             currency,
             closing_day: closingDay,
             period_frequency: periodFrequency,
+            owner_salary_cents: ownerSalaryCents,
         }),
     })
 
@@ -374,34 +375,9 @@ export async function initializePeriod({ householdId }) {
     return parseResponse(response)
 }
 
-export async function transitionPeriodToReview({ householdId, periodId }) {
-    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/periods/${periodId}/review`, {
+export async function simulateClosePeriod({ householdId, periodId }) {
+    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/periods/${periodId}/simulate-close`, {
         method: 'POST',
-        headers: buildProtectedHeaders(),
-    })
-    return parseResponse(response)
-}
-
-export async function approvePeriod({ householdId, periodId, status, comment = '' }) {
-    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/periods/${periodId}/approve`, {
-        method: 'POST',
-        headers: buildProtectedHeaders(),
-        body: JSON.stringify({ status, comment }),
-    })
-    return parseResponse(response)
-}
-
-export async function closePeriod({ householdId, periodId, force = true }) {
-    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/periods/${periodId}/close`, {
-        method: 'POST',
-        headers: buildProtectedHeaders(),
-        body: JSON.stringify({ force }),
-    })
-    return parseResponse(response)
-}
-
-export async function getPeriodConsensus({ householdId, periodId }) {
-    const response = await fetch(`${API_BASE_URL}/v1/households/${householdId}/periods/${periodId}/consensus`, {
         headers: buildProtectedHeaders(),
     })
     return parseResponse(response)

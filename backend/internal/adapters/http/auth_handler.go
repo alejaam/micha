@@ -30,6 +30,7 @@ func newAuthHandler(deps AuthHandlerDeps) authHandler { return authHandler{deps:
 func (h authHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Email    string `json:"email"`
+		Name     string `json:"name"`
 		Password string `json:"password"`
 	}
 	if err := decodeJSON(r, w, &body); err != nil {
@@ -38,6 +39,7 @@ func (h authHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	out, err := h.deps.Register.Execute(r.Context(), inbound.RegisterUserInput{
 		Email:    body.Email,
+		Name:     body.Name,
 		Password: body.Password,
 	})
 	if err != nil {
@@ -241,6 +243,8 @@ func writeAuthError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, "INVALID_EMAIL", "email address is invalid")
 	case errors.Is(err, user.ErrWeakPassword):
 		writeError(w, http.StatusBadRequest, "WEAK_PASSWORD", "password is too weak")
+	case errors.Is(err, user.ErrInvalidName):
+		writeError(w, http.StatusBadRequest, "INVALID_NAME", "name must be between 1 and 100 characters and contain non-whitespace characters")
 	default:
 		slog.Error("auth handler: internal error", "error", err)
 		writeError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "an internal error occurred")

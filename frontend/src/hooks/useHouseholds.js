@@ -1,22 +1,30 @@
 import { useCallback, useEffect, useState, useRef } from 'react'
 import { listHouseholds } from '../api'
+import { useFocusRefetch } from './useFocusRefetch'
 
 export function useHouseholds({ isAuthenticated, handleProtectedError }) {
     const [householdId, setHouseholdId] = useState('')
     const [households, setHouseholds] = useState([])
     const [loadingHouseholds, setLoadingHouseholds] = useState(true)
 
+    // Track whether this is the very first load (vs. a background refetch)
+    const isFirstLoad = useRef(true)
+
     const householdIdRef = useRef(householdId)
     useEffect(() => {
         householdIdRef.current = householdId
     }, [householdId])
 
-    const loadHouseholds = useCallback(async () => {
+    const loadHouseholds = useCallback(async (opts = {}) => {
         if (!isAuthenticated) {
             return
         }
 
-        setLoadingHouseholds(true)
+        const { silent = false } = opts
+        if (!silent) {
+            setLoadingHouseholds(true)
+        }
+
         try {
             const data = await listHouseholds({ limit: 100, offset: 0 })
             const next = Array.isArray(data) ? data : []
@@ -33,7 +41,10 @@ export function useHouseholds({ isAuthenticated, handleProtectedError }) {
         } catch (err) {
             handleProtectedError(err)
         } finally {
-            setLoadingHouseholds(false)
+            if (!silent) {
+                setLoadingHouseholds(false)
+            }
+            isFirstLoad.current = false
         }
     }, [handleProtectedError, isAuthenticated])
 
@@ -44,6 +55,9 @@ export function useHouseholds({ isAuthenticated, handleProtectedError }) {
 
         loadHouseholds()
     }, [isAuthenticated, loadHouseholds])
+
+    // Refetch on focus — but do it silently so we don't unmount the onboarding layout
+    useFocusRefetch(() => loadHouseholds({ silent: true }))
 
     return {
         householdId,

@@ -151,6 +151,14 @@ body {
     background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    width: 100%;
+}
+
+#root {
+    width: 100%;
+    min-height: 100dvh;
+    overflow-x: hidden;
 }
 
 h1,
@@ -174,12 +182,17 @@ ul {
     display: grid;
     gap: 18px;
     overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 16px;
 }
 
 .authShell {
     min-height: 100dvh;
     display: grid;
     justify-items: center;
+    width: 100%;
+    overflow-x: hidden;
 }
 
 .authCard {
@@ -1916,6 +1929,9 @@ ul {
     align-items: center;
     padding: 0 16px 48px;
     background: var(--color-bg);
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .onboardingCard {
@@ -1929,6 +1945,7 @@ ul {
     display: grid;
     gap: 16px;
     padding: 20px;
+    box-sizing: border-box;
 }
 
 .onboardingHeader {
@@ -1960,7 +1977,7 @@ ul {
 }
 
 .pd-stepDotActive {
-    background: var(--color-anil-500);
+    background: var(--color-amber-500);
 }
 
 .pd-stepDotCompleted {
@@ -1991,6 +2008,9 @@ ul {
     justify-content: space-between;
     padding: 12px 20px;
     margin-bottom: 16px;
+    width: 100%;
+    max-width: 560px;
+    box-sizing: border-box;
 }
 
 .onboardingHeaderBar .brand {
@@ -2018,6 +2038,133 @@ ul {
 
 .onboardingHeaderBar .btnGhost:hover {
     color: var(--color-text-1);
+}
+
+/* ─── Fixed expenses service grid (cards) ─────────────────────────────────── */
+.fixedServiceGrid {
+    display: grid;
+    gap: 8px;
+}
+
+.fixedServiceCard {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: border-color var(--dur-base), box-shadow var(--dur-base);
+}
+
+.fixedServiceCardSelected {
+    border-color: var(--color-anil-500);
+    box-shadow: 0 0 0 1px var(--color-anil-500);
+}
+
+.fixedServiceTrigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 14px;
+    border: none;
+    background: var(--color-surface);
+    font: inherit;
+    font-size: 0.92rem;
+    text-align: left;
+    cursor: pointer;
+    color: var(--color-text-1);
+    transition: background var(--dur-fast);
+}
+
+.fixedServiceTrigger:hover {
+    background: var(--color-bg-subtle);
+}
+
+.fixedServiceTriggerActive {
+    background: var(--color-anil-50);
+    font-weight: var(--fw-semibold);
+}
+
+.fixedServiceIcon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: var(--fw-bold);
+    flex-shrink: 0;
+    transition: all var(--dur-fast);
+    color: var(--color-text-3);
+}
+
+.fixedServiceTriggerActive .fixedServiceIcon {
+    background: var(--color-anil-500);
+    border-color: var(--color-anil-500);
+    color: #fff;
+}
+
+.fixedServiceLabel {
+    flex: 1;
+}
+
+.fixedServiceAmount {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 14px 12px;
+    border-top: 1px solid var(--color-border-soft);
+    background: var(--color-bg-subtle);
+}
+
+.fixedServiceAmount .inputPrefix {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    font-size: 0.9rem;
+    color: var(--color-text-3);
+}
+
+.fixedAmountInput {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ─── Fixed expenses custom entry (Otro) ─────────────────────────────────── */
+.fixedCustomDetails {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0;
+}
+
+.fixedCustomSummary {
+    padding: 10px 14px;
+    cursor: pointer;
+    color: var(--color-text-3);
+    font-weight: var(--fw-medium);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    list-style: none;
+}
+
+.fixedCustomSummary::-webkit-details-marker {
+    display: none;
+}
+
+.fixedCustomDetails[open] .fixedCustomSummary {
+    border-bottom: 1px solid var(--color-border-soft);
+    color: var(--color-anil-600);
+}
+
+.fixedCustomForm {
+    padding: 10px 14px 14px;
+}
+
+.fixedCustomForm .formStack {
+    display: grid;
+    gap: 10px;
 }
 
 /* ─── Advanced toggle ────────────────────────────────────────────────────────── */
@@ -3278,44 +3425,7 @@ html {
     }
 }
 
-/* ─── Consensus + MSI indicators ─────────────────────────────────────────────── */
-.consensusRing {
-    display: grid;
-    justify-items: center;
-    gap: 4px;
-}
-
-.consensusRingLabel {
-    margin: 0;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    color: var(--color-text-3);
-    text-transform: uppercase;
-}
-
-.consensusRingCanvas {
-    position: relative;
-    width: 96px;
-    height: 96px;
-    display: grid;
-    place-items: center;
-}
-
-.consensusRingValue {
-    position: absolute;
-    font-family: var(--font-mono);
-    font-size: 14px;
-    color: var(--color-text-1);
-}
-
-.consensusRingMeta {
-    margin: 0;
-    font-size: 11px;
-    color: var(--color-text-3);
-    font-family: var(--font-mono);
-    letter-spacing: 0.04em;
-}
+/* ─── MSI indicators ─────────────────────────────────────────────────────────── */
 
 .expenseMsiMeta {
     display: inline-flex;
@@ -3884,25 +3994,6 @@ html {
     margin-top: 24px;
     padding-top: 20px;
     border-top: 1px dashed var(--color-anil-50);
-}
-
-.periodConsensusBox {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-
-.consensusLabel {
-    font-size: 0.75rem;
-    font-family: var(--font-mono);
-    text-transform: uppercase;
-    color: var(--color-text-3);
-}
-
-.consensusMeta {
-    font-size: 0.72rem;
-    color: var(--color-text-4);
 }
 
 /* Banner mode — prominent when period needs action */

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { listMembers } from '../api'
+import { useFocusRefetch } from './useFocusRefetch'
 
 export function useMembers({ isAuthenticated, householdId, handleProtectedError }) {
     const [members, setMembers] = useState([])
@@ -30,6 +31,8 @@ export function useMembers({ isAuthenticated, householdId, handleProtectedError 
 
         loadMembers()
     }, [isAuthenticated, loadMembers])
+
+    useFocusRefetch(loadMembers)
 
     return {
         members,

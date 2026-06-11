@@ -116,10 +116,7 @@ func NewServer(port string, deps ServerDependencies) Server {
 	mux.Handle("GET /v1/households/{household_id}/periods/current", protectHousehold(http.HandlerFunc(ph.handleGetCurrent)))
 	mux.Handle("GET /v1/households/{household_id}/periods", protectHousehold(http.HandlerFunc(ph.handleListHistory)))
 	mux.Handle("POST /v1/households/{household_id}/periods/initialize", protectHousehold(http.HandlerFunc(ph.handleInitialize)))
-	mux.Handle("POST /v1/households/{household_id}/periods/{period_id}/review", protectHousehold(http.HandlerFunc(ph.handleTransitionToReview)))
-	mux.Handle("POST /v1/households/{household_id}/periods/{period_id}/approve", protectHousehold(http.HandlerFunc(ph.handleApprove)))
-	mux.Handle("POST /v1/households/{household_id}/periods/{period_id}/close", protectHousehold(http.HandlerFunc(ph.handleClose)))
-	mux.Handle("GET /v1/households/{household_id}/periods/{period_id}/consensus", protectHousehold(http.HandlerFunc(ph.handleGetConsensus)))
+	mux.Handle("POST /v1/households/{household_id}/periods/{period_id}/simulate-close", protectHousehold(http.HandlerFunc(ph.handleSimulateClose)))
 
 	// Apply middleware chain: RequestID -> CORS -> routes
 	cors := CORSMiddleware(CORSConfig{AllowedOrigins: deps.AllowedOrigins})
