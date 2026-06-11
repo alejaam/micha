@@ -151,6 +151,14 @@ body {
     background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    width: 100%;
+}
+
+#root {
+    width: 100%;
+    min-height: 100dvh;
+    overflow-x: hidden;
 }
 
 h1,
@@ -174,6 +182,9 @@ ul {
     display: grid;
     gap: 18px;
     overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 16px;
 }
 
 .authShell {
