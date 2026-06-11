@@ -32,9 +32,11 @@ export function OnboardingFixedExpensesPage() {
     const [catalogServices, setCatalogServices] = useState([])
     const [loadingCatalog, setLoadingCatalog] = useState(false)
 
-    // Creation form state
+    // Creation form state — selected services by key
     const [selected, setSelected] = useState({})
     const [amountByKey, setAmountByKey] = useState({})
+    const [customLabel, setCustomLabel] = useState('')
+    const [customAmount, setCustomAmount] = useState('')
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
     const [message, setMessage] = useState('')
@@ -101,25 +103,18 @@ export function OnboardingFixedExpensesPage() {
         [recurringItems],
     )
 
-    // ── Build options: catalog services + "Otro" manual entry ──────────────
+    // ── Build options: catalog services ──────────────────────────────────
 
     const serviceOptions = useMemo(() => {
-        const items = catalogServices.map((svc) => ({
+        return catalogServices.map((svc) => ({
             key: svc.slug,
             label: svc.name,
             category: 'other',
             isCatalog: true,
         }))
-        items.push({
-            key: 'other',
-            label: 'Otro',
-            category: 'other',
-            isCatalog: false,
-        })
-        return items
     }, [catalogServices])
 
-    // ── Creation form logic ────────────────────────────────────────────────
+    // ── Selection logic ──────────────────────────────────────────────────
 
     const selectedKeys = useMemo(
         () => serviceOptions.filter((item) => selected[item.key]).map((item) => item.key),
@@ -134,10 +129,13 @@ export function OnboardingFixedExpensesPage() {
         setAmountByKey((prev) => ({ ...prev, [key]: sanitizeAmountInput(value) }))
     }
 
+    const hasCustomEntry = customLabel.trim() !== '' && dollarsToCents(customAmount) !== null
+
     const hasValidSelection = useMemo(() => {
-        if (selectedKeys.length === 0) return false
-        return selectedKeys.every((key) => dollarsToCents(amountByKey[key] ?? '') !== null)
-    }, [selectedKeys, amountByKey])
+        if (selectedKeys.length === 0 && !hasCustomEntry) return false
+        const servicesValid = selectedKeys.every((key) => dollarsToCents(amountByKey[key] ?? '') !== null)
+        return servicesValid
+    }, [selectedKeys, amountByKey, hasCustomEntry])
 
     // ── Edit handlers ───────────────────────────────────────────────────────
 
@@ -196,16 +194,18 @@ export function OnboardingFixedExpensesPage() {
         }
     }
 
-    // ── Save new fixed expenses (creation form) ────────────────────────────
+    // ── Save new fixed expenses ────────────────────────────────────────────
 
     async function handleSave() {
-        if (!householdId || !hasValidSelection) return
+        if (!householdId) return
 
         setSaving(true)
         setError('')
         setMessage('')
         try {
             const startDate = todayDateOnly()
+
+            // Save selected catalog services
             for (const key of selectedKeys) {
                 const config = serviceOptions.find((item) => item.key === key)
                 if (!config) continue
@@ -225,6 +225,22 @@ export function OnboardingFixedExpensesPage() {
                 })
             }
 
+            // Save custom entry if present
+            if (hasCustomEntry) {
+                const amountCents = dollarsToCents(customAmount)
+                await createRecurringExpense({
+                    householdId,
+                    paidByMemberId: '',
+                    isAgnostic: true,
+                    amountCents,
+                    description: customLabel.trim(),
+                    category: 'other',
+                    expenseType: 'fixed',
+                    recurrencePattern: 'monthly',
+                    startDate,
+                })
+            }
+
             // Refresh the list
             await loadRecurringExpenses()
 
@@ -234,9 +250,11 @@ export function OnboardingFixedExpensesPage() {
                 setMessage(`Tu período de ${currentMonth} ha comenzado automáticamente. ¡Bienvenido a micha!`)
                 navigate('/', { replace: true })
             } else {
-                // Clear form and show success message
+                // Clear form
                 setSelected({})
                 setAmountByKey({})
+                setCustomLabel('')
+                setCustomAmount('')
                 setMessage('Gastos fijos guardados.')
             }
         } catch (err) {
@@ -388,43 +406,46 @@ export function OnboardingFixedExpensesPage() {
             {!loading && recurringItems.length === 0 && (
                 <div className="emptyState u-mt-4">
                     <p className="emptyTitle">Sin gastos fijos aún</p>
-                    <p className="emptyHint">Agrega gastos fijos usando el formulario de abajo.</p>
+                    <p className="emptyHint">Agrega gastos fijos usando las opciones de abajo.</p>
                 </div>
             )}
 
-            {/* ── Quick-add form ──────────────────────────────────────────── */}
+            {/* ── Quick-add: services as independent cards ───────────────── */}
             <div className="u-mt-6">
                 <h3 className="sectionTitle">Agregar nuevo gasto fijo</h3>
 
                 {loadingCatalog ? (
                     <p className="u-text-sm u-text-dim u-mt-2">Cargando servicios disponibles...</p>
                 ) : (
-                    <div className="formStack u-mt-2">
+                    <div className="fixedServiceGrid u-mt-2">
                         {serviceOptions.map((item) => {
                             const isChecked = !!selected[item.key]
                             return (
-                                <div key={item.key} className="formSection">
-                                    <label className="sharedToggleLabel" htmlFor={`fixed-${item.key}`}>
-                                        <input
-                                            id={`fixed-${item.key}`}
-                                            type="checkbox"
-                                            checked={isChecked}
-                                            onChange={() => toggleOption(item.key)}
-                                            disabled={saving}
-                                        />
-                                        <span className="sharedToggleText">{item.label}</span>
-                                    </label>
+                                <div key={item.key} className={`fixedServiceCard ${isChecked ? 'fixedServiceCardSelected' : ''}`}>
+                                    <button
+                                        type="button"
+                                        className={`fixedServiceTrigger ${isChecked ? 'fixedServiceTriggerActive' : ''}`}
+                                        onClick={() => toggleOption(item.key)}
+                                        disabled={saving}
+                                        aria-pressed={isChecked}
+                                    >
+                                        <span className="fixedServiceIcon">
+                                            {isChecked ? '✓' : '+'}
+                                        </span>
+                                        <span className="fixedServiceLabel">{item.label}</span>
+                                    </button>
 
                                     {isChecked && (
-                                        <div className="inputWrap u-mt-2">
+                                        <div className="fixedServiceAmount">
                                             <span className="inputPrefix" aria-hidden>$</span>
                                             <input
-                                                className="input inputWithPrefix"
+                                                className="input inputWithPrefix fixedAmountInput"
                                                 inputMode="decimal"
                                                 placeholder="0.00"
                                                 value={amountByKey[item.key] ?? ''}
                                                 onChange={(e) => handleAmountChange(item.key, e.target.value)}
                                                 disabled={saving}
+                                                autoFocus
                                             />
                                         </div>
                                     )}
@@ -433,66 +454,82 @@ export function OnboardingFixedExpensesPage() {
                         })}
                     </div>
                 )}
+
+                {/* ── Custom entry (Otro) ──────────────────────────────────── */}
+                <details className="fixedCustomDetails u-mt-4">
+                    <summary className="btn btnGhost btnSm fixedCustomSummary">
+                        + Agregar gasto personalizado
+                    </summary>
+                    <div className="fixedCustomForm u-mt-2">
+                        <div className="formStack">
+                            <input
+                                className="input"
+                                type="text"
+                                placeholder="Nombre del gasto (ej. Gym, Seguro...)"
+                                value={customLabel}
+                                onChange={(e) => setCustomLabel(e.target.value)}
+                                disabled={saving}
+                            />
+                            <div className="inputWrap">
+                                <span className="inputPrefix" aria-hidden>$</span>
+                                <input
+                                    className="input inputWithPrefix"
+                                    inputMode="decimal"
+                                    placeholder="0.00"
+                                    value={customAmount}
+                                    onChange={(e) => setCustomAmount(sanitizeAmountInput(e.target.value))}
+                                    disabled={saving}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </details>
             </div>
 
             {/* ── Actions ────────────────────────────────────────────────── */}
-            <div className="u-flex u-gap-4 u-mt-6">
-            <div className="u-flex u-justify-between u-items-center u-mb-4">
-                <h3 className="sectionTitle">Añadir nuevos</h3>
-                <div className="u-flex u-gap-2">
-                    {!isOnboarding ? (
+            <div className="u-flex u-gap-4 u-mt-6 u-flex-wrap">
+                <div className="u-flex u-justify-between u-items-center u-mb-4 u-w-full">
+                    <div className="u-flex u-gap-2">
+                        {!isOnboarding ? (
+                            <button
+                                type="button"
+                                className="btn btnGhost btnSm"
+                                onClick={() => navigate('/rules')}
+                                disabled={saving}
+                            >
+                                Volver a ajustes
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                className="btn btnGhost btnSm"
+                                onClick={() => navigate('/onboarding/cards', { replace: true })}
+                                disabled={saving}
+                            >
+                                Volver
+                            </button>
+                        )}
                         <button
                             type="button"
                             className="btn btnGhost btnSm"
-                            onClick={() => navigate('/rules')}
+                            onClick={() => navigate('/', { replace: true })}
                             disabled={saving}
                         >
-                            Volver a ajustes
+                            Ir al dashboard
                         </button>
-                    ) : (
-                    <button
-                        type="button"
-                        className="btn btnGhost btnSm"
-                        onClick={() => navigate('/onboarding/cards', { replace: true })}
-                        disabled={saving}
-                    >
-                        Volver
-                    </button>
-                    )}
-                    <button
-                        type="button"
-                        className="btn btnGhost btnSm"
-                        onClick={() => navigate('/', { replace: true })}
-                        disabled={saving}
-                    >
-                        Ir al dashboard
-                    </button>
+                    </div>
                 </div>
-            </div>
 
-            {isOnboarding ? (
-                selectedKeys.length > 0 && (
+                {(selectedKeys.length > 0 || hasCustomEntry) && (
                     <button
                         type="button"
                         className="btn btnPrimary u-flex-1"
                         onClick={handleSave}
                         disabled={saving || !hasValidSelection}
                     >
-                        {saving ? 'Guardando...' : 'Guardar y continuar'}
+                        {saving ? 'Guardando...' : isOnboarding ? 'Guardar y continuar' : 'Guardar gastos fijos'}
                     </button>
-                )
-            ) : (
-                selectedKeys.length > 0 && (
-                    <button
-                        type="button"
-                        className="btn btnPrimary"
-                        onClick={handleSave}
-                        disabled={saving || !hasValidSelection}
-                    >
-                        {saving ? 'Guardando...' : 'Guardar gastos fijos'}
-                    </button>
-                )
-            )}
+                )}
             </div>
         </section>
     )
