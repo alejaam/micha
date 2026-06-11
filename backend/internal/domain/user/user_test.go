@@ -143,4 +143,3 @@ func TestNewFromAttributes_InvalidName(t *testing.T) {
 		})
 	}
 }
-

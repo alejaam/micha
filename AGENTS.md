@@ -73,6 +73,22 @@ GitHub Issues for `alejaam/micha`. See `docs/agents/issue-tracker.md`.
 
 Default canonical labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
 
+### CodeGraph
+
+`.codegraph/` exists in this project — a pre-indexed semantic knowledge graph of the codebase.
+
+**Use CodeGraph tools instead of grep/read loops.** Answer directly from the graph in 2-3 calls. The returned source is authoritative — don't re-read those files with Read/Grep.
+
+- `codegraph_context` — Map a task/feature/area first (combines search + node + callers + callees)
+- `codegraph_trace` — Trace call path between symbols ("how does X reach Y")
+- `codegraph_explore` — Survey several related symbols' source in one call
+- `codegraph_search` — Find a symbol by name
+- `codegraph_callers` / `codegraph_callees` — Walk call flow one hop at a time
+- `codegraph_impact` — Check what's affected before editing
+- `codegraph_node` — Get a single symbol's source/signature
+- `codegraph_files` — File structure navigation
+- `codegraph_status` — Index health
+
 ### Domain docs
 
 Multi-context repo (`backend/`, `frontend/`). See `docs/agents/domain.md`.
