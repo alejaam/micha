@@ -105,7 +105,6 @@ func TestAuthHandler_Register_InvalidName(t *testing.T) {
 	}
 }
 
-
 func TestAuthHandler_Register_InvalidEmail(t *testing.T) {
 	t.Parallel()
 
