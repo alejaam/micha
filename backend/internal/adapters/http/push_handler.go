@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
 	webpush "github.com/SherClockHolmes/webpush-go"
+	"github.com/google/uuid"
 
 	"micha/backend/internal/domain/pushsubscription"
 	"micha/backend/internal/ports/outbound"
@@ -33,9 +33,9 @@ func newPushHandler(deps PushHandlerDeps) pushHandler {
 
 // subscribeRequest is the JSON body for POST /v1/push/subscribe.
 type subscribeRequest struct {
-	Endpoint       string `json:"endpoint"`
-	P256dhKey      string `json:"p256dh"`
-	AuthKey        string `json:"auth"`
+	Endpoint  string `json:"endpoint"`
+	P256dhKey string `json:"p256dh"`
+	AuthKey   string `json:"auth"`
 }
 
 // handleSubscribe saves a new push subscription for the authenticated user.

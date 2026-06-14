@@ -91,9 +91,9 @@ func (s PushSubscription) Attributes() Attributes {
 	}
 }
 
-func (s PushSubscription) ID() ID             { return s.id }
-func (s PushSubscription) UserID() string      { return s.userID }
-func (s PushSubscription) Endpoint() string    { return s.endpoint }
-func (s PushSubscription) P256dhKey() string   { return s.p256dhKey }
-func (s PushSubscription) AuthKey() string     { return s.authKey }
+func (s PushSubscription) ID() ID               { return s.id }
+func (s PushSubscription) UserID() string       { return s.userID }
+func (s PushSubscription) Endpoint() string     { return s.endpoint }
+func (s PushSubscription) P256dhKey() string    { return s.p256dhKey }
+func (s PushSubscription) AuthKey() string      { return s.authKey }
 func (s PushSubscription) CreatedAt() time.Time { return s.createdAt }
