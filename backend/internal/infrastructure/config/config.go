@@ -15,6 +15,9 @@ type Config struct {
 	AllowedOrigins     []string
 	AllowOwnerOnBehalf bool
 	Environment        string
+	VAPIDPublicKey     string
+	VAPIDPrivateKey    string
+	VAPIDContact       string
 }
 
 // Load reads configuration from environment variables.
@@ -47,6 +50,9 @@ func Load() (Config, error) {
 		AllowedOrigins:     parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS")),
 		AllowOwnerOnBehalf: parseBoolDefaultTrue(os.Getenv("ALLOW_OWNER_ON_BEHALF")),
 		Environment:        env,
+		VAPIDPublicKey:     os.Getenv("VAPID_PUBLIC_KEY"),
+		VAPIDPrivateKey:    os.Getenv("VAPID_PRIVATE_KEY"),
+		VAPIDContact:       os.Getenv("VAPID_CONTACT"),
 	}, nil
 }
 

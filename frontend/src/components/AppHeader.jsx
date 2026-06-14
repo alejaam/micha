@@ -5,6 +5,7 @@ import { PeriodSelector } from './PeriodSelector'
 import { PeriodStatusRibbon } from './PeriodStatusRibbon'
 import { useAuth } from '../context/AuthContext'
 import { UserMenu } from './UserMenu'
+import { usePushNotifications } from '../hooks/usePushNotifications'
 
 const MONTH_NAMES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -47,6 +48,15 @@ export function AppHeader({
   const periodName = formatPeriodName(currentPeriod)
 
   const [allPeriods, setAllPeriods] = useState([])
+
+  // Push notifications hook
+  const {
+    isSubscribed,
+    isLoading: pushLoading,
+    statusText,
+    subscribe,
+    sendTest,
+  } = usePushNotifications()
 
   // Load all periods when household changes
   useEffect(() => {
@@ -154,6 +164,46 @@ export function AppHeader({
           <span className={isLoading ? 'spinIcon' : ''} aria-hidden>⟳</span>
           {isLoading ? 'Cargando…' : 'Actualizar'}
         </button>
+
+        {/* Push notification bell */}
+        {householdId && (
+          <div className="pushBtnWrapper" style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className={`btn btnGhost btnSm${isSubscribed ? '' : ' btnPulse'}`}
+              onClick={isSubscribed ? sendTest : subscribe}
+              disabled={pushLoading}
+              aria-label={isSubscribed ? 'Enviar notificación de prueba' : 'Activar notificaciones'}
+              title={statusText || (isSubscribed ? 'Notificaciones activas — toca para probar' : 'Activar notificaciones push')}
+            >
+              {pushLoading
+                ? '…'
+                : isSubscribed
+                  ? '🔔'
+                  : '🔕'}
+            </button>
+            {statusText && (
+              <span
+                className="pushStatus"
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  fontSize: '0.65rem',
+                  whiteSpace: 'nowrap',
+                  background: 'var(--bg, #1a1a2e)',
+                  padding: '2px 6px',
+                  borderRadius: 4,
+                  opacity: 0.85,
+                  pointerEvents: 'none',
+                  zIndex: 10,
+                }}
+              >
+                {statusText}
+              </span>
+            )}
+          </div>
+        )}
 
         <UserMenu user={user} households={households} householdId={householdId} onHouseholdChange={onHouseholdChange} onLogout={onLogout} health={health} />
       </div>

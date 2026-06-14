@@ -9,6 +9,9 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
       ENVIRONMENT: ${ENVIRONMENT:-development}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      VAPID_CONTACT: ${VAPID_CONTACT:-mailto:admin@micha.app}
     ports:
       - "8080:8080"
     restart: unless-stopped
