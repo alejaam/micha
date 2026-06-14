@@ -40,6 +40,7 @@ export function usePushNotifications() {
     if (Notification.permission === 'granted') {
       checkExistingSubscription()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Listen for permission changes (Safari, Firefox).
