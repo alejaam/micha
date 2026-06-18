@@ -50,9 +50,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100dvh;
+    min-height: 100vh;
     padding: var(--pd-sp-lg);
-    overflow: hidden;
 }
 
 /* ─── AuthCard ─────────────────────────────────────────────────────────── */
