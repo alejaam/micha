@@ -173,12 +173,22 @@ func main() {
 		GetSubscriptionKPI: subscriptioncatalogapp.NewGetSubscriptionKPIUseCase(subscriptionCatalogRepo),
 	}
 
+	// Push notification dependencies.
+	pushRepo := postgres.NewPushSubscriptionRepository(pool)
+	pushDeps := httpadapter.PushHandlerDeps{
+		PushRepo:        pushRepo,
+		VAPIDPublicKey:  cfg.VAPIDPublicKey,
+		VAPIDPrivateKey: cfg.VAPIDPrivateKey,
+		VAPIDContact:    cfg.VAPIDContact,
+	}
+
 	// Server dependencies grouped by resource.
 	serverDeps := httpadapter.ServerDependencies{
 		Auth:                authDeps,
 		Expense:             expenseDeps,
 		RecurringExpense:    recurringExpenseDeps,
 		SubscriptionCatalog: subscriptionCatalogDeps,
+		Push:                pushDeps,
 		Household:           householdDeps,
 		Member:              memberDeps,
 		MemberFinance: httpadapter.MemberFinanceHandlerDeps{

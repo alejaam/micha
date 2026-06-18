@@ -20,6 +20,7 @@ type ServerDependencies struct {
 	SplitConfig         SplitConfigHandlerDeps
 	Period              PeriodHandlerDeps
 	SubscriptionCatalog SubscriptionCatalogHandlerDeps
+	Push                PushHandlerDeps
 	JWTValidator        outbound.TokenValidator
 	MemberRepo          outbound.MemberRepository
 	AllowedOrigins      []string
@@ -117,6 +118,12 @@ func NewServer(port string, deps ServerDependencies) Server {
 	mux.Handle("GET /v1/households/{household_id}/periods", protectHousehold(http.HandlerFunc(ph.handleListHistory)))
 	mux.Handle("POST /v1/households/{household_id}/periods/initialize", protectHousehold(http.HandlerFunc(ph.handleInitialize)))
 	mux.Handle("POST /v1/households/{household_id}/periods/{period_id}/simulate-close", protectHousehold(http.HandlerFunc(ph.handleSimulateClose)))
+
+	// Web Push notification routes.
+	pushh := newPushHandler(deps.Push)
+	mux.HandleFunc("GET /v1/push/vapid-public-key", pushh.handleVapidPublicKey)
+	mux.Handle("POST /v1/push/subscribe", protect(http.HandlerFunc(pushh.handleSubscribe)))
+	mux.Handle("POST /v1/push/test", protect(http.HandlerFunc(pushh.handleTest)))
 
 	// Apply middleware chain: RequestID -> CORS -> routes
 	cors := CORSMiddleware(CORSConfig{AllowedOrigins: deps.AllowedOrigins})

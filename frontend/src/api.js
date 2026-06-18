@@ -438,3 +438,31 @@ export async function listExpenseCatalogLinks({ recurringExpenseId }) {
     return parseResponse(response)
 }
 
+// ─── Web Push Notifications ──────────────────────────────────────────────────
+
+export async function getVapidPublicKey() {
+    const response = await fetch(`${API_BASE_URL}/v1/push/vapid-public-key`)
+    return response.json()
+}
+
+export async function subscribePush(subscription) {
+    const response = await fetch(`${API_BASE_URL}/v1/push/subscribe`, {
+        method: 'POST',
+        headers: buildProtectedHeaders(),
+        body: JSON.stringify({
+            endpoint: subscription.endpoint,
+            p256dh: subscription.keys.p256dh,
+            auth: subscription.keys.auth,
+        }),
+    })
+    return parseResponse(response)
+}
+
+export async function testPushNotification() {
+    const response = await fetch(`${API_BASE_URL}/v1/push/test`, {
+        method: 'POST',
+        headers: buildProtectedHeaders(),
+    })
+    return parseResponse(response)
+}
+
