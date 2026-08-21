@@ -75,5 +75,4 @@ Default canonical labels (`needs-triage`, `needs-info`, `ready-for-agent`, `read
 
 ### Domain docs
 
-Multi-context repo (`backend/`, `frontend/`). See `docs/agents/domain.md`.
-
+Single-context repo. See `docs/agents/domain.md`.

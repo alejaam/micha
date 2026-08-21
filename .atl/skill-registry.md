@@ -8,17 +8,24 @@ Last updated: 2026-05-18
 
 - .github/skills
 - /home/ale/.agents/skills
-- /home/ale/.config/opencode/skills
 - /home/ale/.claude/skills
-- /home/ale/.gemini/skills
-- /home/ale/.gemini/antigravity/skills
+- /home/ale/.config/opencode/skills
 - /home/ale/.copilot/skills
+- /home/ale/.gemini/antigravity/skills
+- /home/ale/.gemini/skills
 
 ## Contract
 
 **Delegator use only.** This registry is an index, not a summary. Any agent that launches subagents reads it to select relevant skills, then passes exact `SKILL.md` paths for the subagent to read before work.
 
 `SKILL.md` remains the source of truth. Do not inject generated summaries or compact rules by default; pass paths so subagents load the full runtime contract and preserve author intent.
+
+## Project Conventions
+
+| File | Type | Path |
+| --- | --- | --- |
+| `AGENTS.md` | Index | `/home/ale/Documents/Projects/micha/AGENTS.md` |
+| `copilot-instructions.md` | Convention | `/home/ale/Documents/Projects/micha/.github/copilot-instructions.md` |
 
 ## Skills
 
@@ -45,7 +52,8 @@ Last updated: 2026-05-18
 | `issue-creation` | Create Gentle AI issues with issue-first checks. Trigger: creating GitHub issues, bug reports, or feature requests. | user | `/home/ale/.config/opencode/skills/issue-creation/SKILL.md` |
 | `judgment-day` | Trigger: judgment day, dual review, adversarial review, juzgar. Run blind dual review, fix confirmed issues, then re-judge. | user | `/home/ale/.config/opencode/skills/judgment-day/SKILL.md` |
 | `nothing-design` | This skill should be used when the user explicitly says "Nothing style", "Nothing design", "/nothing-design", or directly asks to use/apply the Nothing design system. NEVER trigger automatically for generic UI or design tasks. | user | `/home/ale/.agents/skills/nothing-design/SKILL.md` |
-| `nothing-ui-shell` | Design and implement ultra-minimal, hardware-inspired web UIs in the "Nothing" style with monochrome palettes, subtle grid textures, and clear section-based navigation. Trigger: Use when the user asks for Nothing-style, transparent-hardware, or monochrome minimal interfaces, especially for knowledge dashboards, internal docs shells, or clean sectioned landing pages. | user | `/home/ale/.copilot/skills/nothing-ui-shell/SKILL.md` |
+| `nothing-ui-shell` | Design and implement ultra-minimal, hardware-inspired web UIs in the "Nothing" style with monochrome palettes, subtle grid textures, and clear section-based navigation. Trigger: Use when the user asks for Nothing-style, transparent-hardware, or monochrome minimal interfaces, especially for knowledge dashboards, internal docs shells, or clean sectioned landing pages.
+ | user | `/home/ale/.copilot/skills/nothing-ui-shell/SKILL.md` |
 | `postgres-patterns` | PostgreSQL database patterns for query optimization, schema design, indexing, and security. | user | `/home/ale/.agents/skills/postgres-patterns/SKILL.md` |
 | `prototype` | Build a throwaway prototype to flush out a design before committing to it. Routes between two branches — a runnable terminal app for state/business-logic questions, or several radically different UI variations toggleable from one route. Use when the user wants to prototype, sanity-check a data model or state machine, mock up a UI, explore design options, or says "prototype this", "let me play with it", "try a few designs". | user | `/home/ale/.agents/skills/prototype/SKILL.md` |
 | `reviewer` | Senior-level code review skill. Reviews diffs/PRs for correctness, architecture, security, performance, readability, testing, and maintainability; produces actionable, prioritized feedback with concrete suggestions. | user | `/home/ale/.copilot/skills/reviewer/SKILL.md` |
@@ -60,10 +68,3 @@ Last updated: 2026-05-18
 | `work-unit-commits` | Plan commits as reviewable work units. Trigger: implementation, commit splitting, chained PRs, or keeping tests and docs with code. | user | `/home/ale/.config/opencode/skills/work-unit-commits/SKILL.md` |
 | `write-a-skill` | Create new agent skills with proper structure, progressive disclosure, and bundled resources. Use when user wants to create, write, or build a new skill. | user | `/home/ale/.agents/skills/write-a-skill/SKILL.md` |
 | `zoom-out` | Tell the agent to zoom out and give broader context or a higher-level perspective. Use when you're unfamiliar with a section of code or need to understand how it fits into the bigger picture. | user | `/home/ale/.agents/skills/zoom-out/SKILL.md` |
-
-## Loading protocol
-
-1. Match task context and target files against the `Trigger / description` column.
-2. Pass only the matching `Path` values to the subagent under `## Skills to load before work`.
-3. Instruct the subagent to read those exact `SKILL.md` files before reading, writing, reviewing, testing, or creating artifacts.
-4. If no matching skill exists, proceed without project skill injection and report `skill_resolution: none`.
