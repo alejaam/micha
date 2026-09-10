@@ -26,4 +26,5 @@ frontend/coverage/
 .github/instructions/go.instructions.md
 .atl/skill-registry.md
 openspec/*
+.pi/gentle-ai/persona.json
 .atl/skill-registry.md
