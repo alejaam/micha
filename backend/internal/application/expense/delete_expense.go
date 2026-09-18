@@ -2,10 +2,12 @@ package expenseapp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
 	"micha/backend/internal/domain/expense"
+	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
 )
@@ -16,18 +18,26 @@ var _ inbound.DeleteExpenseUseCase = DeleteExpenseUseCase{}
 // For MSI expenses, it cascades to delete related installments first.
 type DeleteExpenseUseCase struct {
 	repo            outbound.ExpenseRepository
+	memberRepo      outbound.MemberRepository
 	installmentRepo outbound.InstallmentRepository
 }
 
 // NewDeleteExpenseUseCase constructs a DeleteExpenseUseCase.
-func NewDeleteExpenseUseCase(repo outbound.ExpenseRepository, installmentRepo outbound.InstallmentRepository) DeleteExpenseUseCase {
-	return DeleteExpenseUseCase{repo: repo, installmentRepo: installmentRepo}
+func NewDeleteExpenseUseCase(repo outbound.ExpenseRepository, memberRepo outbound.MemberRepository, installmentRepo outbound.InstallmentRepository) DeleteExpenseUseCase {
+	return DeleteExpenseUseCase{repo: repo, memberRepo: memberRepo, installmentRepo: installmentRepo}
 }
 
-func (u DeleteExpenseUseCase) Execute(ctx context.Context, id string) error {
-	e, err := u.repo.FindByID(ctx, id)
+func (u DeleteExpenseUseCase) Execute(ctx context.Context, input inbound.DeleteExpenseInput) error {
+	e, err := u.repo.FindByID(ctx, input.ID)
 	if err != nil {
 		return fmt.Errorf("delete expense: %w", err)
+	}
+
+	if _, err := u.memberRepo.FindByUserID(ctx, e.HouseholdID(), input.CurrentUserID); err != nil {
+		if errors.Is(err, shared.ErrNotFound) {
+			return shared.ErrForbidden
+		}
+		return fmt.Errorf("delete expense: authorize member: %w", err)
 	}
 
 	// Cascade delete installments for MSI expenses before soft-deleting the parent.
@@ -45,6 +55,6 @@ func (u DeleteExpenseUseCase) Execute(ctx context.Context, id string) error {
 		return fmt.Errorf("delete expense: %w", err)
 	}
 
-	slog.InfoContext(ctx, "delete expense", "expense_id", id)
+	slog.InfoContext(ctx, "delete expense", "expense_id", input.ID)
 	return nil
 }

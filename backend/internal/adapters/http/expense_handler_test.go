@@ -204,6 +204,63 @@ func TestExpenseHandler_Create_InvalidPaymentMethod(t *testing.T) {
 	}
 }
 
+func TestExpenseHandler_PropagatesCurrentUserID(t *testing.T) {
+	get := &mockGetExpense{}
+	list := &mockListExpenses{}
+	patch := &mockPatchExpense{}
+	deleteExpense := &mockDeleteExpense{}
+	server := httpadapter.NewServer("8080", httpadapter.ServerDependencies{
+		Auth: httpadapter.AuthHandlerDeps{
+			Register: &mockRegisterUser{},
+			Login:    &mockLogin{},
+		},
+		Expense: httpadapter.ExpenseHandlerDeps{
+			Register: &mockRegisterExpense{},
+			Get:      get,
+			List:     list,
+			Patch:    patch,
+			Delete:   deleteExpense,
+		},
+		JWTValidator:   &mockTokenValidator{returnUserID: "user-1", returnEmail: "test@example.com"},
+		MemberRepo:     newMockMemberRepo(),
+		AllowedOrigins: []string{"*"},
+	})
+
+	requests := []struct {
+		method string
+		path   string
+		body   any
+		status int
+	}{
+		{method: http.MethodGet, path: "/v1/expenses/550e8400-e29b-41d4-a716-446655440000", status: http.StatusOK},
+		{method: http.MethodGet, path: "/v1/expenses?household_id=household-1", status: http.StatusOK},
+		{method: http.MethodPatch, path: "/v1/expenses/550e8400-e29b-41d4-a716-446655440000", body: map[string]any{"description": "Updated"}, status: http.StatusOK},
+		{method: http.MethodDelete, path: "/v1/expenses/550e8400-e29b-41d4-a716-446655440000", status: http.StatusNoContent},
+	}
+	for _, tt := range requests {
+		req := makeJSONRequest(t, tt.method, tt.path, tt.body)
+		req.Header.Set("Authorization", "Bearer valid-token")
+		rec := httptest.NewRecorder()
+		server.Handler().ServeHTTP(rec, req)
+		if rec.Code != tt.status {
+			t.Errorf("%s %s: status = %d; want %d", tt.method, tt.path, rec.Code, tt.status)
+		}
+	}
+
+	if get.lastInput.CurrentUserID != "user-1" {
+		t.Errorf("get CurrentUserID = %q; want user-1", get.lastInput.CurrentUserID)
+	}
+	if list.lastInput.CurrentUserID != "user-1" {
+		t.Errorf("list CurrentUserID = %q; want user-1", list.lastInput.CurrentUserID)
+	}
+	if patch.lastInput.CurrentUserID != "user-1" {
+		t.Errorf("patch CurrentUserID = %q; want user-1", patch.lastInput.CurrentUserID)
+	}
+	if deleteExpense.lastInput.CurrentUserID != "user-1" {
+		t.Errorf("delete CurrentUserID = %q; want user-1", deleteExpense.lastInput.CurrentUserID)
+	}
+}
+
 // --- GET /v1/expenses/{id} ---
 
 func TestExpenseHandler_Get_Success(t *testing.T) {

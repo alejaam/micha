@@ -82,9 +82,11 @@ func (m *mockRegisterExpense) Execute(_ context.Context, input inbound.RegisterE
 type mockGetExpense struct {
 	returnExpense expense.Expense
 	returnErr     error
+	lastInput     inbound.GetExpenseInput
 }
 
-func (m *mockGetExpense) Execute(_ context.Context, _ string) (expense.Expense, error) {
+func (m *mockGetExpense) Execute(_ context.Context, input inbound.GetExpenseInput) (expense.Expense, error) {
+	m.lastInput = input
 	return m.returnExpense, m.returnErr
 }
 
@@ -92,9 +94,11 @@ func (m *mockGetExpense) Execute(_ context.Context, _ string) (expense.Expense, 
 type mockListExpenses struct {
 	returnExpenses []expense.Expense
 	returnErr      error
+	lastInput      inbound.ListExpensesQuery
 }
 
-func (m *mockListExpenses) Execute(_ context.Context, _ inbound.ListExpensesQuery) ([]expense.Expense, error) {
+func (m *mockListExpenses) Execute(_ context.Context, input inbound.ListExpensesQuery) ([]expense.Expense, error) {
+	m.lastInput = input
 	return m.returnExpenses, m.returnErr
 }
 
@@ -113,9 +117,11 @@ func (m *mockPatchExpense) Execute(_ context.Context, input inbound.PatchExpense
 // mockDeleteExpense implements inbound.DeleteExpenseUseCase
 type mockDeleteExpense struct {
 	returnErr error
+	lastInput inbound.DeleteExpenseInput
 }
 
-func (m *mockDeleteExpense) Execute(_ context.Context, _ string) error {
+func (m *mockDeleteExpense) Execute(_ context.Context, input inbound.DeleteExpenseInput) error {
+	m.lastInput = input
 	return m.returnErr
 }
 

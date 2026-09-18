@@ -276,7 +276,15 @@ func (r *mockMemberRepo) FindByID(_ context.Context, id string) (member.Member, 
 }
 
 func (r *mockMemberRepo) Save(_ context.Context, _ member.Member) error { return nil }
-func (r *mockMemberRepo) FindByUserID(_ context.Context, _, _ string) (member.Member, error) {
+func (r *mockMemberRepo) FindByUserID(_ context.Context, householdID, userID string) (member.Member, error) {
+	if r.findErr != nil {
+		return member.Member{}, r.findErr
+	}
+	for _, m := range r.members {
+		if m.HouseholdID() == householdID && m.UserID() == userID {
+			return m, nil
+		}
+	}
 	return member.Member{}, shared.ErrNotFound
 }
 func (r *mockMemberRepo) FindByUserIDGlobal(_ context.Context, _ string) (member.Member, error) {
@@ -457,8 +465,15 @@ func (r *mockPeriodRepo) seedPeriod(id, householdID string, startDate, endDate t
 
 func (r *mockPeriodRepo) Create(_ context.Context, _ period.Period) error { return nil }
 func (r *mockPeriodRepo) Update(_ context.Context, _ period.Period) error { return nil }
-func (r *mockPeriodRepo) GetByID(_ context.Context, _ period.ID) (period.Period, error) {
-	return period.Period{}, nil
+func (r *mockPeriodRepo) GetByID(_ context.Context, id period.ID) (period.Period, error) {
+	if r.findErr != nil {
+		return period.Period{}, r.findErr
+	}
+	p, ok := r.periods[string(id)]
+	if !ok {
+		return period.Period{}, shared.ErrNotFound
+	}
+	return p, nil
 }
 func (r *mockPeriodRepo) GetCurrentOpen(_ context.Context, householdID string) (period.Period, error) {
 	if r.findErr != nil {

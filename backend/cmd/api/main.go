@@ -106,10 +106,10 @@ func main() {
 	// Expense use cases and handler dependencies.
 	expenseDeps := httpadapter.ExpenseHandlerDeps{
 		Register: expenseapp.NewRegisterExpenseUseCaseWithPolicy(expenseRepo, householdRepo, memberRepo, cardRepo, categoryRepo, installmentRepo, periodRepo, txManager, idGen, cfg.AllowOwnerOnBehalf),
-		Get:      expenseapp.NewGetExpenseUseCase(expenseRepo),
-		List:     expenseapp.NewListExpensesUseCase(expenseRepo),
-		Patch:    expenseapp.NewPatchExpenseUseCase(expenseRepo),
-		Delete:   expenseapp.NewDeleteExpenseUseCase(expenseRepo, installmentRepo),
+		Get:      expenseapp.NewGetExpenseUseCase(expenseRepo, memberRepo),
+		List:     expenseapp.NewListExpensesUseCase(expenseRepo, memberRepo, periodRepo),
+		Patch:    expenseapp.NewPatchExpenseUseCase(expenseRepo, memberRepo),
+		Delete:   expenseapp.NewDeleteExpenseUseCase(expenseRepo, memberRepo, installmentRepo),
 	}
 
 	// Recurring expense use cases and handler dependencies.

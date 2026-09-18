@@ -102,7 +102,11 @@ func (h expenseHandler) handleGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	e, err := h.deps.Get.Execute(r.Context(), id)
+	currentUserID, _ := UserIDFromContext(r.Context())
+	e, err := h.deps.Get.Execute(r.Context(), inbound.GetExpenseInput{
+		ID:            id,
+		CurrentUserID: currentUserID,
+	})
 	if err != nil {
 		writeErrorFromDomain(w, err)
 		return
@@ -123,11 +127,13 @@ func (h expenseHandler) handleList(w http.ResponseWriter, r *http.Request) {
 	offset := queryInt(r, "offset", 0)
 	periodID := r.URL.Query().Get("period_id")
 
+	currentUserID, _ := UserIDFromContext(r.Context())
 	expenses, err := h.deps.List.Execute(r.Context(), inbound.ListExpensesQuery{
-		HouseholdID: householdID,
-		PeriodID:    periodID,
-		Limit:       limit,
-		Offset:      offset,
+		HouseholdID:   householdID,
+		CurrentUserID: currentUserID,
+		PeriodID:      periodID,
+		Limit:         limit,
+		Offset:        offset,
 	})
 	if err != nil {
 		writeErrorFromDomain(w, err)
@@ -156,10 +162,12 @@ func (h expenseHandler) handlePatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	currentUserID, _ := UserIDFromContext(r.Context())
 	e, err := h.deps.Patch.Execute(r.Context(), inbound.PatchExpenseCommand{
-		ID:          id,
-		Description: body.Description,
-		AmountCents: body.AmountCents,
+		ID:            id,
+		CurrentUserID: currentUserID,
+		Description:   body.Description,
+		AmountCents:   body.AmountCents,
 	})
 	if err != nil {
 		writeErrorFromDomain(w, err)
@@ -176,7 +184,11 @@ func (h expenseHandler) handleDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.deps.Delete.Execute(r.Context(), id); err != nil {
+	currentUserID, _ := UserIDFromContext(r.Context())
+	if err := h.deps.Delete.Execute(r.Context(), inbound.DeleteExpenseInput{
+		ID:            id,
+		CurrentUserID: currentUserID,
+	}); err != nil {
 		writeErrorFromDomain(w, err)
 		return
 	}

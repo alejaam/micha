@@ -467,9 +467,11 @@ func TestGetExpense_Found(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
 	seedExpense(t, repo, "exp-1", "hh-1", 1000)
-	uc := expenseapp.NewGetExpenseUseCase(repo)
+	memberRepo := newMockMemberRepo()
+	memberRepo.seedMember("m-1", "hh-1")
+	uc := expenseapp.NewGetExpenseUseCase(repo, memberRepo)
 
-	e, err := uc.Execute(context.Background(), "exp-1")
+	e, err := uc.Execute(context.Background(), inbound.GetExpenseInput{ID: "exp-1", CurrentUserID: "user-linked"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -478,12 +480,28 @@ func TestGetExpense_Found(t *testing.T) {
 	}
 }
 
+func TestGetExpense_NonMemberForbidden(t *testing.T) {
+	t.Parallel()
+	repo := newMockRepo()
+	seedExpense(t, repo, "exp-1", "hh-1", 1000)
+	memberRepo := newMockMemberRepo()
+	uc := expenseapp.NewGetExpenseUseCase(repo, memberRepo)
+
+	_, err := uc.Execute(context.Background(), inbound.GetExpenseInput{
+		ID:            "exp-1",
+		CurrentUserID: "user-outside-household",
+	})
+	if !errors.Is(err, shared.ErrForbidden) {
+		t.Fatalf("expected shared.ErrForbidden, got %v", err)
+	}
+}
+
 func TestGetExpense_NotFound(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
-	uc := expenseapp.NewGetExpenseUseCase(repo)
+	uc := expenseapp.NewGetExpenseUseCase(repo, newMockMemberRepo())
 
-	_, err := uc.Execute(context.Background(), "missing-id")
+	_, err := uc.Execute(context.Background(), inbound.GetExpenseInput{ID: "missing-id", CurrentUserID: "user-linked"})
 	if !errors.Is(err, shared.ErrNotFound) {
 		t.Errorf("want ErrNotFound, got %v", err)
 	}
@@ -496,8 +514,8 @@ func TestGetExpense_SoftDeletedReturnsNotFound(t *testing.T) {
 	_ = e.SoftDelete()
 	_ = repo.Update(context.Background(), *e)
 
-	uc := expenseapp.NewGetExpenseUseCase(repo)
-	_, err := uc.Execute(context.Background(), "exp-1")
+	uc := expenseapp.NewGetExpenseUseCase(repo, newMockMemberRepo())
+	_, err := uc.Execute(context.Background(), inbound.GetExpenseInput{ID: "exp-1", CurrentUserID: "user-linked"})
 	if !errors.Is(err, shared.ErrNotFound) {
 		t.Errorf("want ErrNotFound for deleted expense, got %v", err)
 	}
@@ -510,12 +528,15 @@ func TestListExpenses_Success(t *testing.T) {
 	repo := newMockRepo()
 	seedExpense(t, repo, "exp-1", "hh-1", 1000)
 	seedExpense(t, repo, "exp-2", "hh-1", 2000)
-	uc := expenseapp.NewListExpensesUseCase(repo)
+	memberRepo := newMockMemberRepo()
+	memberRepo.seedMember("m-1", "hh-1")
+	uc := expenseapp.NewListExpensesUseCase(repo, memberRepo, newMockPeriodRepo())
 
 	expenses, err := uc.Execute(context.Background(), inbound.ListExpensesQuery{
-		HouseholdID: "hh-1",
-		Limit:       10,
-		Offset:      0,
+		HouseholdID:   "hh-1",
+		CurrentUserID: "user-linked",
+		Limit:         10,
+		Offset:        0,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -525,10 +546,87 @@ func TestListExpenses_Success(t *testing.T) {
 	}
 }
 
+func TestListExpenses_PeriodFromAnotherHouseholdForbidden(t *testing.T) {
+	t.Parallel()
+	repo := newMockRepo()
+	repo.listErr = errors.New("ListByPeriod must not be called")
+	memberRepo := newMockMemberRepo()
+	memberRepo.seedMember("m-a", "hh-a")
+	periodRepo := newMockPeriodRepo()
+	periodRepo.seedPeriod("period-b", "hh-b", time.Now().AddDate(0, -1, 0), time.Now().AddDate(0, 1, 0))
+	uc := expenseapp.NewListExpensesUseCase(repo, memberRepo, periodRepo)
+
+	_, err := uc.Execute(context.Background(), inbound.ListExpensesQuery{
+		HouseholdID:   "hh-a",
+		CurrentUserID: "user-linked",
+		PeriodID:      "period-b",
+	})
+	if !errors.Is(err, shared.ErrForbidden) {
+		t.Fatalf("expected shared.ErrForbidden, got %v", err)
+	}
+}
+
+func TestListExpenses_PeriodWithinHouseholdAllowed(t *testing.T) {
+	t.Parallel()
+	repo := newMockRepo()
+	e, err := expense.NewFromAttributes(expense.ExpenseAttributes{
+		ID:             expense.ID("exp-a"),
+		HouseholdID:    "hh-a",
+		PaidByMemberID: "m-a",
+		PeriodID:       "period-a",
+		AmountCents:    1000,
+		Description:    "seed",
+		IsShared:       true,
+		Currency:       "MXN",
+		PaymentMethod:  expense.PaymentMethodCash,
+		ExpenseType:    expense.ExpenseTypeVariable,
+		CreatedAt:      time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("seed expense: %v", err)
+	}
+	if err := repo.Save(context.Background(), e); err != nil {
+		t.Fatalf("save expense: %v", err)
+	}
+	memberRepo := newMockMemberRepo()
+	memberRepo.seedMember("m-a", "hh-a")
+	periodRepo := newMockPeriodRepo()
+	periodRepo.seedPeriod("period-a", "hh-a", time.Now().AddDate(0, -1, 0), time.Now().AddDate(0, 1, 0))
+	uc := expenseapp.NewListExpensesUseCase(repo, memberRepo, periodRepo)
+
+	expenses, err := uc.Execute(context.Background(), inbound.ListExpensesQuery{
+		HouseholdID:   "hh-a",
+		CurrentUserID: "user-linked",
+		PeriodID:      "period-a",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(expenses) != 1 {
+		t.Fatalf("expenses = %d; want 1", len(expenses))
+	}
+}
+
+func TestListExpenses_NonMemberForbidden(t *testing.T) {
+	t.Parallel()
+	repo := newMockRepo()
+	seedExpense(t, repo, "exp-1", "hh-1", 1000)
+	memberRepo := newMockMemberRepo()
+	uc := expenseapp.NewListExpensesUseCase(repo, memberRepo, newMockPeriodRepo())
+
+	_, err := uc.Execute(context.Background(), inbound.ListExpensesQuery{
+		HouseholdID:   "hh-1",
+		CurrentUserID: "user-outside-household",
+	})
+	if !errors.Is(err, shared.ErrForbidden) {
+		t.Fatalf("expected shared.ErrForbidden, got %v", err)
+	}
+}
+
 func TestListExpenses_MissingHouseholdID(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
-	uc := expenseapp.NewListExpensesUseCase(repo)
+	uc := expenseapp.NewListExpensesUseCase(repo, newMockMemberRepo(), newMockPeriodRepo())
 
 	_, err := uc.Execute(context.Background(), inbound.ListExpensesQuery{Limit: 10})
 	if err == nil {
@@ -539,11 +637,14 @@ func TestListExpenses_MissingHouseholdID(t *testing.T) {
 func TestListExpenses_DefaultLimit(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
-	uc := expenseapp.NewListExpensesUseCase(repo)
+	memberRepo := newMockMemberRepo()
+	memberRepo.seedMember("m-1", "hh-1")
+	uc := expenseapp.NewListExpensesUseCase(repo, memberRepo, newMockPeriodRepo())
 
 	_, err := uc.Execute(context.Background(), inbound.ListExpensesQuery{
-		HouseholdID: "hh-1",
-		Limit:       0,
+		HouseholdID:   "hh-1",
+		CurrentUserID: "user-linked",
+		Limit:         0,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -553,11 +654,14 @@ func TestListExpenses_DefaultLimit(t *testing.T) {
 func TestListExpenses_MaxLimitClamped(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
-	uc := expenseapp.NewListExpensesUseCase(repo)
+	memberRepo := newMockMemberRepo()
+	memberRepo.seedMember("m-1", "hh-1")
+	uc := expenseapp.NewListExpensesUseCase(repo, memberRepo, newMockPeriodRepo())
 
 	_, err := uc.Execute(context.Background(), inbound.ListExpensesQuery{
-		HouseholdID: "hh-1",
-		Limit:       9999,
+		HouseholdID:   "hh-1",
+		CurrentUserID: "user-linked",
+		Limit:         9999,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -570,12 +674,15 @@ func TestPatchExpense_Success(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
 	seedExpense(t, repo, "exp-1", "hh-1", 1000)
-	uc := expenseapp.NewPatchExpenseUseCase(repo)
+	memberRepo := newMockMemberRepo()
+	memberRepo.seedMember("m-1", "hh-1")
+	uc := expenseapp.NewPatchExpenseUseCase(repo, memberRepo)
 
 	newAmt := int64(2000)
 	e, err := uc.Execute(context.Background(), inbound.PatchExpenseCommand{
-		ID:          "exp-1",
-		AmountCents: &newAmt,
+		ID:            "exp-1",
+		CurrentUserID: "user-linked",
+		AmountCents:   &newAmt,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -585,12 +692,30 @@ func TestPatchExpense_Success(t *testing.T) {
 	}
 }
 
+func TestPatchExpense_NonMemberForbidden(t *testing.T) {
+	t.Parallel()
+	repo := newMockRepo()
+	seedExpense(t, repo, "exp-1", "hh-1", 1000)
+	memberRepo := newMockMemberRepo()
+	uc := expenseapp.NewPatchExpenseUseCase(repo, memberRepo)
+
+	newAmount := int64(2000)
+	_, err := uc.Execute(context.Background(), inbound.PatchExpenseCommand{
+		ID:            "exp-1",
+		CurrentUserID: "user-outside-household",
+		AmountCents:   &newAmount,
+	})
+	if !errors.Is(err, shared.ErrForbidden) {
+		t.Fatalf("expected shared.ErrForbidden, got %v", err)
+	}
+}
+
 func TestPatchExpense_NotFound(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
-	uc := expenseapp.NewPatchExpenseUseCase(repo)
+	uc := expenseapp.NewPatchExpenseUseCase(repo, newMockMemberRepo())
 
-	_, err := uc.Execute(context.Background(), inbound.PatchExpenseCommand{ID: "missing"})
+	_, err := uc.Execute(context.Background(), inbound.PatchExpenseCommand{ID: "missing", CurrentUserID: "user-linked"})
 	if !errors.Is(err, shared.ErrNotFound) {
 		t.Errorf("want ErrNotFound, got %v", err)
 	}
@@ -600,12 +725,15 @@ func TestPatchExpense_InvalidAmount(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
 	seedExpense(t, repo, "exp-1", "hh-1", 1000)
-	uc := expenseapp.NewPatchExpenseUseCase(repo)
+	memberRepo := newMockMemberRepo()
+	memberRepo.seedMember("m-1", "hh-1")
+	uc := expenseapp.NewPatchExpenseUseCase(repo, memberRepo)
 
 	bad := int64(-1)
 	_, err := uc.Execute(context.Background(), inbound.PatchExpenseCommand{
-		ID:          "exp-1",
-		AmountCents: &bad,
+		ID:            "exp-1",
+		CurrentUserID: "user-linked",
+		AmountCents:   &bad,
 	})
 	if !errors.Is(err, shared.ErrInvalidMoney) {
 		t.Errorf("want ErrInvalidMoney, got %v", err)
@@ -619,9 +747,11 @@ func TestDeleteExpense_Success(t *testing.T) {
 	repo := newMockRepo()
 	instRepo := newMockInstallmentRepo()
 	seedExpense(t, repo, "exp-1", "hh-1", 1000)
-	uc := expenseapp.NewDeleteExpenseUseCase(repo, instRepo)
+	memberRepo := newMockMemberRepo()
+	memberRepo.seedMember("m-1", "hh-1")
+	uc := expenseapp.NewDeleteExpenseUseCase(repo, memberRepo, instRepo)
 
-	if err := uc.Execute(context.Background(), "exp-1"); err != nil {
+	if err := uc.Execute(context.Background(), inbound.DeleteExpenseInput{ID: "exp-1", CurrentUserID: "user-linked"}); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -631,13 +761,30 @@ func TestDeleteExpense_Success(t *testing.T) {
 	}
 }
 
+func TestDeleteExpense_NonMemberForbidden(t *testing.T) {
+	t.Parallel()
+	repo := newMockRepo()
+	instRepo := newMockInstallmentRepo()
+	seedExpense(t, repo, "exp-1", "hh-1", 1000)
+	memberRepo := newMockMemberRepo()
+	uc := expenseapp.NewDeleteExpenseUseCase(repo, memberRepo, instRepo)
+
+	err := uc.Execute(context.Background(), inbound.DeleteExpenseInput{
+		ID:            "exp-1",
+		CurrentUserID: "user-outside-household",
+	})
+	if !errors.Is(err, shared.ErrForbidden) {
+		t.Fatalf("expected shared.ErrForbidden, got %v", err)
+	}
+}
+
 func TestDeleteExpense_NotFound(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
 	instRepo := newMockInstallmentRepo()
-	uc := expenseapp.NewDeleteExpenseUseCase(repo, instRepo)
+	uc := expenseapp.NewDeleteExpenseUseCase(repo, newMockMemberRepo(), instRepo)
 
-	err := uc.Execute(context.Background(), "missing")
+	err := uc.Execute(context.Background(), inbound.DeleteExpenseInput{ID: "missing", CurrentUserID: "user-linked"})
 	if !errors.Is(err, shared.ErrNotFound) {
 		t.Errorf("want ErrNotFound, got %v", err)
 	}
@@ -650,9 +797,11 @@ func TestDeleteExpense_AlreadyDeleted(t *testing.T) {
 	e := seedExpense(t, repo, "exp-1", "hh-1", 1000)
 	_ = e.SoftDelete()
 	_ = repo.Update(context.Background(), *e)
+	memberRepo := newMockMemberRepo()
+	memberRepo.seedMember("m-1", "hh-1")
 
-	uc := expenseapp.NewDeleteExpenseUseCase(repo, instRepo)
-	err := uc.Execute(context.Background(), "exp-1")
+	uc := expenseapp.NewDeleteExpenseUseCase(repo, memberRepo, instRepo)
+	err := uc.Execute(context.Background(), inbound.DeleteExpenseInput{ID: "exp-1", CurrentUserID: "user-linked"})
 	if !errors.Is(err, shared.ErrAlreadyDeleted) {
 		t.Errorf("want ErrAlreadyDeleted, got %v", err)
 	}

@@ -2,10 +2,12 @@ package expenseapp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
 	"micha/backend/internal/domain/expense"
+	"micha/backend/internal/domain/shared"
 	"micha/backend/internal/ports/inbound"
 	"micha/backend/internal/ports/outbound"
 )
@@ -14,18 +16,26 @@ var _ inbound.PatchExpenseUseCase = PatchExpenseUseCase{}
 
 // PatchExpenseUseCase applies a partial update to an expense.
 type PatchExpenseUseCase struct {
-	repo outbound.ExpenseRepository
+	repo       outbound.ExpenseRepository
+	memberRepo outbound.MemberRepository
 }
 
 // NewPatchExpenseUseCase constructs a PatchExpenseUseCase.
-func NewPatchExpenseUseCase(repo outbound.ExpenseRepository) PatchExpenseUseCase {
-	return PatchExpenseUseCase{repo: repo}
+func NewPatchExpenseUseCase(repo outbound.ExpenseRepository, memberRepo outbound.MemberRepository) PatchExpenseUseCase {
+	return PatchExpenseUseCase{repo: repo, memberRepo: memberRepo}
 }
 
 func (u PatchExpenseUseCase) Execute(ctx context.Context, cmd inbound.PatchExpenseCommand) (expense.Expense, error) {
 	e, err := u.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return expense.Expense{}, fmt.Errorf("patch expense: %w", err)
+	}
+
+	if _, err := u.memberRepo.FindByUserID(ctx, e.HouseholdID(), cmd.CurrentUserID); err != nil {
+		if errors.Is(err, shared.ErrNotFound) {
+			return expense.Expense{}, shared.ErrForbidden
+		}
+		return expense.Expense{}, fmt.Errorf("patch expense: authorize member: %w", err)
 	}
 
 	if err := e.Patch(cmd.Description, cmd.AmountCents); err != nil {

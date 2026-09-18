@@ -28,20 +28,34 @@ type RegisterExpenseOutput struct {
 	ExpenseID string
 }
 
+// GetExpenseInput identifies an expense and its authenticated caller.
+type GetExpenseInput struct {
+	ID            string
+	CurrentUserID string
+}
+
 // ListExpensesQuery holds the parameters for listing expenses.
 type ListExpensesQuery struct {
-	HouseholdID string
-	PeriodID    string
-	Limit       int
-	Offset      int
+	HouseholdID   string
+	CurrentUserID string
+	PeriodID      string
+	Limit         int
+	Offset        int
+}
+
+// DeleteExpenseInput identifies an expense and its authenticated caller.
+type DeleteExpenseInput struct {
+	ID            string
+	CurrentUserID string
 }
 
 // PatchExpenseCommand holds the partial-update fields for an expense.
 // Only non-nil fields are applied.
 type PatchExpenseCommand struct {
-	ID          string
-	Description *string
-	AmountCents *int64
+	ID            string
+	CurrentUserID string
+	Description   *string
+	AmountCents   *int64
 }
 
 type RegisterExpenseUseCase interface {
@@ -49,7 +63,7 @@ type RegisterExpenseUseCase interface {
 }
 
 type GetExpenseUseCase interface {
-	Execute(ctx context.Context, id string) (expense.Expense, error)
+	Execute(ctx context.Context, input GetExpenseInput) (expense.Expense, error)
 }
 
 type ListExpensesUseCase interface {
@@ -61,5 +75,5 @@ type PatchExpenseUseCase interface {
 }
 
 type DeleteExpenseUseCase interface {
-	Execute(ctx context.Context, id string) error
+	Execute(ctx context.Context, input DeleteExpenseInput) error
 }
