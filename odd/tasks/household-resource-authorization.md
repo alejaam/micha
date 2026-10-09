@@ -11,14 +11,14 @@ Prevent authenticated users from reading or mutating expenses and recurring expe
 
 ## Tasks
 
-- [ ] **1. Protect expense operations** — implemented and independently verified; awaiting commit authorization.
+- [x] **1. Protect expense operations** — implemented, independently verified, and committed.
   - Added application tests for cross-household get, list, patch, delete, and period-filter access.
   - Added focused HTTP coverage proving the authenticated user ID reaches expense operations.
   - Enforced active membership against the resolved expense household and verified period ownership before filtered listing.
   - Verification: `go test ./internal/application/expense`, `go test ./internal/adapters/http`, `go test ./...`, and `go test -race ./...` passed from `backend/`.
   - Runtime harness: N/A; authorization is covered at application and HTTP seams, and no live PostgreSQL harness is configured.
   - Independent verification: passed with no blocking findings.
-  - Evidence: commit pending explicit user authorization.
+  - Evidence: commit `8fe3f49` (`fix(authz): isolate expense operations by household`).
 
 - [ ] **2. Protect recurring-expense operations**
   - Add failing application tests for cross-household create, get, list, update, delete, and generation access as applicable.

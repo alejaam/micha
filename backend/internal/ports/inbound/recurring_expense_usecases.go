@@ -29,15 +29,17 @@ type CreateRecurringExpenseOutput struct {
 
 // ListRecurringExpensesQuery holds the parameters for listing recurring expenses.
 type ListRecurringExpensesQuery struct {
-	HouseholdID string
-	Limit       int
-	Offset      int
+	HouseholdID   string
+	CurrentUserID string
+	Limit         int
+	Offset        int
 }
 
 // UpdateRecurringExpenseCommand holds the partial-update fields for a recurring expense.
 // Only non-nil fields are applied.
 type UpdateRecurringExpenseCommand struct {
 	ID                string
+	CurrentUserID     string
 	Description       *string
 	AmountCents       *int64
 	CategoryID        *string
@@ -49,8 +51,9 @@ type UpdateRecurringExpenseCommand struct {
 
 // GenerateRecurringExpensesCommand holds parameters for generating expenses from recurring templates.
 type GenerateRecurringExpensesCommand struct {
-	HouseholdID string
-	AsOfDate    time.Time
+	HouseholdID   string
+	CurrentUserID string
+	AsOfDate      time.Time
 }
 
 // GenerateRecurringExpensesOutput contains the result of expense generation.
@@ -63,8 +66,20 @@ type CreateRecurringExpenseUseCase interface {
 	Execute(ctx context.Context, input CreateRecurringExpenseInput) (CreateRecurringExpenseOutput, error)
 }
 
+// GetRecurringExpenseInput identifies a recurring expense and its authenticated caller.
+type GetRecurringExpenseInput struct {
+	ID            string
+	CurrentUserID string
+}
+
+// DeleteRecurringExpenseInput identifies a recurring expense and its authenticated caller.
+type DeleteRecurringExpenseInput struct {
+	ID            string
+	CurrentUserID string
+}
+
 type GetRecurringExpenseUseCase interface {
-	Execute(ctx context.Context, id string) (recurringexpense.RecurringExpense, error)
+	Execute(ctx context.Context, input GetRecurringExpenseInput) (recurringexpense.RecurringExpense, error)
 }
 
 type ListRecurringExpensesUseCase interface {
@@ -76,7 +91,7 @@ type UpdateRecurringExpenseUseCase interface {
 }
 
 type DeleteRecurringExpenseUseCase interface {
-	Execute(ctx context.Context, id string) error
+	Execute(ctx context.Context, input DeleteRecurringExpenseInput) error
 }
 
 type GenerateRecurringExpensesUseCase interface {

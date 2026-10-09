@@ -48,8 +48,7 @@ func (u CreateRecurringExpenseUseCase) Execute(ctx context.Context, input inboun
 		return inbound.CreateRecurringExpenseOutput{}, fmt.Errorf("create recurring expense: %w", err)
 	}
 
-	// Validate that the actor is a member of this household.
-	if _, err := u.memberRepo.FindByUserID(ctx, input.HouseholdID, input.CurrentUserID); err != nil {
+	if err := authorizeActiveHouseholdMember(ctx, u.memberRepo, input.HouseholdID, input.CurrentUserID); err != nil {
 		return inbound.CreateRecurringExpenseOutput{}, fmt.Errorf("create recurring expense: %w", err)
 	}
 

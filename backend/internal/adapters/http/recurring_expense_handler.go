@@ -104,7 +104,11 @@ func (h recurringExpenseHandler) handleGet(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	re, err := h.deps.Get.Execute(r.Context(), id)
+	currentUserID, _ := UserIDFromContext(r.Context())
+	re, err := h.deps.Get.Execute(r.Context(), inbound.GetRecurringExpenseInput{
+		ID:            id,
+		CurrentUserID: currentUserID,
+	})
 	if err != nil {
 		writeRecurringExpenseError(w, err)
 		return
@@ -124,10 +128,12 @@ func (h recurringExpenseHandler) handleList(w http.ResponseWriter, r *http.Reque
 	limit := queryInt(r, "limit", 100)
 	offset := queryInt(r, "offset", 0)
 
+	currentUserID, _ := UserIDFromContext(r.Context())
 	recurringExpenses, err := h.deps.List.Execute(r.Context(), inbound.ListRecurringExpensesQuery{
-		HouseholdID: householdID,
-		Limit:       limit,
-		Offset:      offset,
+		HouseholdID:   householdID,
+		CurrentUserID: currentUserID,
+		Limit:         limit,
+		Offset:        offset,
 	})
 	if err != nil {
 		writeRecurringExpenseError(w, err)
@@ -187,8 +193,10 @@ func (h recurringExpenseHandler) handleUpdate(w http.ResponseWriter, r *http.Req
 		}
 	}
 
+	currentUserID, _ := UserIDFromContext(r.Context())
 	re, err := h.deps.Update.Execute(r.Context(), inbound.UpdateRecurringExpenseCommand{
 		ID:                id,
+		CurrentUserID:     currentUserID,
 		Description:       body.Description,
 		AmountCents:       body.AmountCents,
 		CategoryID:        body.CategoryID,
@@ -212,7 +220,11 @@ func (h recurringExpenseHandler) handleDelete(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if err := h.deps.Delete.Execute(r.Context(), id); err != nil {
+	currentUserID, _ := UserIDFromContext(r.Context())
+	if err := h.deps.Delete.Execute(r.Context(), inbound.DeleteRecurringExpenseInput{
+		ID:            id,
+		CurrentUserID: currentUserID,
+	}); err != nil {
 		writeRecurringExpenseError(w, err)
 		return
 	}
@@ -242,9 +254,11 @@ func (h recurringExpenseHandler) handleGenerate(w http.ResponseWriter, r *http.R
 		asOfDate = time.Now()
 	}
 
+	currentUserID, _ := UserIDFromContext(r.Context())
 	out, err := h.deps.Generate.Execute(r.Context(), inbound.GenerateRecurringExpensesCommand{
-		HouseholdID: body.HouseholdID,
-		AsOfDate:    asOfDate,
+		HouseholdID:   body.HouseholdID,
+		CurrentUserID: currentUserID,
+		AsOfDate:      asOfDate,
 	})
 	if err != nil {
 		writeRecurringExpenseError(w, err)
@@ -302,6 +316,8 @@ func writeRecurringExpenseError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, shared.ErrNotFound):
 		writeError(w, http.StatusNotFound, "NOT_FOUND", "the requested resource was not found")
+	case errors.Is(err, shared.ErrForbidden):
+		writeError(w, http.StatusForbidden, "FORBIDDEN", "you are not allowed to access this resource")
 	case errors.Is(err, shared.ErrInvalidMoney):
 		writeError(w, http.StatusBadRequest, "INVALID_MONEY", "amount_cents must be greater than zero")
 	case errors.Is(err, recurringexpense.ErrInvalidHouseholdID):

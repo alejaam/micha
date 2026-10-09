@@ -115,11 +115,11 @@ func main() {
 	// Recurring expense use cases and handler dependencies.
 	recurringExpenseDeps := httpadapter.RecurringExpenseHandlerDeps{
 		Create:   recurringexpenseapp.NewCreateRecurringExpenseUseCase(recurringExpenseRepo, householdRepo, memberRepo, categoryRepo, idGen),
-		Get:      recurringexpenseapp.NewGetRecurringExpenseUseCase(recurringExpenseRepo),
-		List:     recurringexpenseapp.NewListRecurringExpensesUseCase(recurringExpenseRepo),
-		Update:   recurringexpenseapp.NewUpdateRecurringExpenseUseCase(recurringExpenseRepo, categoryRepo),
-		Delete:   recurringexpenseapp.NewDeleteRecurringExpenseUseCase(recurringExpenseRepo),
-		Generate: recurringexpenseapp.NewGenerateRecurringExpensesUseCase(recurringExpenseRepo, expenseRepo, idGen),
+		Get:      recurringexpenseapp.NewGetRecurringExpenseUseCase(recurringExpenseRepo, memberRepo),
+		List:     recurringexpenseapp.NewListRecurringExpensesUseCase(recurringExpenseRepo, memberRepo),
+		Update:   recurringexpenseapp.NewUpdateRecurringExpenseUseCase(recurringExpenseRepo, memberRepo, categoryRepo),
+		Delete:   recurringexpenseapp.NewDeleteRecurringExpenseUseCase(recurringExpenseRepo, memberRepo),
+		Generate: recurringexpenseapp.NewGenerateRecurringExpensesUseCase(recurringExpenseRepo, memberRepo, expenseRepo, idGen),
 	}
 
 	// Household use cases and handler dependencies.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	appshared "micha/backend/internal/application/shared"
@@ -15,6 +16,7 @@ import (
 
 type GenerateRecurringExpensesUseCase struct {
 	recurringExpenseRepo outbound.RecurringExpenseRepository
+	memberRepo           outbound.MemberRepository
 	expenseRepo          outbound.ExpenseRepository
 	idGenerator          appshared.IDGenerator
 	now                  func() time.Time
@@ -22,11 +24,13 @@ type GenerateRecurringExpensesUseCase struct {
 
 func NewGenerateRecurringExpensesUseCase(
 	recurringExpenseRepo outbound.RecurringExpenseRepository,
+	memberRepo outbound.MemberRepository,
 	expenseRepo outbound.ExpenseRepository,
 	idGenerator appshared.IDGenerator,
 ) GenerateRecurringExpensesUseCase {
 	return GenerateRecurringExpensesUseCase{
 		recurringExpenseRepo: recurringExpenseRepo,
+		memberRepo:           memberRepo,
 		expenseRepo:          expenseRepo,
 		idGenerator:          idGenerator,
 		now:                  time.Now,
@@ -34,6 +38,14 @@ func NewGenerateRecurringExpensesUseCase(
 }
 
 func (u GenerateRecurringExpensesUseCase) Execute(ctx context.Context, cmd inbound.GenerateRecurringExpensesCommand) (inbound.GenerateRecurringExpensesOutput, error) {
+	householdID := strings.TrimSpace(cmd.HouseholdID)
+	if householdID == "" {
+		return inbound.GenerateRecurringExpensesOutput{}, recurringexpense.ErrInvalidHouseholdID
+	}
+	if err := authorizeActiveHouseholdMember(ctx, u.memberRepo, householdID, cmd.CurrentUserID); err != nil {
+		return inbound.GenerateRecurringExpensesOutput{}, fmt.Errorf("generate recurring expenses: %w", err)
+	}
+
 	asOfDate := cmd.AsOfDate
 	if asOfDate.IsZero() {
 		asOfDate = u.now()
@@ -45,16 +57,13 @@ func (u GenerateRecurringExpensesUseCase) Execute(ctx context.Context, cmd inbou
 		return inbound.GenerateRecurringExpensesOutput{}, fmt.Errorf("generate recurring expenses: %w", err)
 	}
 
-	// Filter by household if specified
-	if cmd.HouseholdID != "" {
-		filtered := make([]recurringexpense.RecurringExpense, 0)
-		for _, re := range recurringExpenses {
-			if re.HouseholdID() == cmd.HouseholdID {
-				filtered = append(filtered, re)
-			}
+	filtered := make([]recurringexpense.RecurringExpense, 0)
+	for _, re := range recurringExpenses {
+		if re.HouseholdID() == householdID {
+			filtered = append(filtered, re)
 		}
-		recurringExpenses = filtered
 	}
+	recurringExpenses = filtered
 
 	var generatedIDs []string
 	for _, re := range recurringExpenses {

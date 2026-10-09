@@ -10,16 +10,20 @@ import (
 )
 
 type DeleteRecurringExpenseUseCase struct {
-	repo outbound.RecurringExpenseRepository
+	repo       outbound.RecurringExpenseRepository
+	memberRepo outbound.MemberRepository
 }
 
-func NewDeleteRecurringExpenseUseCase(repo outbound.RecurringExpenseRepository) DeleteRecurringExpenseUseCase {
-	return DeleteRecurringExpenseUseCase{repo: repo}
+func NewDeleteRecurringExpenseUseCase(repo outbound.RecurringExpenseRepository, memberRepo outbound.MemberRepository) DeleteRecurringExpenseUseCase {
+	return DeleteRecurringExpenseUseCase{repo: repo, memberRepo: memberRepo}
 }
 
-func (u DeleteRecurringExpenseUseCase) Execute(ctx context.Context, id string) error {
-	re, err := u.repo.FindByID(ctx, id)
+func (u DeleteRecurringExpenseUseCase) Execute(ctx context.Context, input inbound.DeleteRecurringExpenseInput) error {
+	re, err := u.repo.FindByID(ctx, input.ID)
 	if err != nil {
+		return fmt.Errorf("delete recurring expense: %w", err)
+	}
+	if err := authorizeActiveHouseholdMember(ctx, u.memberRepo, re.HouseholdID(), input.CurrentUserID); err != nil {
 		return fmt.Errorf("delete recurring expense: %w", err)
 	}
 
@@ -31,7 +35,7 @@ func (u DeleteRecurringExpenseUseCase) Execute(ctx context.Context, id string) e
 		return fmt.Errorf("delete recurring expense: %w", err)
 	}
 
-	slog.InfoContext(ctx, "delete recurring expense", "recurring_expense_id", string(re.ID()))
+	slog.InfoContext(ctx, "delete recurring expense", "recurring_expense_id", input.ID)
 	return nil
 }
 

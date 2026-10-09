@@ -15,15 +15,18 @@ import (
 
 type UpdateRecurringExpenseUseCase struct {
 	repo         outbound.RecurringExpenseRepository
+	memberRepo   outbound.MemberRepository
 	categoryRepo outbound.CategoryRepository
 }
 
 func NewUpdateRecurringExpenseUseCase(
 	repo outbound.RecurringExpenseRepository,
+	memberRepo outbound.MemberRepository,
 	categoryRepo outbound.CategoryRepository,
 ) UpdateRecurringExpenseUseCase {
 	return UpdateRecurringExpenseUseCase{
 		repo:         repo,
+		memberRepo:   memberRepo,
 		categoryRepo: categoryRepo,
 	}
 }
@@ -31,6 +34,9 @@ func NewUpdateRecurringExpenseUseCase(
 func (u UpdateRecurringExpenseUseCase) Execute(ctx context.Context, cmd inbound.UpdateRecurringExpenseCommand) (recurringexpense.RecurringExpense, error) {
 	re, err := u.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
+		return recurringexpense.RecurringExpense{}, fmt.Errorf("update recurring expense: %w", err)
+	}
+	if err := authorizeActiveHouseholdMember(ctx, u.memberRepo, re.HouseholdID(), cmd.CurrentUserID); err != nil {
 		return recurringexpense.RecurringExpense{}, fmt.Errorf("update recurring expense: %w", err)
 	}
 

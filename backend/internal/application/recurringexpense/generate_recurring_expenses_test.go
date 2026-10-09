@@ -232,10 +232,12 @@ func TestGenerateRecurringExpensesUseCase_Execute(t *testing.T) {
 				dueForGeneration: tt.recurringExpenses,
 			}
 			mockExpRepo := &mockExpenseRepo{}
-			uc := NewGenerateRecurringExpensesUseCase(mockRecurringRepo, mockExpRepo, &mockIDGen{})
+			uc := NewGenerateRecurringExpensesUseCase(mockRecurringRepo, &authorizationMemberRepo{}, mockExpRepo, &mockIDGen{})
 
 			out, err := uc.Execute(context.Background(), inbound.GenerateRecurringExpensesCommand{
-				AsOfDate: now,
+				HouseholdID:   "hh-1",
+				CurrentUserID: "user-1",
+				AsOfDate:      now,
 			})
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
@@ -324,11 +326,13 @@ func TestGenerateRecurringExpensesUseCase_WithHouseholdFilter(t *testing.T) {
 		dueForGeneration: items,
 	}
 	mockExpRepo := &mockExpenseRepo{}
-	uc := NewGenerateRecurringExpensesUseCase(mockRecurringRepo, mockExpRepo, &mockIDGen{})
+	memberRepo := &authorizationMemberRepo{}
+	uc := NewGenerateRecurringExpensesUseCase(mockRecurringRepo, memberRepo, mockExpRepo, &mockIDGen{})
 
 	out, err := uc.Execute(context.Background(), inbound.GenerateRecurringExpensesCommand{
-		HouseholdID: "hh-1",
-		AsOfDate:    now,
+		HouseholdID:   "hh-1",
+		CurrentUserID: "user-1",
+		AsOfDate:      now,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -344,6 +348,9 @@ func TestGenerateRecurringExpensesUseCase_WithHouseholdFilter(t *testing.T) {
 
 	if mockExpRepo.saved[0].HouseholdID() != "hh-1" {
 		t.Errorf("saved expense household = %q; want %q", mockExpRepo.saved[0].HouseholdID(), "hh-1")
+	}
+	if memberRepo.householdID != "hh-1" || memberRepo.userID != "user-1" {
+		t.Errorf("FindByUserID(%q, %q); want (hh-1, user-1)", memberRepo.householdID, memberRepo.userID)
 	}
 }
 

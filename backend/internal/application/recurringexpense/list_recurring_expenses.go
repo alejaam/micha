@@ -10,14 +10,19 @@ import (
 )
 
 type ListRecurringExpensesUseCase struct {
-	repo outbound.RecurringExpenseRepository
+	repo       outbound.RecurringExpenseRepository
+	memberRepo outbound.MemberRepository
 }
 
-func NewListRecurringExpensesUseCase(repo outbound.RecurringExpenseRepository) ListRecurringExpensesUseCase {
-	return ListRecurringExpensesUseCase{repo: repo}
+func NewListRecurringExpensesUseCase(repo outbound.RecurringExpenseRepository, memberRepo outbound.MemberRepository) ListRecurringExpensesUseCase {
+	return ListRecurringExpensesUseCase{repo: repo, memberRepo: memberRepo}
 }
 
 func (u ListRecurringExpensesUseCase) Execute(ctx context.Context, query inbound.ListRecurringExpensesQuery) ([]recurringexpense.RecurringExpense, error) {
+	if err := authorizeActiveHouseholdMember(ctx, u.memberRepo, query.HouseholdID, query.CurrentUserID); err != nil {
+		return nil, fmt.Errorf("list recurring expenses: %w", err)
+	}
+
 	limit := query.Limit
 	if limit == 0 {
 		limit = 100
