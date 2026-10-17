@@ -1,5 +1,5 @@
--- 029_create_ale_recurring_expenses.sql
--- Seeds recurring monthly expenses for user ale.jaam21@gmail.com.
+-- 001_ale_recurring_expenses.sql
+-- Seeds recurring monthly expenses for the explicitly selected seed email.
 --
 -- These are household-level fixed expenses (is_agnostic = true).
 -- No specific payer assigned — each member's contribution is calculated
@@ -10,7 +10,7 @@
 --   Internet/Cable (Megacable) → streaming
 --   Phone (Telcel)         → personal
 --
--- Apply with: psql $DATABASE_URL -f migrations/029_create_ale_recurring_expenses.sql
+-- Apply through: go run ./cmd/seed with SEED_KIND=development.
 
 DO $$
 DECLARE
@@ -19,14 +19,19 @@ DECLARE
     v_personal_id   TEXT;
     v_today         DATE := CURRENT_DATE;
 BEGIN
-    -- ── Look up the household where this user is a member ──
+    IF current_setting('app.seed_scope', true) <> 'household-demo' THEN
+        RAISE EXCEPTION 'development recurring-expense fixture requires SEED_SCOPE=household-demo';
+    END IF;
+
+    -- The seed command sets app.seed_email for this transaction.
+    -- A missing setting is intentionally rejected instead of guessing.
     SELECT m.household_id INTO v_household_id
     FROM members m
-    WHERE m.email = 'ale.jaam21@gmail.com'
+    WHERE lower(m.email) = lower(current_setting('app.seed_email', true))
     LIMIT 1;
 
     IF v_household_id IS NULL THEN
-        RAISE EXCEPTION 'No household found for user ale.jaam21@gmail.com. Create the household and member first.';
+        RAISE EXCEPTION 'No household found for configured seed email. Create the household and member first.';
     END IF;
 
     -- ── Look up category IDs ──
