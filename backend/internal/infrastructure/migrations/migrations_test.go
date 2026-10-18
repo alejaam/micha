@@ -14,8 +14,8 @@ func TestFileChecksum(t *testing.T) {
 	filePath := filepath.Join(tmpDir, "test.sql")
 
 	content := []byte("CREATE TABLE test (id INT);")
-	if err := os.WriteFile(filePath, content, 0644); err != nil {
-		t.Fatalf("failed to write test file: %v", err)
+	if writeErr := os.WriteFile(filePath, content, 0644); writeErr != nil {
+		t.Fatalf("failed to write test file: %v", writeErr)
 	}
 
 	sum1, err := fileChecksum(filePath)
@@ -35,8 +35,8 @@ func TestFileChecksum(t *testing.T) {
 	}
 
 	// Modifying content should change checksum
-	if err := os.WriteFile(filePath, []byte("CREATE TABLE test (id INT, name TEXT);"), 0644); err != nil {
-		t.Fatalf("failed to modify test file: %v", err)
+	if writeErr := os.WriteFile(filePath, []byte("CREATE TABLE test (id INT, name TEXT);"), 0644); writeErr != nil {
+		t.Fatalf("failed to modify test file: %v", writeErr)
 	}
 	sum3, err := fileChecksum(filePath)
 	if err != nil {
@@ -60,18 +60,18 @@ func TestApply_Integration(t *testing.T) {
 	}
 	defer pool.Close()
 
-	if err := pool.Ping(ctx); err != nil {
-		t.Skipf("skipping: database unreachable: %v", err)
+	if pingErr := pool.Ping(ctx); pingErr != nil {
+		t.Skipf("skipping: database unreachable: %v", pingErr)
 	}
 
 	tmpDir := t.TempDir()
 	mig1 := filepath.Join(tmpDir, "001_test_migration.sql")
-	if err := os.WriteFile(mig1, []byte("CREATE TABLE IF NOT EXISTS _test_table (id TEXT PRIMARY KEY);"), 0644); err != nil {
-		t.Fatalf("failed to write mig1: %v", err)
+	if writeErr := os.WriteFile(mig1, []byte("CREATE TABLE IF NOT EXISTS _test_table (id TEXT PRIMARY KEY);"), 0644); writeErr != nil {
+		t.Fatalf("failed to write mig1: %v", writeErr)
 	}
 
-	if err := Apply(ctx, pool, tmpDir); err != nil {
-		t.Fatalf("Apply failed: %v", err)
+	if applyErr := Apply(ctx, pool, tmpDir); applyErr != nil {
+		t.Fatalf("Apply failed: %v", applyErr)
 	}
 
 	// Clean up test table and test migration entry
@@ -81,16 +81,16 @@ func TestApply_Integration(t *testing.T) {
 	}()
 
 	// Re-applying without changes should succeed (idempotent)
-	if err := Apply(ctx, pool, tmpDir); err != nil {
-		t.Fatalf("second Apply should succeed idempotently: %v", err)
+	if applyErr := Apply(ctx, pool, tmpDir); applyErr != nil {
+		t.Fatalf("second Apply should succeed idempotently: %v", applyErr)
 	}
 
 	// Test backfill: clear checksum in DB and re-apply
-	if _, err := pool.Exec(ctx, "UPDATE schema_migrations SET checksum = '' WHERE filename = '001_test_migration.sql'"); err != nil {
-		t.Fatalf("clear checksum failed: %v", err)
+	if _, execErr := pool.Exec(ctx, "UPDATE schema_migrations SET checksum = '' WHERE filename = '001_test_migration.sql'"); execErr != nil {
+		t.Fatalf("clear checksum failed: %v", execErr)
 	}
-	if err := Apply(ctx, pool, tmpDir); err != nil {
-		t.Fatalf("Apply should backfill empty checksum: %v", err)
+	if applyErr := Apply(ctx, pool, tmpDir); applyErr != nil {
+		t.Fatalf("Apply should backfill empty checksum: %v", applyErr)
 	}
 	var backfilledChecksum string
 	_ = pool.QueryRow(ctx, "SELECT checksum FROM schema_migrations WHERE filename = '001_test_migration.sql'").Scan(&backfilledChecksum)
@@ -99,8 +99,8 @@ func TestApply_Integration(t *testing.T) {
 	}
 
 	// Tampering with the file should trigger checksum error
-	if err := os.WriteFile(mig1, []byte("CREATE TABLE IF NOT EXISTS _test_table (id TEXT PRIMARY KEY, extra TEXT);"), 0644); err != nil {
-		t.Fatalf("failed to tamper mig1: %v", err)
+	if writeErr := os.WriteFile(mig1, []byte("CREATE TABLE IF NOT EXISTS _test_table (id TEXT PRIMARY KEY, extra TEXT);"), 0644); writeErr != nil {
+		t.Fatalf("failed to tamper mig1: %v", writeErr)
 	}
 
 	err = Apply(ctx, pool, tmpDir)
