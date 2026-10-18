@@ -59,9 +59,21 @@ docker compose -f deploy/docker-compose.yml up --build  # full stack (Go + Postg
 
 ## Current state
 
-- `expense_repository.go` stub (`Save` returns `nil`); real SQL in `backend/migrations/`
 - Endpoints: `/health` + full CRUD for expenses, households, members + settlement calculation
 - PostgreSQL: `localhost:5432`, db/user/pass: `micha` / `micha` / `micha_dev_password`
+
+## Database & Migrations policy
+
+- Migrations (`backend/migrations/`) must contain **100% structural DDL only** (`CREATE TABLE`, `CREATE INDEX`).
+- **Zero-seed policy**: No seed commands, mock tools, or demo fixtures in code or binaries. Having demo fixtures with test credentials in git or environments accessible to clients is prohibited.
+- All entities (users, households, members, expenses) are created exclusively via the domain API/onboarding flow.
+- Reference catalogs (e.g. `subscription_services`) live in `backend/catalogs/reference/` as standalone SQL scripts for manual DBA execution; they must never block or execute during API startup.
+- Full referential integrity: Constraints and foreign keys must be declared valid on creation; never use `NOT VALID` patches during active schema design.
+- The migration runner enforces `pg_advisory_lock` and SHA-256 checksums in `schema_migrations`.
+
+## Code style & linting
+
+- Avoid variable shadowing: `govet` (shadow analyzer) is enabled in `golangci-lint`. Use semantic error variable names (e.g., `writeErr`, `pingErr`, `applyErr`) in nested blocks rather than reusing `err :=`.
 
 ## Agent skills
 
