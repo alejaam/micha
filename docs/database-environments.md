@@ -4,12 +4,12 @@ El arranque de la API (`backend/cmd/api`) ejecuta de forma automática las migra
 
 Este proceso es idempotente y apto para bases de datos limpias (zero-state) en local, staging (Dokploy) y producción.
 
-## Estructura de Migraciones y Catálogos
+## Estructura de Migraciones
 
 - `backend/migrations/001_initial_schema.sql`: Esquema canónico v1 (tablas, constraints, llaves foráneas e índices). Es **100% DDL estructural**. La API nunca se bloquea por datos de catálogo o fixtures.
-- `backend/catalogs/reference/001_subscription_services_mx.sql`: Catálogo oficial de referencia de servicios de streaming y bundles en México (MXN) con precios actualizados.
+- `backend/catalogs/reference/001_subscription_services_mx.sql`: Archivo SQL de referencia con el catálogo oficial de servicios de streaming y bundles en México (MXN) con precios actualizados.
 
-## Arranque Normal de la API
+## Arranque de la API
 
 ```bash
 cd backend
@@ -21,28 +21,14 @@ go run ./cmd/api
 
 La API aplica las migraciones estructurales en el primer arranque. En arranques subsecuentes, verifica los checksums y continúa inmediatamente.
 
-## Carga del Catálogo de Referencia (Explícito)
+## Política de Seguridad: Sin Seeds
 
-Para poblar o actualizar el catálogo de servicios de suscripción de forma explícita e idempotente:
-
-```bash
-cd backend
-SEED_CONFIRM=true \
-SEED_KIND=reference \
-DATABASE_URL=postgres://micha:micha_dev_password@localhost:5432/micha?sslmode=disable \
-go run ./cmd/seed
-```
-
-Este comando:
-- Requiere `SEED_CONFIRM=true` y `SEED_KIND=reference`.
-- No toca ni contamina `schema_migrations`.
-- Ejecuta `ON CONFLICT (slug) DO UPDATE`.
-
-## Política de Fixtures y Seguridad
-
-- **Cero fixtures de prueba en el repositorio**: No existen credenciales, usuarios ficticios ni datos de prueba mockeados en el código ni en los binarios de la aplicación.
-- Toda cuenta, hogar y miembro se crea a través del flujo normal de la aplicación y sus casos de uso.
-- `cmd/seed` rechaza cualquier tipo distinto a `reference`.
+- **Cero seeds en código y binarios**: No existe ningún comando `seed`, fixtures ni usuarios demo en el repositorio ni en los binarios de la aplicación.
+- Toda cuenta, hogar, miembro y gasto se crea exclusivamente a través del flujo normal de la aplicación (registro y onboarding vía API).
+- Para cargar o actualizar el catálogo de servicios de suscripción de manera opcional y manual, se ejecuta directamente el archivo SQL mediante cualquier cliente de PostgreSQL:
+  ```bash
+  psql $DATABASE_URL -f backend/catalogs/reference/001_subscription_services_mx.sql
+  ```
 
 ## Despliegue en Dokploy
 
@@ -53,4 +39,4 @@ En el servicio de Dokploy (staging / producción) configurar únicamente las var
 - `HTTP_PORT` (por defecto `8080`)
 - `ALLOWED_ORIGINS`
 
-Si un entorno de staging o producción requiere el catálogo de referencia, ejecutar un job separado con `SEED_CONFIRM=true SEED_KIND=reference`.
+No se requiere ningún paso manual adicional para que la API arranque y opere con normalidad.
