@@ -16,20 +16,10 @@ import (
 
 const migrationsTable = "schema_migrations"
 
-// Options controls how a directory of SQL files is applied.
-type Options struct {
-	// Settings are applied locally to each migration transaction. They are
-	// intended for explicitly invoked seed operations.
-	Settings map[string]string
-}
-
 // Apply executes SQL migrations from a directory in lexicographical order.
+// Each file is executed once inside a transaction, tracked with SHA-256 checksum,
+// and protected by a PostgreSQL advisory lock against concurrent runs.
 func Apply(ctx context.Context, db *pgxpool.Pool, dir string) error {
-	return ApplyWithOptions(ctx, db, dir, Options{})
-}
-
-// ApplyWithOptions applies SQL files and records a checksum for each file.
-func ApplyWithOptions(ctx context.Context, db *pgxpool.Pool, dir string, options Options) error {
 	if err := ensureMigrationsTable(ctx, db); err != nil {
 		return fmt.Errorf("apply migrations: ensure table: %w", err)
 	}
@@ -62,7 +52,7 @@ func ApplyWithOptions(ctx context.Context, db *pgxpool.Pool, dir string, options
 		if applied {
 			continue
 		}
-		if err := applyFile(ctx, db, fullPath, file, options); err != nil {
+		if err := applyFile(ctx, db, fullPath, file); err != nil {
 			return fmt.Errorf("apply migrations: %s: %w", file, err)
 		}
 	}
@@ -70,21 +60,18 @@ func ApplyWithOptions(ctx context.Context, db *pgxpool.Pool, dir string, options
 }
 
 func ensureMigrationsTable(ctx context.Context, db *pgxpool.Pool) error {
-	if _, err := db.Exec(ctx, `
+	_, err := db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS schema_migrations (
 			filename TEXT PRIMARY KEY,
 			applied_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			checksum TEXT
+			checksum TEXT NOT NULL DEFAULT ''
 		)
-	`); err != nil {
-		return err
-	}
-	_, err := db.Exec(ctx, `ALTER TABLE schema_migrations ADD COLUMN IF NOT EXISTS checksum TEXT`)
+	`)
 	return err
 }
 
 func isApplied(ctx context.Context, db *pgxpool.Pool, filename, fullPath string) (bool, error) {
-	var checksum *string
+	var checksum string
 	err := db.QueryRow(ctx, `SELECT checksum FROM `+migrationsTable+` WHERE filename = $1`, filename).Scan(&checksum)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil
@@ -92,20 +79,20 @@ func isApplied(ctx context.Context, db *pgxpool.Pool, filename, fullPath string)
 	if err != nil {
 		return false, err
 	}
-	if checksum == nil {
+	if checksum == "" {
 		return true, nil
 	}
 	current, err := fileChecksum(fullPath)
 	if err != nil {
 		return false, err
 	}
-	if *checksum != current {
-		return false, fmt.Errorf("checksum mismatch for applied migration %s", filename)
+	if checksum != current {
+		return false, fmt.Errorf("checksum mismatch for applied migration %s (db: %s, file: %s)", filename, checksum, current)
 	}
 	return true, nil
 }
 
-func applyFile(ctx context.Context, db *pgxpool.Pool, fullPath, filename string, options Options) error {
+func applyFile(ctx context.Context, db *pgxpool.Pool, fullPath, filename string) error {
 	sqlBytes, err := os.ReadFile(fullPath)
 	if err != nil {
 		return fmt.Errorf("read file: %w", err)
@@ -118,11 +105,6 @@ func applyFile(ctx context.Context, db *pgxpool.Pool, fullPath, filename string,
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	for key, value := range options.Settings {
-		if _, err := tx.Exec(ctx, `SELECT set_config($1, $2, true)`, key, value); err != nil {
-			return fmt.Errorf("set migration setting %s: %w", key, err)
-		}
-	}
 	if _, err := tx.Exec(ctx, string(sqlBytes)); err != nil {
 		return fmt.Errorf("exec statement: %w", err)
 	}

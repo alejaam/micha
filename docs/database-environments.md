@@ -1,63 +1,51 @@
-# Database por ambiente
+# Base de Datos por Ambiente (micha v1)
 
-El arranque normal de `backend/cmd/api` ejecuta únicamente `backend/migrations`.
-Ese directorio contiene cambios estructurales y el proceso debe funcionar contra
-una base vacía: no crea usuarios, hogares, fixtures ni datos personales.
+El arranque de la API (`backend/cmd/api`) ejecuta de forma automática las migraciones en `backend/migrations` protegidas por un `pg_advisory_lock` y verificación de `checksum`.
 
-## Arranque normal
+Este proceso es idempotente y apto para bases de datos limpias (zero-state) en local, staging (Dokploy) y producción.
+
+## Estructura de Migraciones
+
+- `001_initial_schema.sql`: Esquema canónico v1 (tablas, constraints, llaves foráneas e índices).
+- `002_subscription_services.sql`: Catálogo de referencia de servicios de streaming y bundles en México (MXN) con precios actualizados.
+
+## Arranque Normal
 
 ```bash
 cd backend
-DATABASE_URL=... JWT_SECRET=... ENVIRONMENT=development go run ./cmd/api
+DATABASE_URL=postgres://micha:micha_dev_password@localhost:5432/micha?sslmode=disable \
+JWT_SECRET=dev_secret_key \
+ENVIRONMENT=development \
+go run ./cmd/api
 ```
 
-El runner usa un lock advisory de PostgreSQL y guarda checksum de cada migration.
-No se deben editar archivos ya aplicados; los cambios posteriores se agregan como
-nuevas migrations.
+La API aplica las migraciones estructurales y el catálogo base en el primer arranque. En arranques subsecuentes, verifica los checksums y continúa inmediatamente.
 
-## Seeds explícitos
+## Datos de Prueba en Desarrollo (Opcional)
 
-Los seeds requieren confirmación y scope explícitos. Nunca se ejecutan desde el
-arranque de la API.
-
-Catálogo de referencia:
+Para poblar rápidamente un entorno local de desarrollo con datos de prueba realistas (un usuario demo, un hogar demo con miembros, salarios, gastos y servicios recurrentes):
 
 ```bash
 cd backend
-SEED_CONFIRM=true \
-SEED_ENVIRONMENT=staging \
-SEED_SCOPE=reference-mx \
-SEED_KIND=reference \
-DATABASE_URL=... \
+DATABASE_URL=postgres://micha:micha_dev_password@localhost:5432/micha?sslmode=disable \
+ENVIRONMENT=development \
 go run ./cmd/seed
 ```
 
-Fixture de desarrollo:
+Credenciales de prueba generadas:
+- **Usuario**: `demo@micha.local`
+- **Contraseña**: `password123`
 
-```bash
-cd backend
-SEED_CONFIRM=true \
-SEED_ENVIRONMENT=local \
-SEED_SCOPE=household-demo \
-SEED_KIND=development \
-SEED_EMAIL=usuario@example.com \
-DATABASE_URL=... \
-go run ./cmd/seed
-```
+> [!NOTE]
+> `cmd/seed` es una herramienta exclusiva de desarrollo. No se registra en `schema_migrations` y está terminantemente bloqueada en entornos `production` y `prod`.
 
-Los fixtures están bloqueados para `prod` y `production`. El scope queda
-registrado en la operación y debe ser elegido por el operador; el seed no debe
-usarse como mecanismo para crear la primera cuenta o el primer hogar.
+## Despliegue en Dokploy
 
-## Dokploy
+En el servicio de Dokploy (staging / producción) configurar únicamente las variables normales de la aplicación:
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `ENVIRONMENT` (`production` o `staging`)
+- `HTTP_PORT` (por defecto `8080`)
+- `ALLOWED_ORIGINS`
 
-Configurar en el servicio de la API solo `DATABASE_URL`, `JWT_SECRET`,
-`ENVIRONMENT` y las variables normales de aplicación. No configurar
-`SEED_CONFIRM` ni `SEED_KIND` en el proceso web.
-
-Si staging necesita el catálogo o fixtures, ejecutar un job/comando separado con
-las variables anteriores y con el mismo `DATABASE_URL` de staging. Producción
-solo aplica migrations estructurales durante el despliegue; el catálogo de
-referencia, si se desea, requiere un job explícito con `SEED_KIND=reference` y
-`SEED_SCOPE=reference-mx`. Los fixtures de desarrollo están bloqueados en
-producción.
+No se requiere ningún job manual adicional para disponer del catálogo ni de la estructura completa de base de datos.
