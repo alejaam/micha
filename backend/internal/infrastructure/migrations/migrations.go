@@ -60,13 +60,16 @@ func Apply(ctx context.Context, db *pgxpool.Pool, dir string) error {
 }
 
 func ensureMigrationsTable(ctx context.Context, db *pgxpool.Pool) error {
-	_, err := db.Exec(ctx, `
+	if _, err := db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS schema_migrations (
 			filename TEXT PRIMARY KEY,
 			applied_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 			checksum TEXT NOT NULL DEFAULT ''
 		)
-	`)
+	`); err != nil {
+		return err
+	}
+	_, err := db.Exec(ctx, `ALTER TABLE schema_migrations ADD COLUMN IF NOT EXISTS checksum TEXT NOT NULL DEFAULT ''`)
 	return err
 }
 
@@ -79,13 +82,20 @@ func isApplied(ctx context.Context, db *pgxpool.Pool, filename, fullPath string)
 	if err != nil {
 		return false, err
 	}
-	if checksum == "" {
-		return true, nil
-	}
+
 	current, err := fileChecksum(fullPath)
 	if err != nil {
 		return false, err
 	}
+
+	if checksum == "" {
+		// Backfill missing checksum for historical migration so future changes are detected
+		if _, err := db.Exec(ctx, `UPDATE `+migrationsTable+` SET checksum = $1 WHERE filename = $2`, current, filename); err != nil {
+			return false, fmt.Errorf("backfill checksum for %s: %w", filename, err)
+		}
+		return true, nil
+	}
+
 	if checksum != current {
 		return false, fmt.Errorf("checksum mismatch for applied migration %s (db: %s, file: %s)", filename, checksum, current)
 	}

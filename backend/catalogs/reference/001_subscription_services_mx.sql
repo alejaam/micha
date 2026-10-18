@@ -1,4 +1,4 @@
--- 002_subscription_services.sql
+-- 001_subscription_services_mx.sql
 -- Reference catalog of subscription services and bundles for Mexico (MXN).
 -- Populated with official verified pricing. Safe to run against clean or existing databases.
 

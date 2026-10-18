@@ -1,43 +1,48 @@
 # Base de Datos por Ambiente (micha v1)
 
-El arranque de la API (`backend/cmd/api`) ejecuta de forma automática las migraciones en `backend/migrations` protegidas por un `pg_advisory_lock` y verificación de `checksum`.
+El arranque de la API (`backend/cmd/api`) ejecuta de forma automática las migraciones en `backend/migrations/` protegidas por un `pg_advisory_lock` y verificación de `checksum`.
 
 Este proceso es idempotente y apto para bases de datos limpias (zero-state) en local, staging (Dokploy) y producción.
 
-## Estructura de Migraciones
+## Estructura de Migraciones y Catálogos
 
-- `001_initial_schema.sql`: Esquema canónico v1 (tablas, constraints, llaves foráneas e índices).
-- `002_subscription_services.sql`: Catálogo de referencia de servicios de streaming y bundles en México (MXN) con precios actualizados.
+- `backend/migrations/001_initial_schema.sql`: Esquema canónico v1 (tablas, constraints, llaves foráneas e índices). Es **100% DDL estructural**. La API nunca se bloquea por datos de catálogo o fixtures.
+- `backend/catalogs/reference/001_subscription_services_mx.sql`: Catálogo oficial de referencia de servicios de streaming y bundles en México (MXN) con precios actualizados.
 
-## Arranque Normal
+## Arranque Normal de la API
 
 ```bash
 cd backend
 DATABASE_URL=postgres://micha:micha_dev_password@localhost:5432/micha?sslmode=disable \
-JWT_SECRET=dev_secret_key \
+JWT_SECRET=dev_secret_key_at_least_32_characters_long \
 ENVIRONMENT=development \
 go run ./cmd/api
 ```
 
-La API aplica las migraciones estructurales y el catálogo base en el primer arranque. En arranques subsecuentes, verifica los checksums y continúa inmediatamente.
+La API aplica las migraciones estructurales en el primer arranque. En arranques subsecuentes, verifica los checksums y continúa inmediatamente.
 
-## Datos de Prueba en Desarrollo (Opcional)
+## Carga del Catálogo de Referencia (Explícito)
 
-Para poblar rápidamente un entorno local de desarrollo con datos de prueba realistas (un usuario demo, un hogar demo con miembros, salarios, gastos y servicios recurrentes):
+Para poblar o actualizar el catálogo de servicios de suscripción de forma explícita e idempotente:
 
 ```bash
 cd backend
+SEED_CONFIRM=true \
+SEED_KIND=reference \
 DATABASE_URL=postgres://micha:micha_dev_password@localhost:5432/micha?sslmode=disable \
-ENVIRONMENT=development \
 go run ./cmd/seed
 ```
 
-Credenciales de prueba generadas:
-- **Usuario**: `demo@micha.local`
-- **Contraseña**: `password123`
+Este comando:
+- Requiere `SEED_CONFIRM=true` y `SEED_KIND=reference`.
+- No toca ni contamina `schema_migrations`.
+- Ejecuta `ON CONFLICT (slug) DO UPDATE`.
 
-> [!NOTE]
-> `cmd/seed` es una herramienta exclusiva de desarrollo. No se registra en `schema_migrations` y está terminantemente bloqueada en entornos `production` y `prod`.
+## Política de Fixtures y Seguridad
+
+- **Cero fixtures de prueba en el repositorio**: No existen credenciales, usuarios ficticios ni datos de prueba mockeados en el código ni en los binarios de la aplicación.
+- Toda cuenta, hogar y miembro se crea a través del flujo normal de la aplicación y sus casos de uso.
+- `cmd/seed` rechaza cualquier tipo distinto a `reference`.
 
 ## Despliegue en Dokploy
 
@@ -48,4 +53,4 @@ En el servicio de Dokploy (staging / producción) configurar únicamente las var
 - `HTTP_PORT` (por defecto `8080`)
 - `ALLOWED_ORIGINS`
 
-No se requiere ningún job manual adicional para disponer del catálogo ni de la estructura completa de base de datos.
+Si un entorno de staging o producción requiere el catálogo de referencia, ejecutar un job separado con `SEED_CONFIRM=true SEED_KIND=reference`.

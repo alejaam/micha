@@ -85,6 +85,19 @@ func TestApply_Integration(t *testing.T) {
 		t.Fatalf("second Apply should succeed idempotently: %v", err)
 	}
 
+	// Test backfill: clear checksum in DB and re-apply
+	if _, err := pool.Exec(ctx, "UPDATE schema_migrations SET checksum = '' WHERE filename = '001_test_migration.sql'"); err != nil {
+		t.Fatalf("clear checksum failed: %v", err)
+	}
+	if err := Apply(ctx, pool, tmpDir); err != nil {
+		t.Fatalf("Apply should backfill empty checksum: %v", err)
+	}
+	var backfilledChecksum string
+	_ = pool.QueryRow(ctx, "SELECT checksum FROM schema_migrations WHERE filename = '001_test_migration.sql'").Scan(&backfilledChecksum)
+	if backfilledChecksum == "" {
+		t.Error("expected checksum to be backfilled, got empty")
+	}
+
 	// Tampering with the file should trigger checksum error
 	if err := os.WriteFile(mig1, []byte("CREATE TABLE IF NOT EXISTS _test_table (id TEXT PRIMARY KEY, extra TEXT);"), 0644); err != nil {
 		t.Fatalf("failed to tamper mig1: %v", err)
