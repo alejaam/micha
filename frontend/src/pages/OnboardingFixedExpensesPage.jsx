@@ -442,6 +442,7 @@ export function OnboardingFixedExpensesPage() {
                                                 className="input inputWithPrefix fixedAmountInput"
                                                 inputMode="decimal"
                                                 placeholder="0.00"
+                                                aria-label={`Monto mensual de ${item.label}`}
                                                 value={amountByKey[item.key] ?? ''}
                                                 onChange={(e) => handleAmountChange(item.key, e.target.value)}
                                                 disabled={saving}
@@ -466,6 +467,7 @@ export function OnboardingFixedExpensesPage() {
                                 className="input"
                                 type="text"
                                 placeholder="Nombre del gasto (ej. Gym, Seguro...)"
+                                aria-label="Nombre del gasto personalizado"
                                 value={customLabel}
                                 onChange={(e) => setCustomLabel(e.target.value)}
                                 disabled={saving}
@@ -476,6 +478,7 @@ export function OnboardingFixedExpensesPage() {
                                     className="input inputWithPrefix"
                                     inputMode="decimal"
                                     placeholder="0.00"
+                                    aria-label="Monto mensual del gasto personalizado"
                                     value={customAmount}
                                     onChange={(e) => setCustomAmount(sanitizeAmountInput(e.target.value))}
                                     disabled={saving}

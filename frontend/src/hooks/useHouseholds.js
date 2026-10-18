@@ -7,9 +7,6 @@ export function useHouseholds({ isAuthenticated, handleProtectedError }) {
     const [households, setHouseholds] = useState([])
     const [loadingHouseholds, setLoadingHouseholds] = useState(true)
 
-    // Track whether this is the very first load (vs. a background refetch)
-    const isFirstLoad = useRef(true)
-
     const householdIdRef = useRef(householdId)
     useEffect(() => {
         householdIdRef.current = householdId
@@ -44,7 +41,6 @@ export function useHouseholds({ isAuthenticated, handleProtectedError }) {
             if (!silent) {
                 setLoadingHouseholds(false)
             }
-            isFirstLoad.current = false
         }
     }, [handleProtectedError, isAuthenticated])
 

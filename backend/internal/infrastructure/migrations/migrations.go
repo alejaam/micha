@@ -20,15 +20,22 @@ const migrationsTable = "schema_migrations"
 // Each file is executed once inside a transaction, tracked with SHA-256 checksum,
 // and protected by a PostgreSQL advisory lock against concurrent runs.
 func Apply(ctx context.Context, db *pgxpool.Pool, dir string) error {
+	conn, connErr := db.Acquire(ctx)
+	if connErr != nil {
+		return fmt.Errorf("apply migrations: acquire pool connection: %w", connErr)
+	}
+	defer conn.Release()
+
+	if _, lockErr := conn.Exec(ctx, `SELECT pg_advisory_lock(hashtextextended($1, 0))`, migrationsTable); lockErr != nil {
+		return fmt.Errorf("apply migrations: acquire lock: %w", lockErr)
+	}
+	defer func() {
+		_, _ = conn.Exec(ctx, `SELECT pg_advisory_unlock(hashtextextended($1, 0))`, migrationsTable)
+	}()
+
 	if err := ensureMigrationsTable(ctx, db); err != nil {
 		return fmt.Errorf("apply migrations: ensure table: %w", err)
 	}
-	if _, err := db.Exec(ctx, `SELECT pg_advisory_lock(hashtextextended($1, 0))`, migrationsTable); err != nil {
-		return fmt.Errorf("apply migrations: acquire lock: %w", err)
-	}
-	defer func() {
-		_, _ = db.Exec(ctx, `SELECT pg_advisory_unlock(hashtextextended($1, 0))`, migrationsTable)
-	}()
 
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -52,25 +59,25 @@ func Apply(ctx context.Context, db *pgxpool.Pool, dir string) error {
 		if applied {
 			continue
 		}
-		if err := applyFile(ctx, db, fullPath, file); err != nil {
-			return fmt.Errorf("apply migrations: %s: %w", file, err)
+		if applyErr := applyFile(ctx, db, fullPath, file); applyErr != nil {
+			return fmt.Errorf("apply migrations: %s: %w", file, applyErr)
 		}
 	}
 	return nil
 }
 
 func ensureMigrationsTable(ctx context.Context, db *pgxpool.Pool) error {
-	if _, err := db.Exec(ctx, `
+	if _, createErr := db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS schema_migrations (
 			filename TEXT PRIMARY KEY,
 			applied_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 			checksum TEXT NOT NULL DEFAULT ''
 		)
-	`); err != nil {
-		return err
+	`); createErr != nil {
+		return createErr
 	}
-	_, err := db.Exec(ctx, `ALTER TABLE schema_migrations ADD COLUMN IF NOT EXISTS checksum TEXT NOT NULL DEFAULT ''`)
-	return err
+	_, alterErr := db.Exec(ctx, `ALTER TABLE schema_migrations ADD COLUMN IF NOT EXISTS checksum TEXT NOT NULL DEFAULT ''`)
+	return alterErr
 }
 
 func isApplied(ctx context.Context, db *pgxpool.Pool, filename, fullPath string) (bool, error) {
@@ -83,15 +90,15 @@ func isApplied(ctx context.Context, db *pgxpool.Pool, filename, fullPath string)
 		return false, err
 	}
 
-	current, err := fileChecksum(fullPath)
-	if err != nil {
-		return false, err
+	current, readErr := fileChecksum(fullPath)
+	if readErr != nil {
+		return false, readErr
 	}
 
 	if checksum == "" {
 		// Backfill missing checksum for historical migration so future changes are detected
-		if _, err := db.Exec(ctx, `UPDATE `+migrationsTable+` SET checksum = $1 WHERE filename = $2`, current, filename); err != nil {
-			return false, fmt.Errorf("backfill checksum for %s: %w", filename, err)
+		if _, updateErr := db.Exec(ctx, `UPDATE `+migrationsTable+` SET checksum = $1 WHERE filename = $2`, current, filename); updateErr != nil {
+			return false, fmt.Errorf("backfill checksum for %s: %w", filename, updateErr)
 		}
 		return true, nil
 	}
@@ -103,29 +110,29 @@ func isApplied(ctx context.Context, db *pgxpool.Pool, filename, fullPath string)
 }
 
 func applyFile(ctx context.Context, db *pgxpool.Pool, fullPath, filename string) error {
-	sqlBytes, err := os.ReadFile(fullPath)
-	if err != nil {
-		return fmt.Errorf("read file: %w", err)
+	sqlBytes, readErr := os.ReadFile(fullPath)
+	if readErr != nil {
+		return fmt.Errorf("read file: %w", readErr)
 	}
 	checksum := sha256.Sum256(sqlBytes)
 
-	tx, err := db.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("begin tx: %w", err)
+	tx, txErr := db.Begin(ctx)
+	if txErr != nil {
+		return fmt.Errorf("begin tx: %w", txErr)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	if _, err := tx.Exec(ctx, string(sqlBytes)); err != nil {
-		return fmt.Errorf("exec statement: %w", err)
+	if _, execErr := tx.Exec(ctx, string(sqlBytes)); execErr != nil {
+		return fmt.Errorf("exec statement: %w", execErr)
 	}
-	if _, err := tx.Exec(ctx,
+	if _, insertErr := tx.Exec(ctx,
 		`INSERT INTO `+migrationsTable+` (filename, checksum) VALUES ($1, $2)`,
 		filename, fmt.Sprintf("%x", checksum[:]),
-	); err != nil {
-		return fmt.Errorf("insert migration row: %w", err)
+	); insertErr != nil {
+		return fmt.Errorf("insert migration row: %w", insertErr)
 	}
-	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("commit tx: %w", err)
+	if commitErr := tx.Commit(ctx); commitErr != nil {
+		return fmt.Errorf("commit tx: %w", commitErr)
 	}
 	return nil
 }

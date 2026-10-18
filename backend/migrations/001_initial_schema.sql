@@ -39,10 +39,10 @@ CREATE TABLE IF NOT EXISTS members (
     created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-    CONSTRAINT members_household_email_key UNIQUE (household_id, email),
     CONSTRAINT members_household_id_id_key UNIQUE (household_id, id)
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_members_household_email_active ON members(household_id, email) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_members_household_created ON members(household_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_members_user_id ON members(user_id) WHERE deleted_at IS NULL;
 
@@ -51,7 +51,11 @@ CREATE TABLE IF NOT EXISTS household_split_config (
     household_id TEXT         NOT NULL REFERENCES households(id) ON DELETE CASCADE,
     member_id    TEXT         NOT NULL REFERENCES members(id) ON DELETE CASCADE,
     percentage   NUMERIC(5,2) NOT NULL CHECK (percentage >= 0 AND percentage <= 100),
-    PRIMARY KEY (household_id, member_id)
+    PRIMARY KEY (household_id, member_id),
+    CONSTRAINT fk_split_config_member_same_household
+        FOREIGN KEY (household_id, member_id)
+        REFERENCES members (household_id, id)
+        ON DELETE CASCADE
 );
 
 -- 5. Member Invitations
@@ -99,7 +103,7 @@ CREATE TABLE IF NOT EXISTS cards (
     CONSTRAINT fk_cards_owner_same_household
         FOREIGN KEY (household_id, owner_member_id)
         REFERENCES members (household_id, id)
-        ON DELETE SET NULL
+        ON DELETE SET NULL (owner_member_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_cards_household ON cards(household_id) WHERE deleted_at IS NULL;
@@ -145,7 +149,7 @@ CREATE TABLE IF NOT EXISTS expenses (
     CONSTRAINT fk_expenses_member_same_household
         FOREIGN KEY (household_id, paid_by_member_id)
         REFERENCES members (household_id, id)
-        ON DELETE SET NULL,
+        ON DELETE SET NULL (paid_by_member_id),
     CONSTRAINT fk_expenses_category_same_household
         FOREIGN KEY (household_id, category_id)
         REFERENCES categories (household_id, id)
@@ -153,11 +157,11 @@ CREATE TABLE IF NOT EXISTS expenses (
     CONSTRAINT fk_expenses_card_same_household
         FOREIGN KEY (household_id, card_id)
         REFERENCES cards (household_id, id)
-        ON DELETE SET NULL,
+        ON DELETE SET NULL (card_id),
     CONSTRAINT fk_expenses_period_same_household
         FOREIGN KEY (household_id, period_id)
         REFERENCES periods (household_id, id)
-        ON DELETE SET NULL
+        ON DELETE SET NULL (period_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_expenses_household_created ON expenses(household_id, created_at DESC) WHERE deleted_at IS NULL;
@@ -177,13 +181,15 @@ CREATE TABLE IF NOT EXISTS installments (
     installment_amount_cents BIGINT      NOT NULL CHECK (installment_amount_cents > 0),
     total_amount_cents       BIGINT      NOT NULL CHECK (total_amount_cents > 0),
     total_installments       INT         NOT NULL CHECK (total_installments > 0),
-    current_installment      INT         NOT NULL CHECK (current_installment > 0),
+    current_installment      INT         NOT NULL CHECK (current_installment > 0 AND current_installment <= total_installments),
     created_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at               TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE INDEX IF NOT EXISTS idx_installments_start_date ON installments(start_date);
 CREATE INDEX IF NOT EXISTS idx_installments_expense_id ON installments(expense_id);
 CREATE INDEX IF NOT EXISTS idx_installments_paid_by_member ON installments(paid_by_member_id);
+CREATE INDEX IF NOT EXISTS idx_installments_period_lookup ON installments(start_date, paid_by_member_id);
 
 -- 11. Recurring Expenses
 CREATE TABLE IF NOT EXISTS recurring_expenses (
