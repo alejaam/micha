@@ -67,8 +67,8 @@ describe('OnboardingFixedExpensesPage', () => {
         )
 
         // Wait for catalog to load
-        const rentCheckbox = await screen.findByLabelText('Renta')
-        fireEvent.click(rentCheckbox)
+        const rentBtn = await screen.findByText('Renta')
+        fireEvent.click(rentBtn)
 
         // Amount should be pre-filled from catalog standalone_price_cents (120000 → 1200.00)
         const amountInput = screen.getByDisplayValue('1200.00')

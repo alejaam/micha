@@ -16,6 +16,9 @@ const POST_ONBOARDING_PATHS = ['/onboarding/household', '/onboarding/cards', '/o
  * - Unauthenticated → redirect to /login
  * - No household → allow /onboarding/household creation
  * - Has household → allow onboarding routes (cards, fixed-expenses) or redirect to dashboard
+ *
+ * NOTE: We only block rendering on the FIRST load (loadingHouseholds && households.length === 0).
+ * Subsequent background refetches (e.g. on focus) do NOT unmount the form to avoid losing user input.
  */
 export function ProtectedOnboardingLayout() {
     const { isAuthenticated } = useAuth()
@@ -26,7 +29,9 @@ export function ProtectedOnboardingLayout() {
         return <Navigate to="/login" replace />
     }
 
-    if (loadingHouseholds) {
+    // Only block on the very first load — subsequent refetches are silent and
+    // we should keep showing the layout so the user doesn't lose form input.
+    if (loadingHouseholds && households.length === 0) {
         return null
     }
 
