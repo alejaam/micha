@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { createHousehold, updateHousehold } from '../api'
 import { useAppShell } from '../context/AppShellContext'
@@ -127,23 +128,19 @@ export function OnboardingHouseholdPage() {
         }
     }
 
-    return (
-        <section className={`card ${isOnboarding ? 'onboardingCard' : ''}`} aria-label={isOnboarding ? 'Crea tu hogar' : 'Editar hogar'}>
+    return isOnboarding ? (
+        <section className="card onboardingCard" aria-label="Crea tu hogar">
             <div className="onboardingHeader">
-                <p className="authEyebrow">{isOnboarding ? 'Primeros pasos' : 'Administración'}</p>
-                <h2 className="authTitle">{isOnboarding ? 'Configura tu hogar' : 'Editar hogar'}</h2>
+                <p className="authEyebrow">Primeros pasos</p>
+                <h2 className="authTitle">Configura tu hogar</h2>
                 <p className="authMeta">
-                    {isOnboarding
-                        ? 'Un hogar agrupa todos los gastos compartidos y los miembros.'
-                        : 'Actualiza el nombre, moneda y configuración del periodo.'}
+                    Un hogar agrupa todos los gastos compartidos y los miembros.
                 </p>
             </div>
 
-            {isOnboarding ? (
-                <Banner type="info">
-                    Bienvenido a micha. Para comenzar, necesitas crear tu primer hogar. Este paso es obligatorio.
-                </Banner>
-            ) : null}
+            <Banner type="info">
+                Bienvenido a micha. Para comenzar, necesitas crear tu primer hogar. Este paso es obligatorio.
+            </Banner>
 
             {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
 
@@ -236,28 +233,127 @@ export function OnboardingHouseholdPage() {
                 </div>
 
                 <div className="u-flex u-gap-4 u-mt-6">
-                    {!isOnboarding ? (
-                        <button
-                            type="button"
-                            className="btn u-flex-1"
-                            onClick={() => navigate('/rules')}
-                            disabled={busy}
-                        >
-                            Volver a ajustes
-                        </button>
-                    ) : null}
-
                     <button
                         type="submit"
-                        className={`btn btnPrimary u-flex-1 ${isOnboarding ? 'btnFull' : ''}`}
+                        className="btn btnPrimary u-flex-1 btnFull"
                         disabled={busy || !hhName.trim()}
                     >
                         {busy
-                            ? <><span className="spinIcon" aria-hidden>⟳</span> {isOnboarding ? 'Creando hogar…' : 'Guardando…'}</>
-                            : (isOnboarding ? 'Crear hogar →' : 'Guardar cambios')}
+                            ? <><span className="spinIcon" aria-hidden>⟳</span> Creando hogar…</>
+                            : 'Crear hogar →'}
                     </button>
                 </div>
             </form>
         </section>
+    ) : (
+        <motion.div
+            className="pageGrid"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+        >
+            <div className="dashboardCol">
+                <section className="card" aria-label="Editar hogar">
+                    <div className="listHeader">
+                        <h2 className="listTitle">Editar hogar</h2>
+                    </div>
+                    <p className="u-text-sm u-text-dim u-mb-3">
+                        Actualiza el nombre, moneda y configuración del periodo de tu hogar.
+                    </p>
+
+                    {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
+
+                    <form className="formStack" onSubmit={handleSubmit}>
+                        <div className="formSection">
+                            <h3 className="sectionTitle">Detalles del hogar</h3>
+                            <FormField label="Nombre del hogar" htmlFor="hhNameSettings">
+                                <input
+                                    id="hhNameSettings"
+                                    className="input"
+                                    placeholder="Ej. Casa Familia"
+                                    value={hhName}
+                                    onChange={(e) => setHhName(e.target.value)}
+                                    disabled={busy}
+                                    autoFocus
+                                />
+                            </FormField>
+                            <FormField label="Modo de liquidación" htmlFor="hhModeSettings">
+                                <select
+                                    id="hhModeSettings"
+                                    className="input"
+                                    value={settlementMode}
+                                    onChange={(e) => setSettlementMode(e.target.value)}
+                                    disabled={busy}
+                                >
+                                    <option value="equal">Dividir equitativamente</option>
+                                    <option value="proportional">Proporcional al salario</option>
+                                </select>
+                                <p className="formHint">{SETTLEMENT_HINTS[settlementMode]}</p>
+                            </FormField>
+                            <FormField label="Moneda" htmlFor="hhCurrencySettings">
+                                <select
+                                    id="hhCurrencySettings"
+                                    className="input"
+                                    value={currency}
+                                    onChange={(e) => setCurrency(e.target.value)}
+                                    disabled={busy}
+                                >
+                                    {CURRENCIES.map((c) => (
+                                        <option key={c.code} value={c.code}>{c.label}</option>
+                                    ))}
+                                </select>
+                            </FormField>
+
+                            <FormField label="Día de cierre" htmlFor="hhClosingDaySettings">
+                                <input
+                                    id="hhClosingDaySettings"
+                                    className="input"
+                                    type="number"
+                                    min="1"
+                                    max="31"
+                                    value={closingDay}
+                                    onChange={(e) => setClosingDay(e.target.value)}
+                                    disabled={busy}
+                                />
+                                <p className="formHint">Día del mes en que se cierra el periodo.</p>
+                            </FormField>
+
+                            <FormField label="Frecuencia del periodo" htmlFor="hhFrequencySettings">
+                                <select
+                                    id="hhFrequencySettings"
+                                    className="input"
+                                    value={periodFrequency}
+                                    onChange={(e) => setPeriodFrequency(e.target.value)}
+                                    disabled={busy}
+                                >
+                                    <option value="monthly">Mensual</option>
+                                    <option value="biweekly">Quincenal</option>
+                                </select>
+                            </FormField>
+                        </div>
+
+                        <div className="u-flex u-gap-4 u-mt-6">
+                            <button
+                                type="button"
+                                className="btn u-flex-1"
+                                onClick={() => navigate('/rules')}
+                                disabled={busy}
+                            >
+                                ← Volver a ajustes
+                            </button>
+                            <button
+                                type="submit"
+                                className="btn btnPrimary u-flex-1"
+                                disabled={busy || !hhName.trim()}
+                            >
+                                {busy
+                                    ? <><span className="spinIcon" aria-hidden>⟳</span> Guardando…</>
+                                    : 'Guardar cambios'}
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+        </motion.div>
     )
 }
