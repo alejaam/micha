@@ -87,4 +87,59 @@ describe('OnboardingFixedExpensesPage', () => {
         }))
         expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true })
     })
+
+    it('shows error and disables button when custom expense is partially filled', async () => {
+        render(
+            <MemoryRouter initialEntries={['/onboarding/fixed-expenses']}>
+                <OnboardingFixedExpensesPage />
+            </MemoryRouter>,
+        )
+
+        const customLabelInput = screen.getByLabelText('Nombre del gasto personalizado')
+        fireEvent.change(customLabelInput, { target: { value: 'Gimnasio' } })
+
+        // Save button appears but is disabled, and warning is shown
+        const saveBtn = screen.getByRole('button', { name: 'Guardar y continuar' })
+        expect(saveBtn).toBeDisabled()
+        expect(screen.getByText('Ingresa un nombre y un monto válido para el gasto personalizado.')).toBeInTheDocument()
+
+        // Once valid amount is provided, button is enabled
+        const customAmountInput = screen.getByLabelText('Monto mensual del gasto personalizado')
+        fireEvent.change(customAmountInput, { target: { value: '500' } })
+        expect(saveBtn).not.toBeDisabled()
+    })
+
+    it('does not duplicate previously saved items on partial save retry', async () => {
+        // First call succeeds (Renta), second fails (Internet)
+        mockCreateRecurringExpense
+            .mockResolvedValueOnce({})
+            .mockRejectedValueOnce(new Error('Network error on second item'))
+
+        render(
+            <MemoryRouter initialEntries={['/onboarding/fixed-expenses']}>
+                <OnboardingFixedExpensesPage />
+            </MemoryRouter>,
+        )
+
+        const rentBtn = await screen.findByText('Renta')
+        fireEvent.click(rentBtn)
+        const internetBtn = await screen.findByText('Internet')
+        fireEvent.click(internetBtn)
+
+        const saveBtn = screen.getByRole('button', { name: 'Guardar y continuar' })
+        fireEvent.click(saveBtn)
+
+        await waitFor(() => expect(screen.getByText('Network error on second item')).toBeInTheDocument())
+        expect(mockCreateRecurringExpense).toHaveBeenCalledTimes(2)
+
+        // Renta succeeded so it was deselected. Now mock success on retry:
+        mockCreateRecurringExpense.mockResolvedValueOnce({})
+        fireEvent.click(saveBtn)
+
+        // Only Internet should be retried (call #3), Renta should NOT be duplicated
+        await waitFor(() => expect(mockCreateRecurringExpense).toHaveBeenCalledTimes(3))
+        expect(mockCreateRecurringExpense).toHaveBeenLastCalledWith(expect.objectContaining({
+            description: 'Internet',
+        }))
+    })
 })

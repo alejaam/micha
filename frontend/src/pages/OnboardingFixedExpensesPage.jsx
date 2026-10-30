@@ -130,12 +130,16 @@ export function OnboardingFixedExpensesPage() {
     }
 
     const hasCustomEntry = customLabel.trim() !== '' && dollarsToCents(customAmount) !== null
+    const isCustomPartiallyFilled =
+        (customLabel.trim() !== '' && dollarsToCents(customAmount) === null) ||
+        (customLabel.trim() === '' && customAmount.trim() !== '')
 
     const hasValidSelection = useMemo(() => {
+        if (isCustomPartiallyFilled) return false
         if (selectedKeys.length === 0 && !hasCustomEntry) return false
         const servicesValid = selectedKeys.every((key) => dollarsToCents(amountByKey[key] ?? '') !== null)
         return servicesValid
-    }, [selectedKeys, amountByKey, hasCustomEntry])
+    }, [selectedKeys, amountByKey, hasCustomEntry, isCustomPartiallyFilled])
 
     // ── Edit handlers ───────────────────────────────────────────────────────
 
@@ -197,7 +201,7 @@ export function OnboardingFixedExpensesPage() {
     // ── Save new fixed expenses ────────────────────────────────────────────
 
     async function handleSave() {
-        if (!householdId) return
+        if (!householdId || !hasValidSelection || isCustomPartiallyFilled) return
 
         setSaving(true)
         setError('')
@@ -223,6 +227,18 @@ export function OnboardingFixedExpensesPage() {
                     recurrencePattern: 'monthly',
                     startDate,
                 })
+
+                // Deselect on success so retrying partial failure won't duplicate
+                setSelected((prev) => {
+                    const next = { ...prev }
+                    delete next[key]
+                    return next
+                })
+                setAmountByKey((prev) => {
+                    const next = { ...prev }
+                    delete next[key]
+                    return next
+                })
             }
 
             // Save custom entry if present
@@ -239,6 +255,8 @@ export function OnboardingFixedExpensesPage() {
                     recurrencePattern: 'monthly',
                     startDate,
                 })
+                setCustomLabel('')
+                setCustomAmount('')
             }
 
             // Refresh the list
@@ -250,7 +268,7 @@ export function OnboardingFixedExpensesPage() {
                 setMessage(`Tu período de ${currentMonth} ha comenzado automáticamente. ¡Bienvenido a micha!`)
                 navigate('/', { replace: true })
             } else {
-                // Clear form
+                // Clear any remaining state
                 setSelected({})
                 setAmountByKey({})
                 setCustomLabel('')
@@ -446,7 +464,6 @@ export function OnboardingFixedExpensesPage() {
                                                 value={amountByKey[item.key] ?? ''}
                                                 onChange={(e) => handleAmountChange(item.key, e.target.value)}
                                                 disabled={saving}
-                                                autoFocus
                                             />
                                         </div>
                                     )}
@@ -484,6 +501,11 @@ export function OnboardingFixedExpensesPage() {
                                     disabled={saving}
                                 />
                             </div>
+                            {isCustomPartiallyFilled && (
+                                <p className="u-text-danger u-text-xs u-mt-1" role="alert">
+                                    Ingresa un nombre y un monto válido para el gasto personalizado.
+                                </p>
+                            )}
                         </div>
                     </div>
                 </details>
@@ -523,7 +545,7 @@ export function OnboardingFixedExpensesPage() {
                     </div>
                 </div>
 
-                {(selectedKeys.length > 0 || hasCustomEntry) && (
+                {(selectedKeys.length > 0 || hasCustomEntry || isCustomPartiallyFilled) && (
                     <button
                         type="button"
                         className="btn btnPrimary u-flex-1"
