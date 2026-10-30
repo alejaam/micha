@@ -165,7 +165,7 @@ export function AppHeader({
           aria-label={`Cambiar tema. Modo actual: ${theme === 'auto' ? `Dispositivo (${resolvedTheme === 'dark' ? 'Oscuro' : 'Claro'})` : theme === 'dark' ? 'Oscuro' : 'Claro'}`}
           title={`Tema: ${theme === 'auto' ? `Dispositivo (${resolvedTheme === 'dark' ? 'Oscuro' : 'Claro'})` : theme === 'dark' ? 'Oscuro' : 'Claro'}`}
         >
-          <span aria-hidden>{resolvedTheme === 'dark' ? '🌙' : '☀️'}</span>
+          <span aria-hidden>{theme === 'auto' ? '💻' : resolvedTheme === 'dark' ? '🌙' : '☀️'}</span>
         </button>
 
         <UserMenu user={user} households={households} householdId={householdId} onHouseholdChange={onHouseholdChange} onLogout={onLogout} health={health} />

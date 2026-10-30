@@ -107,7 +107,7 @@ describe('ThemeContext', () => {
         expect(document.documentElement.getAttribute('data-theme')).toBe('light')
     })
 
-    it('cycles theme with toggleTheme', () => {
+    it('cycles theme with toggleTheme when system is light', () => {
         matchesDark = false
         const { result } = renderHook(() => useTheme(), { wrapper: ThemeProvider })
 
@@ -127,5 +127,34 @@ describe('ThemeContext', () => {
             result.current.toggleTheme()
         })
         expect(result.current.theme).toBe('auto')
+    })
+
+    it('cycles theme with toggleTheme when system is dark without no-op first click', () => {
+        matchesDark = true
+        const { result } = renderHook(() => useTheme(), { wrapper: ThemeProvider })
+
+        expect(result.current.theme).toBe('auto')
+        expect(result.current.resolvedTheme).toBe('dark')
+
+        // First click switches to light (never a visual no-op)
+        act(() => {
+            result.current.toggleTheme()
+        })
+        expect(result.current.theme).toBe('light')
+        expect(result.current.resolvedTheme).toBe('light')
+
+        // Second click switches to manual dark
+        act(() => {
+            result.current.toggleTheme()
+        })
+        expect(result.current.theme).toBe('dark')
+        expect(result.current.resolvedTheme).toBe('dark')
+
+        // Third click returns to auto
+        act(() => {
+            result.current.toggleTheme()
+        })
+        expect(result.current.theme).toBe('auto')
+        expect(result.current.resolvedTheme).toBe('dark')
     })
 })

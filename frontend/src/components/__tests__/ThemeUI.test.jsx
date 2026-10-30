@@ -27,13 +27,16 @@ describe('Theme UI integration', () => {
 
         const toggleBtn = screen.getByRole('button', { name: /cambiar tema/i })
         expect(toggleBtn).toBeInTheDocument()
+        expect(toggleBtn).toHaveTextContent('💻')
 
         // Click toggle -> switches theme
         fireEvent.click(toggleBtn)
         expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+        expect(toggleBtn).toHaveTextContent('🌙')
 
         fireEvent.click(toggleBtn)
         expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+        expect(toggleBtn).toHaveTextContent('☀️')
     })
 
     it('renders theme options in UserMenu and allows selecting auto, light, dark', () => {

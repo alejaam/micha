@@ -11,6 +11,18 @@ function getSystemPrefersDark() {
     return window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
+function getNextTheme(currentTheme, systemPrefersDark) {
+    if (systemPrefersDark) {
+        if (currentTheme === 'auto') return 'light'
+        if (currentTheme === 'light') return 'dark'
+        return 'auto'
+    } else {
+        if (currentTheme === 'auto') return 'dark'
+        if (currentTheme === 'dark') return 'light'
+        return 'auto'
+    }
+}
+
 export function ThemeProvider({ children }) {
     const [theme, setThemeState] = useState(() => {
         try {
@@ -72,23 +84,9 @@ export function ThemeProvider({ children }) {
     }, [])
 
     const toggleTheme = useCallback(() => {
-        setThemeState((current) => {
-            let next
-            if (current === 'auto') {
-                next = 'dark'
-            } else if (current === 'dark') {
-                next = 'light'
-            } else {
-                next = 'auto'
-            }
-            try {
-                localStorage.setItem(THEME_STORAGE_KEY, next)
-            } catch {
-                // ignore
-            }
-            return next
-        })
-    }, [])
+        const next = getNextTheme(theme, systemPrefersDark)
+        setTheme(next)
+    }, [theme, systemPrefersDark, setTheme])
 
     const value = useMemo(() => ({
         theme,
