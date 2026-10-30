@@ -85,17 +85,21 @@ func TestApply_Integration(t *testing.T) {
 		t.Fatalf("second Apply should succeed idempotently: %v", applyErr)
 	}
 
-	// Test backfill: clear checksum in DB and re-apply
+	// Test empty checksum: clearing checksum on non-baseline migration must fail tamper check
 	if _, execErr := pool.Exec(ctx, "UPDATE schema_migrations SET checksum = '' WHERE filename = '001_test_migration.sql'"); execErr != nil {
 		t.Fatalf("clear checksum failed: %v", execErr)
 	}
-	if applyErr := Apply(ctx, pool, tmpDir); applyErr != nil {
-		t.Fatalf("Apply should backfill empty checksum: %v", applyErr)
+	if applyErr := Apply(ctx, pool, tmpDir); applyErr == nil {
+		t.Fatalf("Apply should reject empty checksum on unverified migration, got nil")
 	}
-	var backfilledChecksum string
-	_ = pool.QueryRow(ctx, "SELECT checksum FROM schema_migrations WHERE filename = '001_test_migration.sql'").Scan(&backfilledChecksum)
-	if backfilledChecksum == "" {
-		t.Error("expected checksum to be backfilled, got empty")
+
+	// Restore valid checksum
+	sum, err := fileChecksum(mig1)
+	if err != nil {
+		t.Fatalf("fileChecksum: %v", err)
+	}
+	if _, execErr := pool.Exec(ctx, "UPDATE schema_migrations SET checksum = $1 WHERE filename = '001_test_migration.sql'", sum); execErr != nil {
+		t.Fatalf("restore checksum failed: %v", execErr)
 	}
 
 	// Tampering with the file should trigger checksum error

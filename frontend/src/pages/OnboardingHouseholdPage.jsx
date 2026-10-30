@@ -24,6 +24,145 @@ const SETTLEMENT_HINTS = {
     proportional: 'Los miembros que ganan más contribuyen con una mayor parte de los gastos.',
 }
 
+function HouseholdForm({
+    isOnboarding,
+    hhName,
+    setHhName,
+    settlementMode,
+    setSettlementMode,
+    currency,
+    setCurrency,
+    closingDay,
+    setClosingDay,
+    periodFrequency,
+    setPeriodFrequency,
+    salary,
+    setSalary,
+    busy,
+    onSubmit,
+    onCancel,
+}) {
+    const idPrefix = isOnboarding ? 'hh' : 'hhEdit'
+
+    return (
+        <form className="formStack" onSubmit={onSubmit}>
+            <div className="formSection">
+                <h3 className="sectionTitle">Detalles del hogar</h3>
+                <FormField label="Nombre del hogar" htmlFor={`${idPrefix}Name`}>
+                    <input
+                        id={`${idPrefix}Name`}
+                        className="input"
+                        placeholder="Ej. Casa Familia"
+                        value={hhName}
+                        onChange={(e) => setHhName(e.target.value)}
+                        disabled={busy}
+                        autoFocus
+                    />
+                </FormField>
+                <FormField label="Modo de liquidación" htmlFor={`${idPrefix}Mode`}>
+                    <select
+                        id={`${idPrefix}Mode`}
+                        className="input"
+                        value={settlementMode}
+                        onChange={(e) => setSettlementMode(e.target.value)}
+                        disabled={busy}
+                    >
+                        <option value="equal">Dividir equitativamente</option>
+                        <option value="proportional">Proporcional al salario</option>
+                    </select>
+                    <p className="formHint">{SETTLEMENT_HINTS[settlementMode]}</p>
+                </FormField>
+                <FormField label="Moneda" htmlFor={`${idPrefix}Currency`}>
+                    <select
+                        id={`${idPrefix}Currency`}
+                        className="input"
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value)}
+                        disabled={busy}
+                    >
+                        {CURRENCIES.map((c) => (
+                            <option key={c.code} value={c.code}>{c.label}</option>
+                        ))}
+                    </select>
+                </FormField>
+
+                <FormField label="Día de cierre" htmlFor={`${idPrefix}ClosingDay`}>
+                    <input
+                        id={`${idPrefix}ClosingDay`}
+                        className="input"
+                        type="number"
+                        min="1"
+                        max="31"
+                        value={closingDay}
+                        onChange={(e) => setClosingDay(e.target.value)}
+                        disabled={busy}
+                    />
+                    <p className="formHint">Día del mes en que se cierra el periodo.</p>
+                </FormField>
+
+                <FormField label="Frecuencia del periodo" htmlFor={`${idPrefix}Frequency`}>
+                    <select
+                        id={`${idPrefix}Frequency`}
+                        className="input"
+                        value={periodFrequency}
+                        onChange={(e) => setPeriodFrequency(e.target.value)}
+                        disabled={busy}
+                    >
+                        <option value="monthly">Mensual</option>
+                        <option value="biweekly">Quincenal</option>
+                    </select>
+                </FormField>
+
+                {isOnboarding && (
+                    <FormField label="Tu salario mensual (opcional)" htmlFor={`${idPrefix}Salary`}>
+                        <div className="inputWrap">
+                            <span className="inputPrefix" aria-hidden>$</span>
+                            <input
+                                id={`${idPrefix}Salary`}
+                                className="input inputWithPrefix"
+                                type="text"
+                                inputMode="decimal"
+                                placeholder="0.00"
+                                value={salary}
+                                onChange={(e) => setSalary(sanitizeAmountInput(e.target.value))}
+                                disabled={busy}
+                            />
+                        </div>
+                        <p className="formHint">Tu salario mensual bruto. Se usará para calcular la distribución proporcional de gastos.</p>
+                    </FormField>
+                )}
+            </div>
+
+            <div className="u-flex u-gap-4 u-mt-6">
+                {!isOnboarding && onCancel && (
+                    <button
+                        type="button"
+                        className="btn u-flex-1"
+                        onClick={onCancel}
+                        disabled={busy}
+                    >
+                        ← Volver a ajustes
+                    </button>
+                )}
+                <button
+                    type="submit"
+                    className={`btn btnPrimary u-flex-1 ${isOnboarding ? 'btnFull' : ''}`}
+                    disabled={busy || !hhName.trim()}
+                >
+                    {busy ? (
+                        <>
+                            <span className="spinIcon" aria-hidden>⟳</span>{' '}
+                            {isOnboarding ? 'Creando hogar…' : 'Guardando…'}
+                        </>
+                    ) : (
+                        isOnboarding ? 'Crear hogar →' : 'Guardar cambios'
+                    )}
+                </button>
+            </div>
+        </form>
+    )
+}
+
 export function OnboardingHouseholdPage() {
     const { handleProtectedError } = useAuth()
     const { householdId, selectedHousehold, setHouseholdId, loadHouseholds } = useAppShell()
@@ -144,106 +283,23 @@ export function OnboardingHouseholdPage() {
 
             {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
 
-            <form className="formStack" onSubmit={handleSubmit}>
-                <div className="formSection">
-                    <h3 className="sectionTitle">Detalles del hogar</h3>
-                    <FormField label="Nombre del hogar" htmlFor="hhName">
-                        <input
-                            id="hhName"
-                            className="input"
-                            placeholder="Ej. Casa Familia"
-                            value={hhName}
-                            onChange={(e) => setHhName(e.target.value)}
-                            disabled={busy}
-                            autoFocus
-                        />
-                    </FormField>
-                    <FormField label="Modo de liquidación" htmlFor="hhMode">
-                        <select
-                            id="hhMode"
-                            className="input"
-                            value={settlementMode}
-                            onChange={(e) => setSettlementMode(e.target.value)}
-                            disabled={busy}
-                        >
-                            <option value="equal">Dividir equitativamente</option>
-                            <option value="proportional">Proporcional al salario</option>
-                        </select>
-                        <p className="formHint">{SETTLEMENT_HINTS[settlementMode]}</p>
-                    </FormField>
-                    <FormField label="Moneda" htmlFor="hhCurrency">
-                        <select
-                            id="hhCurrency"
-                            className="input"
-                            value={currency}
-                            onChange={(e) => setCurrency(e.target.value)}
-                            disabled={busy}
-                        >
-                            {CURRENCIES.map((c) => (
-                                <option key={c.code} value={c.code}>{c.label}</option>
-                            ))}
-                        </select>
-                    </FormField>
-
-                    <FormField label="Día de cierre" htmlFor="hhClosingDay">
-                        <input
-                            id="hhClosingDay"
-                            className="input"
-                            type="number"
-                            min="1"
-                            max="31"
-                            value={closingDay}
-                            onChange={(e) => setClosingDay(e.target.value)}
-                            disabled={busy}
-                        />
-                        <p className="formHint">Día del mes en que se cierra el periodo.</p>
-                    </FormField>
-
-                    <FormField label="Frecuencia del periodo" htmlFor="hhFrequency">
-                        <select
-                            id="hhFrequency"
-                            className="input"
-                            value={periodFrequency}
-                            onChange={(e) => setPeriodFrequency(e.target.value)}
-                            disabled={busy}
-                        >
-                            <option value="monthly">Mensual</option>
-                            <option value="biweekly">Quincenal</option>
-                        </select>
-                    </FormField>
-
-                    {isOnboarding && (
-                        <FormField label="Tu salario mensual (opcional)" htmlFor="hhSalary">
-                            <div className="inputWrap">
-                                <span className="inputPrefix" aria-hidden>$</span>
-                                <input
-                                    id="hhSalary"
-                                    className="input inputWithPrefix"
-                                    type="text"
-                                    inputMode="decimal"
-                                    placeholder="0.00"
-                                    value={salary}
-                                    onChange={(e) => setSalary(sanitizeAmountInput(e.target.value))}
-                                    disabled={busy}
-                                />
-                            </div>
-                            <p className="formHint">Tu salario mensual bruto. Se usará para calcular la distribución proporcional de gastos.</p>
-                        </FormField>
-                    )}
-                </div>
-
-                <div className="u-flex u-gap-4 u-mt-6">
-                    <button
-                        type="submit"
-                        className="btn btnPrimary u-flex-1 btnFull"
-                        disabled={busy || !hhName.trim()}
-                    >
-                        {busy
-                            ? <><span className="spinIcon" aria-hidden>⟳</span> Creando hogar…</>
-                            : 'Crear hogar →'}
-                    </button>
-                </div>
-            </form>
+            <HouseholdForm
+                isOnboarding
+                hhName={hhName}
+                setHhName={setHhName}
+                settlementMode={settlementMode}
+                setSettlementMode={setSettlementMode}
+                currency={currency}
+                setCurrency={setCurrency}
+                closingDay={closingDay}
+                setClosingDay={setClosingDay}
+                periodFrequency={periodFrequency}
+                setPeriodFrequency={setPeriodFrequency}
+                salary={salary}
+                setSalary={setSalary}
+                busy={busy}
+                onSubmit={handleSubmit}
+            />
         </section>
     ) : (
         <motion.div
@@ -263,95 +319,24 @@ export function OnboardingHouseholdPage() {
 
                     {error ? <Banner type="error" floating onDismiss={() => setError('')}>{error}</Banner> : null}
 
-                    <form className="formStack" onSubmit={handleSubmit}>
-                        <div className="formSection">
-                            <h3 className="sectionTitle">Detalles del hogar</h3>
-                            <FormField label="Nombre del hogar" htmlFor="hhNameSettings">
-                                <input
-                                    id="hhNameSettings"
-                                    className="input"
-                                    placeholder="Ej. Casa Familia"
-                                    value={hhName}
-                                    onChange={(e) => setHhName(e.target.value)}
-                                    disabled={busy}
-                                    autoFocus
-                                />
-                            </FormField>
-                            <FormField label="Modo de liquidación" htmlFor="hhModeSettings">
-                                <select
-                                    id="hhModeSettings"
-                                    className="input"
-                                    value={settlementMode}
-                                    onChange={(e) => setSettlementMode(e.target.value)}
-                                    disabled={busy}
-                                >
-                                    <option value="equal">Dividir equitativamente</option>
-                                    <option value="proportional">Proporcional al salario</option>
-                                </select>
-                                <p className="formHint">{SETTLEMENT_HINTS[settlementMode]}</p>
-                            </FormField>
-                            <FormField label="Moneda" htmlFor="hhCurrencySettings">
-                                <select
-                                    id="hhCurrencySettings"
-                                    className="input"
-                                    value={currency}
-                                    onChange={(e) => setCurrency(e.target.value)}
-                                    disabled={busy}
-                                >
-                                    {CURRENCIES.map((c) => (
-                                        <option key={c.code} value={c.code}>{c.label}</option>
-                                    ))}
-                                </select>
-                            </FormField>
-
-                            <FormField label="Día de cierre" htmlFor="hhClosingDaySettings">
-                                <input
-                                    id="hhClosingDaySettings"
-                                    className="input"
-                                    type="number"
-                                    min="1"
-                                    max="31"
-                                    value={closingDay}
-                                    onChange={(e) => setClosingDay(e.target.value)}
-                                    disabled={busy}
-                                />
-                                <p className="formHint">Día del mes en que se cierra el periodo.</p>
-                            </FormField>
-
-                            <FormField label="Frecuencia del periodo" htmlFor="hhFrequencySettings">
-                                <select
-                                    id="hhFrequencySettings"
-                                    className="input"
-                                    value={periodFrequency}
-                                    onChange={(e) => setPeriodFrequency(e.target.value)}
-                                    disabled={busy}
-                                >
-                                    <option value="monthly">Mensual</option>
-                                    <option value="biweekly">Quincenal</option>
-                                </select>
-                            </FormField>
-                        </div>
-
-                        <div className="u-flex u-gap-4 u-mt-6">
-                            <button
-                                type="button"
-                                className="btn u-flex-1"
-                                onClick={() => navigate('/rules')}
-                                disabled={busy}
-                            >
-                                ← Volver a ajustes
-                            </button>
-                            <button
-                                type="submit"
-                                className="btn btnPrimary u-flex-1"
-                                disabled={busy || !hhName.trim()}
-                            >
-                                {busy
-                                    ? <><span className="spinIcon" aria-hidden>⟳</span> Guardando…</>
-                                    : 'Guardar cambios'}
-                            </button>
-                        </div>
-                    </form>
+                    <HouseholdForm
+                        isOnboarding={false}
+                        hhName={hhName}
+                        setHhName={setHhName}
+                        settlementMode={settlementMode}
+                        setSettlementMode={setSettlementMode}
+                        currency={currency}
+                        setCurrency={setCurrency}
+                        closingDay={closingDay}
+                        setClosingDay={setClosingDay}
+                        periodFrequency={periodFrequency}
+                        setPeriodFrequency={setPeriodFrequency}
+                        salary={salary}
+                        setSalary={setSalary}
+                        busy={busy}
+                        onSubmit={handleSubmit}
+                        onCancel={() => navigate('/rules')}
+                    />
                 </section>
             </div>
         </motion.div>
