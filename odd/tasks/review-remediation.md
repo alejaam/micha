@@ -20,7 +20,7 @@ Remediation of 10 audit findings covering backend migration safety, onboarding f
 - [x] T1: Fix backend migrations advisory lock, single connection execution, and baseline reconciliation/checksum rules (Linked S1, S2, S3) [inline] commit: baa8116
 - [x] T2: Fix onboarding fixed expenses partial save retry, selection guard, half-filled custom validation, and remove autoFocus (Linked S4, S5, S6, S9) [inline] commit: ceafa23
 - [x] T3: Fix theme initial flash with index.html inline script, purify updater, and improve quick toggle icon & cycle (Linked S7, S8) [inline] commit: 8c4117a
-- [ ] T4: Refactor OnboardingHouseholdPage to extract duplicated form branches into a shared component (Linked S10) [inline]
+- [x] T4: Refactor OnboardingHouseholdPage to extract duplicated form branches into a shared component (Linked S10) [inline] commit: e7f7557
 
 ## Log
 
