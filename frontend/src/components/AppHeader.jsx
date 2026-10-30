@@ -4,6 +4,7 @@ import { listPeriods } from '../api'
 import { PeriodSelector } from './PeriodSelector'
 import { PeriodStatusRibbon } from './PeriodStatusRibbon'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { UserMenu } from './UserMenu'
 
 const MONTH_NAMES = [
@@ -44,6 +45,7 @@ export function AppHeader({
   onSelectPeriod = null,
 }) {
   const { user } = useAuth()
+  const { theme, resolvedTheme, toggleTheme } = useTheme()
   const periodName = formatPeriodName(currentPeriod)
 
   const [allPeriods, setAllPeriods] = useState([])
@@ -153,6 +155,17 @@ export function AppHeader({
         >
           <span className={isLoading ? 'spinIcon' : ''} aria-hidden>⟳</span>
           {isLoading ? 'Cargando…' : 'Actualizar'}
+        </button>
+
+        {/* Theme quick toggle */}
+        <button
+          type="button"
+          className="btn btnGhost btnSm themeToggleBtn"
+          onClick={toggleTheme}
+          aria-label={`Cambiar tema. Modo actual: ${theme === 'auto' ? `Dispositivo (${resolvedTheme === 'dark' ? 'Oscuro' : 'Claro'})` : theme === 'dark' ? 'Oscuro' : 'Claro'}`}
+          title={`Tema: ${theme === 'auto' ? `Dispositivo (${resolvedTheme === 'dark' ? 'Oscuro' : 'Claro'})` : theme === 'dark' ? 'Oscuro' : 'Claro'}`}
+        >
+          <span aria-hidden>{resolvedTheme === 'dark' ? '🌙' : '☀️'}</span>
         </button>
 
         <UserMenu user={user} households={households} householdId={householdId} onHouseholdChange={onHouseholdChange} onLogout={onLogout} health={health} />
