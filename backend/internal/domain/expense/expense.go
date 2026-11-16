@@ -19,12 +19,7 @@ var (
 
 // "A cargo de" (charged to member) errors.
 var (
-	// ErrChargedToNotAllowed is returned when an expense type cannot be charged
-	// in full to a single member (household-level fixed expenses and MSI roots).
-	ErrChargedToNotAllowed = errors.New("charged_to_member_id is only allowed for variable expenses")
-
-	// ErrInvalidChargedToMemberID is returned when the "a cargo de" member does not
-	// exist or belongs to another household.
+	ErrChargedToNotAllowed      = errors.New("charged_to_member_id is only allowed for variable expenses")
 	ErrInvalidChargedToMemberID = errors.New("invalid charged to member id")
 )
 

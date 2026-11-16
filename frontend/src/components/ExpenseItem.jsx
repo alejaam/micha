@@ -12,7 +12,6 @@ import { dollarsToCents, formatCurrency, formatRelativeDate } from '../utils'
  * @param {(id:string)=>void}     onDelete
  * @param {({id,amountCents,description})=>void} onSave
  * @param {number} animIndex     - Staggered entrance delay index
- * @param {string} chargedToName - Member the expense is "a cargo de" (empty = shared)
  */
 export function ExpenseItem({
   item,
@@ -79,11 +78,7 @@ export function ExpenseItem({
               </span>
             ) : null}
             {chargedToName ? (
-              <span className="expenseMsiMeta">
-                <span className="expenseChargedChip" title="No se reparte: se cobra completo a este miembro en la liquidación">
-                  A cargo de {chargedToName}
-                </span>
-              </span>
+              <span className="expenseChargedChip" title="No se reparte: se cobra completo a este miembro en la liquidación">A cargo de {chargedToName}</span>
             ) : null}
           </div>
 

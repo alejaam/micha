@@ -49,12 +49,13 @@ func (h settlementHandler) handleGetMonthly(w http.ResponseWriter, r *http.Reque
 	members := make([]map[string]any, 0, len(out.Members))
 	for _, m := range out.Members {
 		members = append(members, map[string]any{
-			"member_id":            m.MemberID,
-			"name":                 m.Name,
-			"paid_cents":           m.PaidCents,
-			"expected_share":       m.ExpectedShare,
-			"net_balance_cents":    m.NetBalanceCents,
-			"salary_weight_bps":    m.SalaryWeightBps,
+			"member_id":         m.MemberID,
+			"name":              m.Name,
+			"paid_cents":        m.PaidCents,
+			"expected_share":    m.ExpectedShare,
+			"net_balance_cents": m.NetBalanceCents,
+			"salary_weight_bps": m.SalaryWeightBps,
+
 			"charged_cents":        m.ChargedCents,
 			"charged_credit_cents": m.ChargedCreditCents,
 		})
@@ -80,8 +81,6 @@ func (h settlementHandler) handleGetMonthly(w http.ResponseWriter, r *http.Reque
 			"total_shared_cents":        out.TotalSharedCents,
 			"included_expense_count":    out.IncludedExpenseCount,
 			"excluded_voucher_count":    out.ExcludedVoucherCount,
-			"charged_expense_count":     out.ChargedExpenseCount,
-			"total_charged_cents":       out.TotalChargedCents,
 			"members":                   members,
 			"transfers":                 transfers,
 		},

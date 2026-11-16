@@ -687,73 +687,34 @@ func seedExpense(t *testing.T, repo *mockRepo, id, householdID string, amountCen
 	return &e
 }
 
-func TestRegisterExpense_ChargedToMember_Persisted(t *testing.T) {
+func TestRegisterExpense_ChargedToMember(t *testing.T) {
 	t.Parallel()
 	repo := newMockRepo()
-	hhRepo := newMockHouseholdRepo("hh-1")
 	mRepo := newMockMemberRepo()
 	mRepo.seedMemberWithUser("m-1", "hh-1", "u-1", time.Now())
 	mRepo.seedMemberWithUser("m-2", "hh-1", "u-2", time.Now())
+	mRepo.seedMemberWithUser("m-x", "hh-2", "u-x", time.Now())
 	catRepo := newMockCategoryRepo()
 	catRepo.seedCategory("cat-other", "hh-1", "other")
 	catRepo.seedCategory("cat-personal", "hh-1", "personal")
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, newMockCardRepo(), catRepo, newMockInstallmentRepo(), newMockPeriodRepo(), &mockTxManager{}, staticIDGen("exp-1"))
-
-	_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
-		HouseholdID:       "hh-1",
-		PaidByMemberID:    "m-1",
-		CurrentUserID:     "u-1",
-		AmountCents:       142500,
-		Description:       "Casco",
-		IsShared:          false,
-		Currency:          "MXN",
-		PaymentMethod:     "cash",
-		ExpenseType:       "variable",
-		CategoryID:        "personal",
-		ChargedToMemberID: "m-2",
-	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	uc := expenseapp.NewRegisterExpenseUseCase(repo, newMockHouseholdRepo("hh-1"), mRepo, newMockCardRepo(), catRepo, newMockInstallmentRepo(), newMockPeriodRepo(), &mockTxManager{}, staticIDGen("exp-1"))
+	input := func(chargedTo string) inbound.RegisterExpenseInput {
+		return inbound.RegisterExpenseInput{HouseholdID: "hh-1", PaidByMemberID: "m-1", CurrentUserID: "u-1", AmountCents: 142500, Description: "Casco", Currency: "MXN", PaymentMethod: "cash", ExpenseType: "variable", CategoryID: "personal", ChargedToMemberID: chargedTo}
 	}
 
+	for _, chargedTo := range []string{"m-x", "m-missing"} {
+		if _, err := uc.Execute(context.Background(), input(chargedTo)); !errors.Is(err, expense.ErrInvalidChargedToMemberID) {
+			t.Fatalf("charged to %q: expected ErrInvalidChargedToMemberID, got %v", chargedTo, err)
+		}
+	}
+	if _, err := uc.Execute(context.Background(), input("m-2")); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	saved, err := repo.FindByID(context.Background(), "exp-1")
 	if err != nil {
 		t.Fatalf("find saved expense: %v", err)
 	}
-	if saved.ChargedToMemberID() != "m-2" {
-		t.Fatalf("charged to = %q, want m-2", saved.ChargedToMemberID())
-	}
-	if !saved.IsShared() {
-		t.Fatalf("expected charged-to expense to stay in the settlement (is_shared=true)")
-	}
-}
-
-func TestRegisterExpense_ChargedToMember_OtherHousehold_Rejected(t *testing.T) {
-	t.Parallel()
-	repo := newMockRepo()
-	hhRepo := newMockHouseholdRepo("hh-1")
-	mRepo := newMockMemberRepo()
-	mRepo.seedMemberWithUser("m-1", "hh-1", "u-1", time.Now())
-	mRepo.seedMemberWithUser("m-x", "hh-2", "u-x", time.Now())
-	catRepo := newMockCategoryRepo()
-	catRepo.seedCategory("cat-other", "hh-1", "other")
-	uc := expenseapp.NewRegisterExpenseUseCase(repo, hhRepo, mRepo, newMockCardRepo(), catRepo, newMockInstallmentRepo(), newMockPeriodRepo(), &mockTxManager{}, staticIDGen("exp-1"))
-
-	for _, chargedTo := range []string{"m-x", "m-missing"} {
-		_, err := uc.Execute(context.Background(), inbound.RegisterExpenseInput{
-			HouseholdID:       "hh-1",
-			PaidByMemberID:    "m-1",
-			CurrentUserID:     "u-1",
-			AmountCents:       1000,
-			Description:       "Casco",
-			IsShared:          true,
-			Currency:          "MXN",
-			PaymentMethod:     "cash",
-			ExpenseType:       "variable",
-			ChargedToMemberID: chargedTo,
-		})
-		if !errors.Is(err, expense.ErrInvalidChargedToMemberID) {
-			t.Fatalf("charged to %q: expected ErrInvalidChargedToMemberID, got %v", chargedTo, err)
-		}
+	if saved.ChargedToMemberID() != "m-2" || !saved.IsShared() {
+		t.Fatalf("charged to = %q shared = %v, want m-2 / true", saved.ChargedToMemberID(), saved.IsShared())
 	}
 }

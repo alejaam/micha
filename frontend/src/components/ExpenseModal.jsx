@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from 'react'
 import { listCards, listCategories } from '../api'
 import { FormField } from '../ui/FormField'
@@ -162,11 +163,6 @@ export function ExpenseModal({
 
     // "A cargo de" only applies to regular (variable) expenses.
     const canChargeToMember = expenseType === 'variable'
-    const chargedToMemberName = members.find((m) => m.id === chargedToMemberId)?.name || ''
-
-    useEffect(() => {
-        if (!canChargeToMember) setChargedToMemberId('')
-    }, [canChargeToMember])
 
     const isCurrentMemberSelected = paidByMemberId === defaultPaidByMemberId && defaultPaidByMemberId !== ''
 
@@ -407,15 +403,7 @@ export function ExpenseModal({
                                         </option>
                                     ))}
                                 </select>
-                                {chargedToMemberId ? (
-                                    <p className="formHint">
-                                        No se reparte: en la liquidación {chargedToMemberName || "ese miembro"} cubre el monto completo a quien lo pagó.
-                                    </p>
-                                ) : (
-                                    <p className="formHint">
-                                        Solo para excepciones: algo que pagó un miembro pero le corresponde completo a otro.
-                                    </p>
-                                )}
+                                <p className="formHint">Solo excepciones: lo pagó un miembro pero le corresponde completo a otro.</p>
                             </FormField>
                         )}
                     </div>

@@ -84,7 +84,7 @@ export function ExpenseList({
                onDelete={onDelete}
               onSave={onSave}
               currency={currency}
-              chargedToName={item.charged_to_member_id ? memberNames.get(item.charged_to_member_id) || '' : ''}
+              chargedToName={memberNames.get(item.charged_to_member_id) || ''}
             />
           ))}
         </ul>
