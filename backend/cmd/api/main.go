@@ -84,7 +84,14 @@ func main() {
 	txManager := postgres.NewTransactionManager(pool)
 
 	hasher := infraauth.NewBcryptHasher()
-	inviteSender := infraauth.NewLogInviteCodeSender()
+	inviteSender, err := infraauth.NewInviteSender(cfg.InviteDelivery, cfg.Environment)
+	if err != nil {
+		slog.Error("invalid invite delivery configuration", "error", err)
+		os.Exit(1)
+	}
+	if cfg.InviteDelivery == "" {
+		slog.Warn("INVITE_DELIVERY not set: member invitations will fail until a delivery adapter is configured")
+	}
 	signer, err := infraauth.NewJWTSigner(cfg.JWTSecret)
 	if err != nil {
 		slog.Error("failed to create JWT signer", "error", err)
