@@ -42,6 +42,7 @@ type Result struct {
 	TotalSharedCents        int64
 	IncludedExpenseCount    int
 	ExcludedVoucherCount    int
+	ChargedFallbackCount    int // "A cargo de" expenses split as shared because the assigned member is inactive.
 	Members                 []MemberResult
 	Transfers               []Transfer
 }
@@ -68,17 +69,21 @@ func Calculate(mode household.SettlementMode, members []member.Member, expenses 
 		}
 
 		// "A cargo de" exception: the full amount is owed by the assigned member
-		// and credited to the payer, outside the shared split. If either member is
-		// no longer active (e.g. the assigned member was removed), the expense
-		// falls back to the normal shared treatment.
+		// and credited to the payer, outside the shared split. If the assigned
+		// member is no longer active, the expense falls back to the normal shared
+		// treatment and is reported via ChargedFallbackCount. If only the payer is
+		// no longer active, the user's explicit mark is still honoured: the
+		// assigned member owes the full amount and, as with any shared expense
+		// whose payer is inactive, there is no active member to credit.
 		if chargedTo := e.ChargedToMemberID(); chargedTo != "" {
-			chargedIdx, chargedOK := memberIndex[chargedTo]
-			payerIdx, payerOK := memberIndex[e.PaidByMemberID()]
-			if chargedOK && payerOK {
+			if chargedIdx, chargedOK := memberIndex[chargedTo]; chargedOK {
 				memberResults[chargedIdx].ChargedCents += e.AmountCents()
-				memberResults[payerIdx].ChargedCreditCents += e.AmountCents()
+				if payerIdx, payerOK := memberIndex[e.PaidByMemberID()]; payerOK {
+					memberResults[payerIdx].ChargedCreditCents += e.AmountCents()
+				}
 				continue
 			}
+			result.ChargedFallbackCount++
 		}
 
 		if !e.IsShared() {

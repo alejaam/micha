@@ -52,7 +52,8 @@ type CalculateSettlementOutput struct {
 	TotalSharedCents        int64
 	IncludedExpenseCount    int
 	ExcludedVoucherCount    int
-	Members               []MemberSettlement
+	ChargedFallbackCount    int // "A cargo de" expenses split as shared because the assigned member is inactive.
+	Members                 []MemberSettlement
 	Transfers               []SettlementTransfer
 }
 

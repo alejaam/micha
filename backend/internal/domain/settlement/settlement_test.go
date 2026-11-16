@@ -164,24 +164,31 @@ func TestCalculate_ChargedToMember(t *testing.T) {
 		return mustExpense(t, expense.ExpenseAttributes{ID: expense.ID(id), HouseholdID: "hh-1", PaidByMemberID: paidBy, ChargedToMemberID: chargedTo, AmountCents: amount, Description: id, IsShared: true, Currency: "MXN", CreatedAt: time.Now()})
 	}
 	cases := []struct {
-		name       string
-		mode       household.SettlementMode
-		salaryA    int64
-		expenses   []expense.Expense
-		wantShared int64
-		want       []settlement.Transfer
+		name         string
+		mode         household.SettlementMode
+		salaryA      int64
+		expenses     []expense.Expense
+		wantShared   int64
+		wantFallback int
+		wantNetB     int64
+		want         []settlement.Transfer
 	}{
 		{"acceptance 50/50", household.SettlementModeEqual, 100000,
 			[]expense.Expense{exp("e-1", "m-a", "", 600892), exp("e-2", "m-a", "m-b", 142500)},
-			600892, []settlement.Transfer{{FromMemberID: "m-b", ToMemberID: "m-a", AmountCents: 442946}}},
+			600892, 0, -442946, []settlement.Transfer{{FromMemberID: "m-b", ToMemberID: "m-a", AmountCents: 442946}}},
 		{"proportional not split", household.SettlementModeProportional, 300000,
 			[]expense.Expense{exp("e-1", "m-b", "m-a", 5000)},
-			0, []settlement.Transfer{{FromMemberID: "m-a", ToMemberID: "m-b", AmountCents: 5000}}},
+			0, 0, 5000, []settlement.Transfer{{FromMemberID: "m-a", ToMemberID: "m-b", AmountCents: 5000}}},
 		{"charged to payer", household.SettlementModeEqual, 100000,
-			[]expense.Expense{exp("e-1", "m-a", "m-a", 142500)}, 0, nil},
-		{"removed member falls back to shared", household.SettlementModeEqual, 100000,
+			[]expense.Expense{exp("e-1", "m-a", "m-a", 142500)}, 0, 0, 0, nil},
+		{"removed assigned member falls back to shared and is flagged", household.SettlementModeEqual, 100000,
 			[]expense.Expense{exp("e-1", "m-a", "m-gone", 10000)},
-			10000, []settlement.Transfer{{FromMemberID: "m-b", ToMemberID: "m-a", AmountCents: 5000}}},
+			10000, 1, -5000, []settlement.Transfer{{FromMemberID: "m-b", ToMemberID: "m-a", AmountCents: 5000}}},
+		// Payer no longer active: the explicit mark is honoured (B still owes the
+		// full amount); there is no active member to credit, so no transfer.
+		{"removed payer keeps full charge on assigned member", household.SettlementModeEqual, 100000,
+			[]expense.Expense{exp("e-1", "m-gone", "m-b", 10000)},
+			0, 0, -10000, nil},
 	}
 	for _, tc := range cases {
 		members := []member.Member{mustMember(t, "m-a", "hh-1", "A", tc.salaryA), mustMember(t, "m-b", "hh-1", "B", 100000)}
@@ -191,6 +198,12 @@ func TestCalculate_ChargedToMember(t *testing.T) {
 		}
 		if res.TotalSharedCents != tc.wantShared {
 			t.Fatalf("%s: total shared = %d, want %d", tc.name, res.TotalSharedCents, tc.wantShared)
+		}
+		if res.ChargedFallbackCount != tc.wantFallback {
+			t.Fatalf("%s: charged fallback count = %d, want %d", tc.name, res.ChargedFallbackCount, tc.wantFallback)
+		}
+		if res.Members[1].NetBalanceCents != tc.wantNetB {
+			t.Fatalf("%s: net balance B = %d, want %d", tc.name, res.Members[1].NetBalanceCents, tc.wantNetB)
 		}
 		if len(res.Transfers) != len(tc.want) || (len(tc.want) == 1 && res.Transfers[0] != tc.want[0]) {
 			t.Fatalf("%s: transfers = %+v, want %+v", tc.name, res.Transfers, tc.want)

@@ -66,7 +66,7 @@ type ExpenseAttributes struct {
 	CategoryID        string // The category this expense belongs to
 	CardID            string // Optional linked card id when payment_method=card
 	ChargedToMemberID string // Optional: member who owes the full amount ("a cargo de"); empty = shared
-	HouseholdID      string
+	HouseholdID       string
 	AmountCents       int64
 	Description       string
 	IsShared          bool
@@ -88,7 +88,7 @@ type Expense struct {
 	categoryID        string
 	cardID            string
 	chargedToMemberID string
-	householdID      string
+	householdID       string
 	amountCents       int64
 	description       string
 	isShared          bool

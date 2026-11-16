@@ -81,6 +81,7 @@ func (h settlementHandler) handleGetMonthly(w http.ResponseWriter, r *http.Reque
 			"total_shared_cents":        out.TotalSharedCents,
 			"included_expense_count":    out.IncludedExpenseCount,
 			"excluded_voucher_count":    out.ExcludedVoucherCount,
+			"charged_fallback_count":    out.ChargedFallbackCount,
 			"members":                   members,
 			"transfers":                 transfers,
 		},
