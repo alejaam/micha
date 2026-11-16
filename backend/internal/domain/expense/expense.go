@@ -17,6 +17,17 @@ var (
 	ErrInvalidCategory       = errors.New("invalid expense category")
 )
 
+// "A cargo de" (charged to member) errors.
+var (
+	// ErrChargedToNotAllowed is returned when an expense type cannot be charged
+	// in full to a single member (household-level fixed expenses and MSI roots).
+	ErrChargedToNotAllowed = errors.New("charged_to_member_id is only allowed for variable expenses")
+
+	// ErrInvalidChargedToMemberID is returned when the "a cargo de" member does not
+	// exist or belongs to another household.
+	ErrInvalidChargedToMemberID = errors.New("invalid charged to member id")
+)
+
 // PaymentMethod defines how an expense was paid.
 type PaymentMethod string
 
@@ -59,7 +70,8 @@ type ExpenseAttributes struct {
 	PeriodID          string // The period this expense belongs to
 	CategoryID        string // The category this expense belongs to
 	CardID            string // Optional linked card id when payment_method=card
-	HouseholdID       string
+	ChargedToMemberID string // Optional: member who owes the full amount ("a cargo de"); empty = shared
+	HouseholdID      string
 	AmountCents       int64
 	Description       string
 	IsShared          bool
@@ -80,7 +92,8 @@ type Expense struct {
 	periodID          string
 	categoryID        string
 	cardID            string
-	householdID       string
+	chargedToMemberID string
+	householdID      string
 	amountCents       int64
 	description       string
 	isShared          bool
@@ -163,6 +176,13 @@ func NewFromAttributes(attrs ExpenseAttributes) (Expense, error) {
 		return Expense{}, errors.New("MSI expense requires total_installments > 0")
 	}
 
+	// "A cargo de" is an exception for regular (variable) expenses only:
+	// fixed expenses are household-level and MSI roots settle via installments.
+	chargedToMemberID := strings.TrimSpace(attrs.ChargedToMemberID)
+	if chargedToMemberID != "" && expenseType != ExpenseTypeVariable {
+		return Expense{}, ErrChargedToNotAllowed
+	}
+
 	updatedAt := attrs.UpdatedAt
 	if updatedAt.IsZero() {
 		updatedAt = attrs.CreatedAt
@@ -174,6 +194,7 @@ func NewFromAttributes(attrs ExpenseAttributes) (Expense, error) {
 		periodID:          strings.TrimSpace(attrs.PeriodID),
 		categoryID:        strings.TrimSpace(attrs.CategoryID),
 		cardID:            strings.TrimSpace(attrs.CardID),
+		chargedToMemberID: chargedToMemberID,
 		householdID:       attrs.HouseholdID,
 		amountCents:       attrs.AmountCents,
 		description:       attrs.Description,
@@ -224,6 +245,7 @@ func (e Expense) Attributes() ExpenseAttributes {
 		PeriodID:          e.periodID,
 		CategoryID:        e.categoryID,
 		CardID:            e.cardID,
+		ChargedToMemberID: e.chargedToMemberID,
 		HouseholdID:       e.householdID,
 		AmountCents:       e.amountCents,
 		Description:       e.description,
@@ -244,6 +266,7 @@ func (e Expense) PaidByMemberID() string       { return e.memberID }
 func (e Expense) PeriodID() string             { return e.periodID }
 func (e Expense) CategoryID() string           { return e.categoryID }
 func (e Expense) CardID() string               { return e.cardID }
+func (e Expense) ChargedToMemberID() string    { return e.chargedToMemberID }
 func (e Expense) HouseholdID() string          { return e.householdID }
 func (e Expense) AmountCents() int64           { return e.amountCents }
 func (e Expense) Description() string          { return e.description }

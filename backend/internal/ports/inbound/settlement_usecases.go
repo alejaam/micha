@@ -29,6 +29,12 @@ type MemberSettlement struct {
 	ExpectedShare   int64
 	NetBalanceCents int64
 	SalaryWeightBps int64
+
+	// ChargedCents is owed in full by this member ("a cargo de" expenses).
+	ChargedCents int64
+
+	// ChargedCreditCents was paid by this member on behalf of others.
+	ChargedCreditCents int64
 }
 
 // SettlementTransfer is a recommended transfer to close balances.
@@ -49,7 +55,9 @@ type CalculateSettlementOutput struct {
 	TotalSharedCents        int64
 	IncludedExpenseCount    int
 	ExcludedVoucherCount    int
-	Members                 []MemberSettlement
+	ChargedExpenseCount     int
+	TotalChargedCents       int64
+	Members               []MemberSettlement
 	Transfers               []SettlementTransfer
 }
 

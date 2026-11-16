@@ -25,13 +25,28 @@ type Transfer struct {
 type MemberResult struct {
 	MemberID        string
 	Name            string
-	PaidCents       int64
-	ExpectedShare   int64
+	PaidCents       int64 // Shared expenses/installments paid by this member.
+	ExpectedShare   int64 // This member's portion of the shared total.
 	NetBalanceCents int64
 	SalaryWeightBps int64
+
+	// ChargedCents is what this member owes in full for expenses registered
+	// "a cargo de" them by another member (outside the shared split).
+	ChargedCents int64
+
+	// ChargedCreditCents is what this member paid on behalf of other members
+	// via "a cargo de" expenses and must be reimbursed in full.
+	ChargedCreditCents int64
+}
+
+// recomputeNet derives the net balance from shared and charged components.
+func (r *MemberResult) recomputeNet() {
+	r.NetBalanceCents = r.PaidCents - r.ExpectedShare + r.ChargedCreditCents - r.ChargedCents
 }
 
 // Result is the settlement output for a period.
+// ChargedExpenseCount / TotalChargedCents describe "a cargo de" expenses settled
+// 1:1 between payer and assigned member; they are not part of TotalSharedCents.
 type Result struct {
 	SettlementMode          household.SettlementMode
 	EffectiveSettlementMode household.SettlementMode
@@ -39,6 +54,8 @@ type Result struct {
 	TotalSharedCents        int64
 	IncludedExpenseCount    int
 	ExcludedVoucherCount    int
+	ChargedExpenseCount     int
+	TotalChargedCents       int64
 	Members                 []MemberResult
 	Transfers               []Transfer
 }
@@ -60,7 +77,27 @@ func Calculate(mode household.SettlementMode, members []member.Member, expenses 
 	}
 
 	for _, e := range expenses {
-		if e.DeletedAt() != nil || !e.IsShared() {
+		if e.DeletedAt() != nil {
+			continue
+		}
+
+		// "A cargo de" exception: the full amount is owed by the assigned member
+		// and credited to the payer, outside the shared split. If either member is
+		// no longer active (e.g. the assigned member was removed), the expense
+		// falls back to the normal shared treatment.
+		if chargedTo := e.ChargedToMemberID(); chargedTo != "" {
+			chargedIdx, chargedOK := memberIndex[chargedTo]
+			payerIdx, payerOK := memberIndex[e.PaidByMemberID()]
+			if chargedOK && payerOK {
+				memberResults[chargedIdx].ChargedCents += e.AmountCents()
+				memberResults[payerIdx].ChargedCreditCents += e.AmountCents()
+				result.TotalChargedCents += e.AmountCents()
+				result.ChargedExpenseCount++
+				continue
+			}
+		}
+
+		if !e.IsShared() {
 			continue
 		}
 
@@ -98,7 +135,7 @@ func Calculate(mode household.SettlementMode, members []member.Member, expenses 
 	for i := range memberResults {
 		memberResults[i].ExpectedShare = expectedShares[i]
 		memberResults[i].SalaryWeightBps = weights[i]
-		memberResults[i].NetBalanceCents = memberResults[i].PaidCents - expectedShares[i]
+		memberResults[i].recomputeNet()
 	}
 
 	result.Members = memberResults
@@ -135,7 +172,7 @@ func ApplyAdditionalShared(result Result, mode household.SettlementMode, members
 		}
 		result.Members[idx].ExpectedShare = expectedShares[i]
 		result.Members[idx].SalaryWeightBps = weights[i]
-		result.Members[idx].NetBalanceCents = result.Members[idx].PaidCents - expectedShares[i]
+		result.Members[idx].recomputeNet()
 	}
 
 	result.Transfers = suggestTransfers(result.Members)

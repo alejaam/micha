@@ -21,6 +21,9 @@ type RegisterExpenseInput struct {
 	CardName          string
 	CategoryID        string
 	TotalInstallments int
+	// ChargedToMemberID optionally assigns the full amount to one member
+	// ("a cargo de"). Empty means the expense follows the shared split.
+	ChargedToMemberID string
 }
 
 // RegisterExpenseOutput contains created expense identifiers.

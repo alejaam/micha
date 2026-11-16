@@ -12,6 +12,7 @@ import { dollarsToCents, formatCurrency, formatRelativeDate } from '../utils'
  * @param {(id:string)=>void}     onDelete
  * @param {({id,amountCents,description})=>void} onSave
  * @param {number} animIndex     - Staggered entrance delay index
+ * @param {string} chargedToName - Member the expense is "a cargo de" (empty = shared)
  */
 export function ExpenseItem({
   item,
@@ -21,6 +22,7 @@ export function ExpenseItem({
   onSave,
   animIndex,
   currency = 'MXN',
+  chargedToName = '',
 }) {
   const [editing, setEditing]         = useState(false)
   const [draftAmount, setDraftAmount] = useState('')
@@ -74,6 +76,13 @@ export function ExpenseItem({
               <span className="expenseMsiMeta" aria-label="MSI installments progress">
                 <span className="expenseMsiChip">MSI</span>
                 <span className="expenseMsiFraction">{currentInstallment}/{totalInstallments}</span>
+              </span>
+            ) : null}
+            {chargedToName ? (
+              <span className="expenseMsiMeta">
+                <span className="expenseChargedChip" title="No se reparte: se cobra completo a este miembro en la liquidación">
+                  A cargo de {chargedToName}
+                </span>
               </span>
             ) : null}
           </div>

@@ -87,6 +87,9 @@ func (u CalculateSettlementUseCase) Execute(ctx context.Context, input inbound.C
 			ExpectedShare:   m.ExpectedShare,
 			NetBalanceCents: m.NetBalanceCents,
 			SalaryWeightBps: m.SalaryWeightBps,
+
+			ChargedCents:       m.ChargedCents,
+			ChargedCreditCents: m.ChargedCreditCents,
 		})
 	}
 
@@ -109,6 +112,8 @@ func (u CalculateSettlementUseCase) Execute(ctx context.Context, input inbound.C
 		TotalSharedCents:        calc.TotalSharedCents,
 		IncludedExpenseCount:    calc.IncludedExpenseCount,
 		ExcludedVoucherCount:    calc.ExcludedVoucherCount,
+		ChargedExpenseCount:     calc.ChargedExpenseCount,
+		TotalChargedCents:       calc.TotalChargedCents,
 		Members:                 memberOut,
 		Transfers:               transferOut,
 	}, nil

@@ -190,3 +190,48 @@ func mustNew(t *testing.T, attrs expense.ExpenseAttributes) *expense.Expense {
 	}
 	return &e
 }
+
+func TestNew_ChargedToMember_Variable(t *testing.T) {
+	t.Parallel()
+	attrs := baseAttrs
+	attrs.ChargedToMemberID = "  m-2 "
+	e, err := expense.NewFromAttributes(attrs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if e.ChargedToMemberID() != "m-2" {
+		t.Fatalf("charged to = %q, want m-2", e.ChargedToMemberID())
+	}
+	if e.Attributes().ChargedToMemberID != "m-2" {
+		t.Fatalf("attributes charged to = %q, want m-2", e.Attributes().ChargedToMemberID)
+	}
+}
+
+func TestNew_ChargedToMember_DefaultsEmpty(t *testing.T) {
+	t.Parallel()
+	e, err := expense.NewFromAttributes(baseAttrs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if e.ChargedToMemberID() != "" {
+		t.Fatalf("charged to = %q, want empty", e.ChargedToMemberID())
+	}
+}
+
+func TestNew_ChargedToMember_RejectedForFixedAndMSI(t *testing.T) {
+	t.Parallel()
+	fixed := baseAttrs
+	fixed.ExpenseType = expense.ExpenseTypeFixed
+	fixed.ChargedToMemberID = "m-2"
+	if _, err := expense.NewFromAttributes(fixed); !errors.Is(err, expense.ErrChargedToNotAllowed) {
+		t.Fatalf("fixed: expected ErrChargedToNotAllowed, got %v", err)
+	}
+
+	msi := baseAttrs
+	msi.ExpenseType = expense.ExpenseTypeMSI
+	msi.TotalInstallments = 3
+	msi.ChargedToMemberID = "m-2"
+	if _, err := expense.NewFromAttributes(msi); !errors.Is(err, expense.ErrChargedToNotAllowed) {
+		t.Fatalf("msi: expected ErrChargedToNotAllowed, got %v", err)
+	}
+}

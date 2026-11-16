@@ -39,6 +39,7 @@ export function ExpenseModal({
     const [cardId, setCardId] = useState('')
     const [cardName, setCardName] = useState('')
     const [category, setCategory] = useState('')
+    const [chargedToMemberId, setChargedToMemberId] = useState('')
     const [showAdvanced, setShowAdvanced] = useState(false)
 
     // Dynamic categories from backend
@@ -159,6 +160,14 @@ export function ExpenseModal({
         }
     }, [eligibleMembers, paidByMemberId, defaultPaidByMemberId])
 
+    // "A cargo de" only applies to regular (variable) expenses.
+    const canChargeToMember = expenseType === 'variable'
+    const chargedToMemberName = members.find((m) => m.id === chargedToMemberId)?.name || ''
+
+    useEffect(() => {
+        if (!canChargeToMember) setChargedToMemberId('')
+    }, [canChargeToMember])
+
     const isCurrentMemberSelected = paidByMemberId === defaultPaidByMemberId && defaultPaidByMemberId !== ''
 
     const isValid = useMemo(
@@ -188,6 +197,7 @@ export function ExpenseModal({
             cardName: isCardPayment ? cardName.trim() : '',
             category,
             totalInstallments: isMSI ? Number(totalInstallments) : 0,
+            chargedToMemberId: canChargeToMember ? chargedToMemberId : '',
         })
     }
 
@@ -378,6 +388,34 @@ export function ExpenseModal({
                                     onChange={(e) => setTotalInstallments(e.target.value)}
                                     disabled={isSubmitting}
                                 />
+                            </FormField>
+                        )}
+
+                        {canChargeToMember && members.length > 1 && (
+                            <FormField label="A cargo de" htmlFor="modalChargedTo">
+                                <select
+                                    id="modalChargedTo"
+                                    className="input"
+                                    value={chargedToMemberId}
+                                    onChange={(e) => setChargedToMemberId(e.target.value)}
+                                    disabled={isSubmitting || isLoadingMembers}
+                                >
+                                    <option value="">Nadie (gasto compartido)</option>
+                                    {members.map((m) => (
+                                        <option key={m.id} value={m.id}>
+                                            {m.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                {chargedToMemberId ? (
+                                    <p className="formHint">
+                                        No se reparte: en la liquidación {chargedToMemberName || "ese miembro"} cubre el monto completo a quien lo pagó.
+                                    </p>
+                                ) : (
+                                    <p className="formHint">
+                                        Solo para excepciones: algo que pagó un miembro pero le corresponde completo a otro.
+                                    </p>
+                                )}
                             </FormField>
                         )}
                     </div>
