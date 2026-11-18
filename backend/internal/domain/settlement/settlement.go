@@ -75,6 +75,7 @@ func Calculate(mode household.SettlementMode, members []member.Member, expenses 
 		// no longer active, the user's explicit mark is still honoured: the
 		// assigned member owes the full amount and, as with any shared expense
 		// whose payer is inactive, there is no active member to credit.
+		fallback := false
 		if chargedTo := e.ChargedToMemberID(); chargedTo != "" {
 			if chargedIdx, chargedOK := memberIndex[chargedTo]; chargedOK {
 				memberResults[chargedIdx].ChargedCents += e.AmountCents()
@@ -83,7 +84,7 @@ func Calculate(mode household.SettlementMode, members []member.Member, expenses 
 				}
 				continue
 			}
-			result.ChargedFallbackCount++
+			fallback = true
 		}
 
 		if !e.IsShared() {
@@ -93,6 +94,11 @@ func Calculate(mode household.SettlementMode, members []member.Member, expenses 
 		// MSI root expenses are excluded because their value is settled via installments.
 		if e.ExpenseType() == expense.ExpenseTypeMSI {
 			continue
+		}
+
+		// Counted only once the expense is really split as shared.
+		if fallback {
+			result.ChargedFallbackCount++
 		}
 
 		// Vouchers were previously excluded but now they are included in settlement.

@@ -42,6 +42,8 @@ Registro de un gasto compartido dentro de un Period. No existe el concepto de ga
 - `variable` — gasto registrado por un Member en un Period específico. No se replica.
 - `msi` — gasto raíz de una compra a meses sin intereses. **No se muestra en el listado general de gastos** — solo existe como registro contable. Cada mes se genera automáticamente un Expense cuota con descripción `"MSI N/M"` en el Period correspondiente.
 
+**A cargo de** (`ChargedToMemberID`, opcional, solo en gastos `variable` compartidos): excepción al reparto. El monto completo lo debe el Member asignado y se acredita a quien pagó, fuera del reparto compartido. Si el asignado ya no está activo, el gasto vuelve al reparto normal y se cuenta en `ChargedFallbackCount`. Errores: `ErrInvalidChargedToMemberID` (el miembro no existe o es de otro Household) y `ErrChargedToNotAllowed` (tipo de gasto que no lo admite).
+
 ### Installment (tracker MSI)
 Entidad que gestiona la vida de una compra MSI desde el Expense raíz. Contiene: monto total, número de cuotas, cuota actual e ID del Expense raíz. Cada vez que se abre un nuevo Period, verifica si hay installments activos y genera el Expense cuota correspondiente. Cuando `currentInstallment == totalInstallments`, el tracker se marca como completado y deja de generar cuotas.
 

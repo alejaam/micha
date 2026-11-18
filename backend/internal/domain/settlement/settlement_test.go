@@ -189,6 +189,11 @@ func TestCalculate_ChargedToMember(t *testing.T) {
 		{"removed payer keeps full charge on assigned member", household.SettlementModeEqual, 100000,
 			[]expense.Expense{exp("e-1", "m-gone", "m-b", 10000)},
 			0, 0, -10000, nil},
+		// A non-shared expense with a removed assigned member is excluded, so it is
+		// not reported as a fallback to shared (review of PR #85).
+		{"non-shared with removed assigned member is not a fallback", household.SettlementModeEqual, 100000,
+			[]expense.Expense{mustExpense(t, expense.ExpenseAttributes{ID: "e-1", HouseholdID: "hh-1", PaidByMemberID: "m-a", ChargedToMemberID: "m-gone", AmountCents: 10000, Description: "e-1", IsShared: false, Currency: "MXN", CreatedAt: time.Now()})},
+			0, 0, 0, nil},
 	}
 	for _, tc := range cases {
 		members := []member.Member{mustMember(t, "m-a", "hh-1", "A", tc.salaryA), mustMember(t, "m-b", "hh-1", "B", 100000)}
