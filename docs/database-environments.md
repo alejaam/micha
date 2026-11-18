@@ -7,6 +7,7 @@ Este proceso es idempotente y apto para bases de datos limpias (zero-state) en l
 ## Estructura de Migraciones
 
 - `backend/migrations/001_initial_schema.sql`: Esquema canónico v1 (tablas, constraints, llaves foráneas e índices). Es **100% DDL estructural**. La API nunca se bloquea por datos de catálogo o fixtures.
+- `backend/migrations/002_expense_charged_to_member.sql`: columna opcional `charged_to_member_id` en `expenses` (gastos «a cargo de» un miembro).
 - `backend/catalogs/reference/001_subscription_services_mx.sql`: Archivo SQL de referencia con el catálogo oficial de servicios de streaming y bundles en México (MXN) con precios actualizados.
 
 ## Arranque de la API
