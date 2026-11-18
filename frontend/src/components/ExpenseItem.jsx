@@ -21,6 +21,7 @@ export function ExpenseItem({
   onSave,
   animIndex,
   currency = 'MXN',
+  chargedToName = '',
 }) {
   const [editing, setEditing]         = useState(false)
   const [draftAmount, setDraftAmount] = useState('')
@@ -75,6 +76,9 @@ export function ExpenseItem({
                 <span className="expenseMsiChip">MSI</span>
                 <span className="expenseMsiFraction">{currentInstallment}/{totalInstallments}</span>
               </span>
+            ) : null}
+            {chargedToName ? (
+              <span className="expenseChargedChip" title="No se reparte: se cobra completo a este miembro en la liquidación">A cargo de {chargedToName}</span>
             ) : null}
           </div>
 

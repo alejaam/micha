@@ -46,6 +46,7 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		Category          string `json:"category"`
 		CategoryID        string `json:"category_id"`
 		TotalInstallments int    `json:"total_installments"`
+		ChargedToMemberID string `json:"charged_to_member_id"`
 	}
 	if err := decodeJSON(r, w, &body); err != nil {
 		return
@@ -82,6 +83,7 @@ func (h expenseHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		CardName:          body.CardName,
 		CategoryID:        categoryID,
 		TotalInstallments: body.TotalInstallments,
+		ChargedToMemberID: body.ChargedToMemberID,
 	}
 
 	out, err := h.deps.Register.Execute(r.Context(), input)
@@ -188,22 +190,23 @@ func (h expenseHandler) handleDelete(w http.ResponseWriter, r *http.Request) {
 func expenseJSON(e expense.Expense) map[string]any {
 	attrs := e.Attributes()
 	m := map[string]any{
-		"id":                 string(attrs.ID),
-		"household_id":       attrs.HouseholdID,
-		"paid_by_member_id":  attrs.PaidByMemberID,
-		"amount_cents":       attrs.AmountCents,
-		"description":        attrs.Description,
-		"is_shared":          attrs.IsShared,
-		"currency":           attrs.Currency,
-		"payment_method":     string(attrs.PaymentMethod),
-		"expense_type":       string(attrs.ExpenseType),
-		"card_id":            attrs.CardID,
-		"card_name":          attrs.CardName,
-		"category_id":        attrs.CategoryID,
-		"total_installments": attrs.TotalInstallments,
-		"period_id":          attrs.PeriodID,
-		"created_at":         attrs.CreatedAt,
-		"updated_at":         attrs.UpdatedAt,
+		"id":                   string(attrs.ID),
+		"household_id":         attrs.HouseholdID,
+		"paid_by_member_id":    attrs.PaidByMemberID,
+		"amount_cents":         attrs.AmountCents,
+		"description":          attrs.Description,
+		"is_shared":            attrs.IsShared,
+		"currency":             attrs.Currency,
+		"payment_method":       string(attrs.PaymentMethod),
+		"expense_type":         string(attrs.ExpenseType),
+		"card_id":              attrs.CardID,
+		"card_name":            attrs.CardName,
+		"category_id":          attrs.CategoryID,
+		"total_installments":   attrs.TotalInstallments,
+		"charged_to_member_id": attrs.ChargedToMemberID,
+		"period_id":            attrs.PeriodID,
+		"created_at":           attrs.CreatedAt,
+		"updated_at":           attrs.UpdatedAt,
 	}
 	if attrs.DeletedAt != nil {
 		m["deleted_at"] = attrs.DeletedAt
@@ -240,6 +243,10 @@ func writeErrorFromDomain(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, "INVALID_EXPENSE_TYPE", "expense_type must be fixed, variable or msi")
 	case errors.Is(err, expense.ErrInvalidCategory):
 		writeError(w, http.StatusBadRequest, "INVALID_CATEGORY", "category must be rent, auto, streaming, food, personal, savings or other")
+	case errors.Is(err, expense.ErrInvalidChargedToMemberID):
+		writeError(w, http.StatusBadRequest, "INVALID_CHARGED_TO_MEMBER_ID", "charged_to_member_id must be a member of the household")
+	case errors.Is(err, expense.ErrChargedToNotAllowed):
+		writeError(w, http.StatusBadRequest, "CHARGED_TO_NOT_ALLOWED", "charged_to_member_id is only allowed for variable expenses")
 	case errors.Is(err, shared.ErrAlreadyDeleted):
 		writeError(w, http.StatusBadRequest, "ALREADY_DELETED", "expense has already been deleted")
 	case errors.Is(err, shared.ErrForbidden):

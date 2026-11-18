@@ -19,6 +19,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
   const [totalInstallments, setTotalInstallments] = useState(3)
   const [cardId, setCardId]                 = useState('')
   const [category, setCategory]             = useState('other')
+  const [chargedToMemberId, setChargedToMemberId] = useState('')
 
   const hasMembers = Array.isArray(members) && members.length > 0
   const paidByMemberId = useMemo(
@@ -31,6 +32,8 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
   )
   const isCardPayment = paymentMethod === 'card'
   const isMSI = expenseType === 'msi'
+  // "A cargo de" only applies to regular (variable) expenses.
+  const canChargeToMember = expenseType === 'variable' && members.length > 1
 
   const isValid = useMemo(
     () => {
@@ -60,6 +63,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
       cardId: isCardPayment ? cardId : '',
       category,
       totalInstallments: isMSI ? Number(totalInstallments) : 0,
+      chargedToMemberId: canChargeToMember ? chargedToMemberId : '',
     })
 
     // Reset on successful submit (parent resolves the promise)
@@ -71,6 +75,7 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
     setTotalInstallments(3)
     setCardId('')
     setCategory('other')
+    setChargedToMemberId('')
   }
 
   return (
@@ -211,6 +216,29 @@ export function ExpenseForm({ onSubmit, isSubmitting, members = [], cards = [], 
           />
           Gasto compartido
         </label>
+
+        {canChargeToMember && (
+          <details className="advancedSection">
+            <summary className="formHint">Más opciones</summary>
+            <FormField label="A cargo de" htmlFor="newChargedTo">
+              <select
+                id="newChargedTo"
+                className="input"
+                value={chargedToMemberId}
+                onChange={(e) => setChargedToMemberId(e.target.value)}
+                disabled={isSubmitting}
+              >
+                <option value="">Nadie (gasto compartido)</option>
+                {members.map((member) => (
+                  <option key={member.id} value={member.id}>{member.name}</option>
+                ))}
+              </select>
+              <p className="formHint">
+                Solo para excepciones: no se reparte, el miembro elegido cubre el monto completo a quien lo pagó.
+              </p>
+            </FormField>
+          </details>
+        )}
 
         <button
           type="submit"

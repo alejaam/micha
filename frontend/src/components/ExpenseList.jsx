@@ -23,7 +23,12 @@ export function ExpenseList({
   onSave,
   currency = 'MXN',
   onQuickAdd,
+  members = [],
 }) {
+  const memberNames = useMemo(
+    () => new Map((members || []).map((m) => [m.id, m.name])),
+    [members],
+  )
   const totalCents = useMemo(
     () => items.reduce((sum, item) => sum + item.amount_cents, 0),
     [items],
@@ -79,6 +84,7 @@ export function ExpenseList({
                onDelete={onDelete}
               onSave={onSave}
               currency={currency}
+              chargedToName={memberNames.get(item.charged_to_member_id) || ''}
             />
           ))}
         </ul>

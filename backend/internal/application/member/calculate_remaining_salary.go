@@ -90,7 +90,8 @@ func (u CalculateRemainingSalaryUseCase) Execute(ctx context.Context, input inbo
 	allocatedDebt := int64(0)
 	for _, memberResult := range calc.Members {
 		if memberResult.MemberID == input.MemberID {
-			allocatedDebt = memberResult.ExpectedShare
+			// Shared portion plus expenses charged in full to this member ("a cargo de").
+			allocatedDebt = memberResult.ExpectedShare + memberResult.ChargedCents
 			break
 		}
 	}

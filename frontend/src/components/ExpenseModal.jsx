@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from 'react'
 import { listCards, listCategories } from '../api'
 import { FormField } from '../ui/FormField'
@@ -39,6 +40,7 @@ export function ExpenseModal({
     const [cardId, setCardId] = useState('')
     const [cardName, setCardName] = useState('')
     const [category, setCategory] = useState('')
+    const [chargedToMemberId, setChargedToMemberId] = useState('')
     const [showAdvanced, setShowAdvanced] = useState(false)
 
     // Dynamic categories from backend
@@ -159,6 +161,9 @@ export function ExpenseModal({
         }
     }, [eligibleMembers, paidByMemberId, defaultPaidByMemberId])
 
+    // "A cargo de" only applies to regular (variable) expenses.
+    const canChargeToMember = expenseType === 'variable'
+
     const isCurrentMemberSelected = paidByMemberId === defaultPaidByMemberId && defaultPaidByMemberId !== ''
 
     const isValid = useMemo(
@@ -188,6 +193,7 @@ export function ExpenseModal({
             cardName: isCardPayment ? cardName.trim() : '',
             category,
             totalInstallments: isMSI ? Number(totalInstallments) : 0,
+            chargedToMemberId: canChargeToMember ? chargedToMemberId : '',
         })
     }
 
@@ -378,6 +384,26 @@ export function ExpenseModal({
                                     onChange={(e) => setTotalInstallments(e.target.value)}
                                     disabled={isSubmitting}
                                 />
+                            </FormField>
+                        )}
+
+                        {canChargeToMember && members.length > 1 && (
+                            <FormField label="A cargo de" htmlFor="modalChargedTo">
+                                <select
+                                    id="modalChargedTo"
+                                    className="input"
+                                    value={chargedToMemberId}
+                                    onChange={(e) => setChargedToMemberId(e.target.value)}
+                                    disabled={isSubmitting || isLoadingMembers}
+                                >
+                                    <option value="">Nadie (gasto compartido)</option>
+                                    {members.map((m) => (
+                                        <option key={m.id} value={m.id}>
+                                            {m.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="formHint">Solo excepciones: lo pagó un miembro pero le corresponde completo a otro.</p>
                             </FormField>
                         )}
                     </div>

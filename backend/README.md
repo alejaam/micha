@@ -175,18 +175,8 @@ go test ./internal/adapters/http/...
 
 Located in `/migrations`, numbered sequentially:
 
-1. `001_create_expenses.sql` - Initial expense table
-2. `002_create_households.sql` - Household table
-3. `003_create_members.sql` - Member table
-4. `004_alter_expenses_phase1_fields.sql` - Add expense fields
-5. `005_alter_expenses_add_payment_method.sql` - Payment methods
-6. `006_create_users.sql` - User authentication
-7. `007_alter_expenses_add_expense_type.sql` - Expense types
-8. `008_alter_members_add_user_id.sql` - Link members to users
-9. `009_alter_expenses_add_card_name_category.sql` - Card name + category
-10. `010_categories.sql` - Custom categories table
-11. `011_household_split_config.sql` - Split configuration
-12. `012_add_deleted_at_members.sql` - Soft delete for members
+1. `001_initial_schema.sql` - Initial schema (households, members, expenses, users, categories, …)
+2. `002_expense_charged_to_member.sql` - Optional "a cargo de" member on expenses
 
 ## Docker Deployment
 

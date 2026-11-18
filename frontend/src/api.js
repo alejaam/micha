@@ -150,7 +150,7 @@ export async function createMember({ householdId, name, email, monthlySalaryCent
     return parseResponse(response)
 }
 
-export async function createExpense({ householdId, paidByMemberId, amountCents, description, isShared = true, currency = 'MXN', paymentMethod = 'cash', expenseType = 'variable', cardId = '', cardName = '', category = 'other', totalInstallments = 0 }) {
+export async function createExpense({ householdId, paidByMemberId, amountCents, description, isShared = true, currency = 'MXN', paymentMethod = 'cash', expenseType = 'variable', cardId = '', cardName = '', category = 'other', totalInstallments = 0, chargedToMemberId = '' }) {
     const response = await fetch(`${API_BASE_URL}/v1/expenses`, {
         method: 'POST',
         headers: buildProtectedHeaders(),
@@ -167,6 +167,7 @@ export async function createExpense({ householdId, paidByMemberId, amountCents, 
             card_name: cardName,
             category,
             total_installments: totalInstallments,
+            charged_to_member_id: chargedToMemberId,
         }),
     })
 

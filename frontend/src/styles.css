@@ -3444,6 +3444,15 @@ html {
     color: var(--color-text-1);
 }
 
+/* "A cargo de" marker: expense charged in full to one member (not split). */
+.expenseChargedChip {
+    border: 1px dashed var(--color-text-1);
+    border-radius: var(--radius-pill);
+    padding: 1px 8px;
+    font-size: 11px;
+    color: var(--color-text-1);
+}
+
 /* ─── CardExpensesPanel ──────────────────────────────────────────────────────── */
 .cardExpensesTable {
     display: flex;

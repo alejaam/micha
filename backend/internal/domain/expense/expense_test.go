@@ -190,3 +190,23 @@ func mustNew(t *testing.T, attrs expense.ExpenseAttributes) *expense.Expense {
 	}
 	return &e
 }
+
+func TestNew_ChargedToMember(t *testing.T) {
+	t.Parallel()
+	attrs := baseAttrs
+	attrs.ChargedToMemberID = "  m-2 "
+	e := mustNew(t, attrs)
+	if e.ChargedToMemberID() != "m-2" || e.Attributes().ChargedToMemberID != "m-2" {
+		t.Fatalf("charged to = %q, want m-2", e.ChargedToMemberID())
+	}
+	if mustNew(t, baseAttrs).ChargedToMemberID() != "" {
+		t.Fatalf("charged to should default to empty")
+	}
+	for _, typ := range []expense.ExpenseType{expense.ExpenseTypeFixed, expense.ExpenseTypeMSI} {
+		bad := attrs
+		bad.ExpenseType, bad.TotalInstallments = typ, 3
+		if _, err := expense.NewFromAttributes(bad); !errors.Is(err, expense.ErrChargedToNotAllowed) {
+			t.Fatalf("%s: expected ErrChargedToNotAllowed, got %v", typ, err)
+		}
+	}
+}

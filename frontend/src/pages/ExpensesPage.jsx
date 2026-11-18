@@ -88,6 +88,7 @@ export function ExpensesPage() {
             <div className="dashboardCol">
                 <ExpenseList
                     items={items}
+                    members={members}
                     isLoading={loadingList}
                     deletingId={deletingId}
                     savingId={savingId}

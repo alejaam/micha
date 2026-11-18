@@ -25,10 +25,13 @@ type Transfer struct {
 type MemberResult struct {
 	MemberID        string
 	Name            string
-	PaidCents       int64
-	ExpectedShare   int64
+	PaidCents       int64 // Shared expenses/installments paid by this member.
+	ExpectedShare   int64 // This member's portion of the shared total.
 	NetBalanceCents int64
 	SalaryWeightBps int64
+
+	// "A cargo de": owed in full by this member / paid by this member for others.
+	ChargedCents, ChargedCreditCents int64
 }
 
 // Result is the settlement output for a period.
@@ -39,6 +42,7 @@ type Result struct {
 	TotalSharedCents        int64
 	IncludedExpenseCount    int
 	ExcludedVoucherCount    int
+	ChargedFallbackCount    int // "A cargo de" expenses split as shared because the assigned member is inactive.
 	Members                 []MemberResult
 	Transfers               []Transfer
 }
@@ -60,13 +64,41 @@ func Calculate(mode household.SettlementMode, members []member.Member, expenses 
 	}
 
 	for _, e := range expenses {
-		if e.DeletedAt() != nil || !e.IsShared() {
+		if e.DeletedAt() != nil {
+			continue
+		}
+
+		// "A cargo de" exception: the full amount is owed by the assigned member
+		// and credited to the payer, outside the shared split. If the assigned
+		// member is no longer active, the expense falls back to the normal shared
+		// treatment and is reported via ChargedFallbackCount. If only the payer is
+		// no longer active, the user's explicit mark is still honoured: the
+		// assigned member owes the full amount and, as with any shared expense
+		// whose payer is inactive, there is no active member to credit.
+		fallback := false
+		if chargedTo := e.ChargedToMemberID(); chargedTo != "" {
+			if chargedIdx, chargedOK := memberIndex[chargedTo]; chargedOK {
+				memberResults[chargedIdx].ChargedCents += e.AmountCents()
+				if payerIdx, payerOK := memberIndex[e.PaidByMemberID()]; payerOK {
+					memberResults[payerIdx].ChargedCreditCents += e.AmountCents()
+				}
+				continue
+			}
+			fallback = true
+		}
+
+		if !e.IsShared() {
 			continue
 		}
 
 		// MSI root expenses are excluded because their value is settled via installments.
 		if e.ExpenseType() == expense.ExpenseTypeMSI {
 			continue
+		}
+
+		// Counted only once the expense is really split as shared.
+		if fallback {
+			result.ChargedFallbackCount++
 		}
 
 		// Vouchers were previously excluded but now they are included in settlement.
@@ -98,7 +130,8 @@ func Calculate(mode household.SettlementMode, members []member.Member, expenses 
 	for i := range memberResults {
 		memberResults[i].ExpectedShare = expectedShares[i]
 		memberResults[i].SalaryWeightBps = weights[i]
-		memberResults[i].NetBalanceCents = memberResults[i].PaidCents - expectedShares[i]
+		r := &memberResults[i]
+		r.NetBalanceCents = r.PaidCents - r.ExpectedShare + r.ChargedCreditCents - r.ChargedCents
 	}
 
 	result.Members = memberResults
@@ -135,7 +168,8 @@ func ApplyAdditionalShared(result Result, mode household.SettlementMode, members
 		}
 		result.Members[idx].ExpectedShare = expectedShares[i]
 		result.Members[idx].SalaryWeightBps = weights[i]
-		result.Members[idx].NetBalanceCents = result.Members[idx].PaidCents - expectedShares[i]
+		r := &result.Members[idx]
+		r.NetBalanceCents = r.PaidCents - r.ExpectedShare + r.ChargedCreditCents - r.ChargedCents
 	}
 
 	result.Transfers = suggestTransfers(result.Members)

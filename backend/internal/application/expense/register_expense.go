@@ -2,6 +2,7 @@ package expenseapp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -134,9 +135,19 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: resolve card: %w", err)
 	}
 
+	chargedToMemberID, err := u.resolveChargedToMember(ctx, input.HouseholdID, input.ChargedToMemberID)
+	if err != nil {
+		return inbound.RegisterExpenseOutput{}, fmt.Errorf("register expense: resolve charged to member: %w", err)
+	}
+
 	isShared := input.IsShared
 	if u.isPersonalCategory(ctx, input.HouseholdID, input.CategoryID, categoryID) {
 		isShared = false
+	}
+	if chargedToMemberID != "" {
+		// "A cargo de" expenses are part of the household settlement; if the
+		// assigned member is later removed they fall back to the shared split.
+		isShared = true
 	}
 
 	currentPeriod, err := u.periodRepo.GetCurrentOpen(ctx, input.HouseholdID)
@@ -159,6 +170,7 @@ func (u RegisterExpenseUseCase) Execute(ctx context.Context, input inbound.Regis
 		CardID:            cardID,
 		CardName:          cardName,
 		CategoryID:        categoryID,
+		ChargedToMemberID: chargedToMemberID,
 		TotalInstallments: input.TotalInstallments,
 		CreatedAt:         now,
 		UpdatedAt:         now,
@@ -322,6 +334,28 @@ func (u RegisterExpenseUseCase) resolveCardDetails(ctx context.Context, input in
 	}
 
 	return string(c.ID()), c.CardName(), nil
+}
+
+// resolveChargedToMember validates the optional "a cargo de" member: it must be
+// an active member of the same household. Returns "" when not provided.
+func (u RegisterExpenseUseCase) resolveChargedToMember(ctx context.Context, householdID, chargedToMemberID string) (string, error) {
+	chargedToMemberID = strings.TrimSpace(chargedToMemberID)
+	if chargedToMemberID == "" {
+		return "", nil
+	}
+
+	m, err := u.memberRepo.FindByID(ctx, chargedToMemberID)
+	if err != nil {
+		if errors.Is(err, shared.ErrNotFound) {
+			return "", expense.ErrInvalidChargedToMemberID
+		}
+		return "", err
+	}
+	if m.HouseholdID() != householdID {
+		return "", expense.ErrInvalidChargedToMemberID
+	}
+
+	return string(m.ID()), nil
 }
 
 func (u RegisterExpenseUseCase) isPersonalCategory(ctx context.Context, householdID, rawCategory, resolvedCategoryID string) bool {
