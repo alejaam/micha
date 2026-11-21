@@ -4,8 +4,8 @@ REST API backend for personal expense tracking and household settlement calculat
 
 ## Tech Stack
 
-- **Go 1.23+**
-- **PostgreSQL 15+**
+- **Go 1.24+**
+- **PostgreSQL 16**
 - **Architecture**: DDD + Clean Architecture + Hexagonal (Ports & Adapters)
 - **Auth**: JWT-based authentication
 
@@ -25,8 +25,8 @@ internal/
 
 ## Prerequisites
 
-- Go 1.23 or higher
-- PostgreSQL 15 or higher
+- Go 1.24 or higher
+- PostgreSQL 16 (or use the Docker Compose service)
 - Docker & Docker Compose (optional, for containerized deployment)
 
 ## Quick Start
@@ -62,8 +62,8 @@ migrate -path migrations -database "$DATABASE_URL" up
 Or use the provided Docker Compose setup (includes Postgres):
 
 ```bash
-cd ../deploy
-docker-compose up -d postgres
+cd ..
+docker compose up -d database
 ```
 
 ### 3. Run the API
@@ -118,7 +118,7 @@ Health check: `curl http://localhost:8080/health`
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/v1/households/{id}/settlement?month=YYYY-MM` | Calculate monthly settlement | JWT + Member |
+| GET | `/v1/households/{id}/settlement?year=YYYY&month=M` | Calculate monthly settlement | JWT + Member |
 
 ### Categories
 
@@ -180,16 +180,17 @@ Located in `/migrations`, numbered sequentially:
 
 ## Docker Deployment
 
-See `/deploy/docker-compose.yml` for full stack deployment:
+See `docker-compose.yml` (repo root) for full stack deployment:
 
 ```bash
-cd ../deploy
-docker-compose up --build
+cd ..
+docker compose up --build
 ```
 
 This starts:
-- PostgreSQL database
+- PostgreSQL 16 database
 - Backend API on port 8080
+- Frontend (Nginx) on port 5173
 
 ## Environment Variables Reference
 
