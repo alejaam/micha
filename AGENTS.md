@@ -1,6 +1,6 @@
 # AGENTS.md — micha
 
-Go REST API for personal expense tracking. Backend: Go 1.24, PostgreSQL 16.
+Go REST API for personal expense tracking. Backend: Go 1.23, PostgreSQL.
 Architecture: DDD + Clean Architecture + Hexagonal. Claude Code / multi-agent compatible.
 
 ## Layer map (dependency direction: inward only)
@@ -54,7 +54,7 @@ Validate with `docs/architecture-checklist.md` before finishing any feature.
 cd backend && go run ./cmd/api              # start API (port 8080)
 cd backend && go test ./...                 # all tests
 cd backend && go test -race ./...           # with race detector
-docker compose up --build                   # full stack (Go + Nginx frontend + Postgres)
+docker compose -f deploy/docker-compose.yml up --build  # full stack (Go + Postgres)
 ```
 
 ## Current state
