@@ -10,7 +10,7 @@ Lo que existe hoy en el código:
 - **Hogares y miembros**, con onboarding en el frontend (hogar, miembros, tarjetas, gastos fijos).
 - **Gastos**: alta, edición, baja y listado; gastos recurrentes y generación de los del periodo.
 - **Gastos «a cargo de» un miembro** como excepción en la liquidación (migración `002`).
-- **Liquidación mensual** (`GET /v1/households/{id}/settlement?month=YYYY-MM`) y configuración de reparto (`split-config`).
+- **Liquidación mensual** (`GET /v1/households/{id}/settlement?year=YYYY&month=M`) y configuración de reparto (`split-config`).
 - **Categorías** personalizadas, **tarjetas**, **periodos** (actual, historial, simulación de cierre) y **catálogo de servicios de suscripción** con KPI.
 - **Frontend** React con rutas protegidas, panel de gastos, saldos, tarjetas, gastos fijos, mensualidades y reglas.
 - **Despliegue** con Docker Compose (API Go, frontend servido por Nginx y PostgreSQL).

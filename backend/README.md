@@ -118,7 +118,7 @@ Health check: `curl http://localhost:8080/health`
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| GET | `/v1/households/{id}/settlement?month=YYYY-MM` | Calculate monthly settlement | JWT + Member |
+| GET | `/v1/households/{id}/settlement?year=YYYY&month=M` | Calculate monthly settlement | JWT + Member |
 
 ### Categories
 
