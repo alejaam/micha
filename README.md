@@ -108,7 +108,7 @@ docker compose up --build
 - API: `http://localhost:8080`
 - PostgreSQL: `localhost:5432`
 
-El frontend lee `VITE_API_URL` (por defecto `http://localhost:8080`). Para un entorno publicado, ajusta también `ALLOWED_ORIGINS` y `ENVIRONMENT`. Notas sobre bases por ambiente y Dokploy: [`docs/database-environments.md`](docs/database-environments.md).
+`VITE_API_URL` (por defecto `http://localhost:8080`) se pasa como build arg y queda fijada en el bundle: para cambiarla, expórtala y vuelve a construir con `docker compose up --build`. Para un entorno publicado, ajusta también `ALLOWED_ORIGINS` y `ENVIRONMENT`. Notas sobre bases por ambiente y Dokploy: [`docs/database-environments.md`](docs/database-environments.md).
 
 ## Documentación
 
