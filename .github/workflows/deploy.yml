@@ -67,16 +67,22 @@ jobs:
             echo "ℹ️ No DOKPLOY_WEBHOOK configurado. Configúralo en Settings > Secrets."
           fi
 
+      # Sin dominio público no hay URL que comprobar. Define la variable de
+      # repositorio HEALTH_URL (Settings > Variables) para reactivar estos pasos.
       - name: ⏳ Wait for Deploy
+        if: vars.HEALTH_URL != ''
         run: |
           echo "⏳ Esperando a que Dokploy complete el deploy..."
-          echo "Revisa el estado en https://micha.devjaam.tech"
+          echo "Revisa el estado en ${{ vars.HEALTH_URL }}"
           sleep 30
 
       - name: ✅ Health Check
+        if: vars.HEALTH_URL != ''
+        env:
+          HEALTH_URL: ${{ vars.HEALTH_URL }}
         run: |
           for i in {1..5}; do
-            if curl -sSf https://micha.devjaam.tech/health > /dev/null 2>&1; then
+            if curl -sSf "$HEALTH_URL" > /dev/null 2>&1; then
               echo "✅ Health check pasó"
               exit 0
             fi
