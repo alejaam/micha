@@ -38,12 +38,13 @@ func (m *mockInviteRepo) Save(_ context.Context, inv invitation.Invitation) erro
 type mockInviteSender struct {
 	sentEmail string
 	sentCode  string
+	err       error
 }
 
 func (m *mockInviteSender) SendInviteCode(_ context.Context, email, code string) error {
 	m.sentEmail = email
 	m.sentCode = code
-	return nil
+	return m.err
 }
 
 func newMockMemberRepo() *mockMemberRepo {
@@ -250,6 +251,23 @@ func TestRegisterMember_PendingCreatesAndSendsInviteCode(t *testing.T) {
 	}
 	if sender.sentCode == "" {
 		t.Fatal("expected invite code to be generated")
+	}
+}
+
+func TestRegisterMember_PendingPropagatesInviteDeliveryFailure(t *testing.T) {
+	t.Parallel()
+	deliveryErr := errors.New("invite delivery is not configured")
+	sender := &mockInviteSender{err: deliveryErr}
+	uc := memberapp.NewRegisterMemberUseCaseWithInvites(newMockMemberRepo(), staticMemberIDGen("m-1"), &mockInviteRepo{}, sender)
+
+	_, err := uc.Execute(context.Background(), inbound.RegisterMemberInput{
+		HouseholdID:        "hh-1",
+		Name:               "Ale",
+		Email:              "ale@mail.com",
+		MonthlySalaryCents: 200000,
+	})
+	if !errors.Is(err, deliveryErr) {
+		t.Fatalf("expected delivery error to propagate, got %v", err)
 	}
 }
 

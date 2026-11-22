@@ -15,6 +15,8 @@ type Config struct {
 	AllowedOrigins     []string
 	AllowOwnerOnBehalf bool
 	Environment        string
+	// InviteDelivery selects the invite delivery adapter (INVITE_DELIVERY). Empty = not configured.
+	InviteDelivery string
 }
 
 // Load reads configuration from environment variables.
@@ -47,6 +49,7 @@ func Load() (Config, error) {
 		AllowedOrigins:     parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS")),
 		AllowOwnerOnBehalf: parseBoolDefaultTrue(os.Getenv("ALLOW_OWNER_ON_BEHALF")),
 		Environment:        env,
+		InviteDelivery:     os.Getenv("INVITE_DELIVERY"),
 	}, nil
 }
 
