@@ -13,8 +13,8 @@ Este proceso es idempotente y apto para bases de datos limpias (zero-state) en l
 
 Al consolidar las 33 migraciones anteriores en `001_initial_schema.sql`:
 1. **Bases limpias (zero-state)**: Aplican `001_initial_schema.sql` y registran su checksum SHA-256 automáticamente.
-2. **Bases con las 33 migraciones históricas previas**: Si la base de datos ya aplicó todas las migraciones anteriores hasta `033_add_name_to_users.sql`, el motor reconcilia automáticamente el baseline registrando `001_initial_schema.sql` sin re-ejecutar sentencias redundantes.
-3. **Bases parcialmente migradas (< 033)**: Para evitar inconsistencias silenciosas en tablas preexistentes, el runner aborta el arranque con un error explícito. En estos casos se requiere recrear la base de datos (`docker compose down -v` o `dropdb`).
+2. **Bases con las 33 migraciones históricas previas**: Si la base de datos ya aplicó todas las migraciones anteriores hasta `033_add_name_to_users.sql`, el motor reconcilia automáticamente el baseline registrando `001_initial_schema.sql` tras verificar de forma estricta y bidireccional contra `information_schema` que la estructura completa (tablas, columnas, tipos de datos y nulabilidad) coincida exactamente con el esquema canónico v1 (`validateBaselineSchema`), sin tablas ni columnas extra o residuales.
+3. **Bases parcialmente migradas (< 033) o con divergencias de esquema**: Para evitar inconsistencias silenciosas en tablas preexistentes, el runner aborta el arranque con un error explícito. En estos casos se requiere recrear la base de datos (`docker compose down -v` o `dropdb`).
 
 ## Arranque de la API
 

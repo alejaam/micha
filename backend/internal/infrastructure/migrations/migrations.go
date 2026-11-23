@@ -23,20 +23,151 @@ const (
 	finalLegacyMigrationFile     = "033_add_name_to_users.sql"
 )
 
-var expectedBaselineTables = []string{
-	"users",
-	"households",
-	"members",
-	"household_split_config",
-	"member_invitations",
-	"categories",
-	"cards",
-	"periods",
-	"expenses",
-	"installments",
-	"recurring_expenses",
-	"subscription_services",
-	"recurring_expense_catalog_links",
+type expectedColumnDef struct {
+	udtName    string
+	isNullable string // "YES" or "NO"
+}
+
+var expectedBaselineSchema = map[string]map[string]expectedColumnDef{
+	"users": {
+		"id":            {udtName: "text", isNullable: "NO"},
+		"email":         {udtName: "text", isNullable: "NO"},
+		"password_hash": {udtName: "text", isNullable: "NO"},
+		"name":          {udtName: "text", isNullable: "NO"},
+		"created_at":    {udtName: "timestamptz", isNullable: "NO"},
+	},
+	"households": {
+		"id":               {udtName: "text", isNullable: "NO"},
+		"name":             {udtName: "text", isNullable: "NO"},
+		"owner_id":         {udtName: "text", isNullable: "YES"},
+		"settlement_mode":  {udtName: "text", isNullable: "NO"},
+		"currency":         {udtName: "bpchar", isNullable: "NO"},
+		"closing_day":      {udtName: "int4", isNullable: "NO"},
+		"period_frequency": {udtName: "text", isNullable: "NO"},
+		"created_at":       {udtName: "timestamptz", isNullable: "NO"},
+		"updated_at":       {udtName: "timestamptz", isNullable: "NO"},
+	},
+	"members": {
+		"id":                   {udtName: "text", isNullable: "NO"},
+		"household_id":         {udtName: "text", isNullable: "NO"},
+		"user_id":              {udtName: "text", isNullable: "YES"},
+		"name":                 {udtName: "text", isNullable: "NO"},
+		"email":                {udtName: "text", isNullable: "NO"},
+		"monthly_salary_cents": {udtName: "int8", isNullable: "NO"},
+		"deleted_at":           {udtName: "timestamptz", isNullable: "YES"},
+		"created_at":           {udtName: "timestamptz", isNullable: "NO"},
+		"updated_at":           {udtName: "timestamptz", isNullable: "NO"},
+	},
+	"household_split_config": {
+		"household_id": {udtName: "text", isNullable: "NO"},
+		"member_id":    {udtName: "text", isNullable: "NO"},
+		"percentage":   {udtName: "numeric", isNullable: "NO"},
+	},
+	"member_invitations": {
+		"id":           {udtName: "text", isNullable: "NO"},
+		"household_id": {udtName: "text", isNullable: "NO"},
+		"member_id":    {udtName: "text", isNullable: "NO"},
+		"email":        {udtName: "text", isNullable: "NO"},
+		"invite_code":  {udtName: "text", isNullable: "NO"},
+		"expires_at":   {udtName: "timestamptz", isNullable: "NO"},
+		"used_at":      {udtName: "timestamptz", isNullable: "YES"},
+		"created_at":   {udtName: "timestamptz", isNullable: "NO"},
+	},
+	"categories": {
+		"id":           {udtName: "text", isNullable: "NO"},
+		"household_id": {udtName: "text", isNullable: "NO"},
+		"name":         {udtName: "text", isNullable: "NO"},
+		"slug":         {udtName: "text", isNullable: "NO"},
+		"is_default":   {udtName: "bool", isNullable: "NO"},
+		"created_at":   {udtName: "timestamptz", isNullable: "NO"},
+	},
+	"cards": {
+		"id":              {udtName: "text", isNullable: "NO"},
+		"household_id":    {udtName: "text", isNullable: "NO"},
+		"owner_member_id": {udtName: "text", isNullable: "YES"},
+		"bank_name":       {udtName: "text", isNullable: "NO"},
+		"card_name":       {udtName: "text", isNullable: "NO"},
+		"cutoff_day":      {udtName: "int4", isNullable: "NO"},
+		"created_at":      {udtName: "timestamptz", isNullable: "NO"},
+		"updated_at":      {udtName: "timestamptz", isNullable: "NO"},
+		"deleted_at":      {udtName: "timestamptz", isNullable: "YES"},
+	},
+	"periods": {
+		"id":           {udtName: "text", isNullable: "NO"},
+		"household_id": {udtName: "text", isNullable: "NO"},
+		"start_date":   {udtName: "timestamptz", isNullable: "NO"},
+		"end_date":     {udtName: "timestamptz", isNullable: "NO"},
+		"status":       {udtName: "text", isNullable: "NO"},
+		"created_at":   {udtName: "timestamptz", isNullable: "NO"},
+		"updated_at":   {udtName: "timestamptz", isNullable: "NO"},
+	},
+	"expenses": {
+		"id":                 {udtName: "text", isNullable: "NO"},
+		"household_id":        {udtName: "text", isNullable: "NO"},
+		"paid_by_member_id":  {udtName: "text", isNullable: "YES"},
+		"period_id":          {udtName: "text", isNullable: "YES"},
+		"category_id":        {udtName: "text", isNullable: "NO"},
+		"card_id":            {udtName: "text", isNullable: "YES"},
+		"amount_cents":       {udtName: "int8", isNullable: "NO"},
+		"description":        {udtName: "text", isNullable: "NO"},
+		"is_shared":          {udtName: "bool", isNullable: "NO"},
+		"currency":           {udtName: "bpchar", isNullable: "NO"},
+		"payment_method":     {udtName: "text", isNullable: "NO"},
+		"expense_type":       {udtName: "text", isNullable: "NO"},
+		"card_name":          {udtName: "text", isNullable: "NO"},
+		"total_installments": {udtName: "int4", isNullable: "NO"},
+		"created_at":         {udtName: "timestamptz", isNullable: "NO"},
+		"updated_at":         {udtName: "timestamptz", isNullable: "NO"},
+		"deleted_at":         {udtName: "timestamptz", isNullable: "YES"},
+	},
+	"installments": {
+		"id":                       {udtName: "text", isNullable: "NO"},
+		"expense_id":               {udtName: "text", isNullable: "NO"},
+		"paid_by_member_id":        {udtName: "text", isNullable: "NO"},
+		"start_date":               {udtName: "date", isNullable: "NO"},
+		"installment_amount_cents": {udtName: "int8", isNullable: "NO"},
+		"total_amount_cents":       {udtName: "int8", isNullable: "NO"},
+		"total_installments":       {udtName: "int4", isNullable: "NO"},
+		"current_installment":      {udtName: "int4", isNullable: "NO"},
+		"created_at":               {udtName: "timestamptz", isNullable: "NO"},
+		"updated_at":               {udtName: "timestamptz", isNullable: "NO"},
+	},
+	"recurring_expenses": {
+		"id":                   {udtName: "text", isNullable: "NO"},
+		"household_id":         {udtName: "text", isNullable: "NO"},
+		"paid_by_member_id":    {udtName: "text", isNullable: "YES"},
+		"amount_cents":         {udtName: "int8", isNullable: "NO"},
+		"description":          {udtName: "text", isNullable: "NO"},
+		"category_id":          {udtName: "text", isNullable: "NO"},
+		"expense_type":         {udtName: "text", isNullable: "NO"},
+		"recurrence_pattern":   {udtName: "text", isNullable: "NO"},
+		"start_date":           {udtName: "date", isNullable: "NO"},
+		"end_date":             {udtName: "date", isNullable: "YES"},
+		"next_generation_date": {udtName: "date", isNullable: "NO"},
+		"is_active":            {udtName: "bool", isNullable: "NO"},
+		"is_agnostic":          {udtName: "bool", isNullable: "NO"},
+		"created_at":           {udtName: "timestamptz", isNullable: "NO"},
+		"updated_at":           {udtName: "timestamptz", isNullable: "NO"},
+		"deleted_at":           {udtName: "timestamptz", isNullable: "YES"},
+	},
+	"subscription_services": {
+		"id":                     {udtName: "text", isNullable: "NO"},
+		"name":                   {udtName: "text", isNullable: "NO"},
+		"slug":                   {udtName: "text", isNullable: "NO"},
+		"region":                 {udtName: "text", isNullable: "NO"},
+		"currency":               {udtName: "text", isNullable: "NO"},
+		"standalone_price_cents": {udtName: "int8", isNullable: "NO"},
+		"icon_url":               {udtName: "text", isNullable: "YES"},
+		"is_bundle":              {udtName: "bool", isNullable: "NO"},
+		"created_at":             {udtName: "timestamptz", isNullable: "NO"},
+		"updated_at":             {udtName: "timestamptz", isNullable: "NO"},
+	},
+	"recurring_expense_catalog_links": {
+		"recurring_expense_id": {udtName: "text", isNullable: "NO"},
+		"catalog_service_id":   {udtName: "text", isNullable: "NO"},
+		"custom_price_cents":   {udtName: "int8", isNullable: "YES"},
+		"created_at":           {udtName: "timestamptz", isNullable: "NO"},
+	},
 }
 
 // Apply executes SQL migrations from a directory in lexicographical order.
@@ -161,7 +292,7 @@ func reconcileBaseline(ctx context.Context, conn *pgxpool.Conn, dir string) erro
 }
 
 func validateBaselineSchema(ctx context.Context, conn *pgxpool.Conn) error {
-	rows, err := conn.Query(ctx, `
+	tableRows, err := conn.Query(ctx, `
 		SELECT table_name 
 		FROM information_schema.tables 
 		WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
@@ -169,58 +300,82 @@ func validateBaselineSchema(ctx context.Context, conn *pgxpool.Conn) error {
 	if err != nil {
 		return fmt.Errorf("query existing tables: %w", err)
 	}
-	defer rows.Close()
+	defer tableRows.Close()
 
 	existingTables := make(map[string]bool)
-	for rows.Next() {
+	for tableRows.Next() {
 		var name string
-		if err := rows.Scan(&name); err != nil {
-			return fmt.Errorf("scan table name: %w", err)
+		if scanErr := tableRows.Scan(&name); scanErr != nil {
+			return fmt.Errorf("scan table name: %w", scanErr)
 		}
 		existingTables[name] = true
 	}
-	if err := rows.Err(); err != nil {
-		return fmt.Errorf("iterate table names: %w", err)
+	if rowsErr := tableRows.Err(); rowsErr != nil {
+		return fmt.Errorf("iterate table names: %w", rowsErr)
 	}
 
-	for _, table := range expectedBaselineTables {
-		if !existingTables[table] {
-			return fmt.Errorf("database schema diverges from %s: missing table %q. Please recreate the database (e.g. docker compose down -v)", baselineFileName, table)
+	for expectedTable := range expectedBaselineSchema {
+		if !existingTables[expectedTable] {
+			return fmt.Errorf("database schema diverges from %s: missing table %q. Please recreate the database (e.g. docker compose down -v)", baselineFileName, expectedTable)
 		}
 	}
 
-	if existingTables["period_approvals"] {
-		return fmt.Errorf("database schema diverges from %s: obsolete table %q still exists. Please recreate the database (e.g. docker compose down -v)", baselineFileName, "period_approvals")
-	}
-
-	requiredColumns := []struct {
-		table  string
-		column string
-	}{
-		{"users", "name"},
-		{"households", "owner_id"},
-		{"households", "closing_day"},
-		{"households", "period_frequency"},
-		{"expenses", "period_id"},
-		{"expenses", "card_id"},
-		{"expenses", "expense_type"},
-		{"cards", "owner_member_id"},
-		{"recurring_expenses", "is_household_expense"},
-	}
-
-	for _, col := range requiredColumns {
-		var exists bool
-		err := conn.QueryRow(ctx, `
-			SELECT EXISTS (
-				SELECT 1 FROM information_schema.columns 
-				WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2
-			)
-		`, col.table, col.column).Scan(&exists)
-		if err != nil {
-			return fmt.Errorf("check column %s.%s: %w", col.table, col.column, err)
+	for existingTable := range existingTables {
+		if existingTable == migrationsTable {
+			continue
 		}
-		if !exists {
-			return fmt.Errorf("database schema diverges from %s: missing column %s.%s. Please recreate the database (e.g. docker compose down -v)", baselineFileName, col.table, col.column)
+		if _, ok := expectedBaselineSchema[existingTable]; !ok {
+			return fmt.Errorf("database schema diverges from %s: unexpected extra table %q. Please recreate the database (e.g. docker compose down -v)", baselineFileName, existingTable)
+		}
+	}
+
+	colRows, err := conn.Query(ctx, `
+		SELECT table_name, column_name, udt_name, is_nullable
+		FROM information_schema.columns
+		WHERE table_schema = 'public'
+	`)
+	if err != nil {
+		return fmt.Errorf("query existing columns: %w", err)
+	}
+	defer colRows.Close()
+
+	existingColumns := make(map[string]map[string]expectedColumnDef)
+	for colRows.Next() {
+		var tableName, colName, udtName, isNullable string
+		if scanErr := colRows.Scan(&tableName, &colName, &udtName, &isNullable); scanErr != nil {
+			return fmt.Errorf("scan column info: %w", scanErr)
+		}
+		if existingColumns[tableName] == nil {
+			existingColumns[tableName] = make(map[string]expectedColumnDef)
+		}
+		existingColumns[tableName][colName] = expectedColumnDef{
+			udtName:    udtName,
+			isNullable: isNullable,
+		}
+	}
+	if rowsErr := colRows.Err(); rowsErr != nil {
+		return fmt.Errorf("iterate column info: %w", rowsErr)
+	}
+
+	for tableName, expectedCols := range expectedBaselineSchema {
+		actualCols := existingColumns[tableName]
+		for colName, expectedDef := range expectedCols {
+			actualDef, ok := actualCols[colName]
+			if !ok {
+				return fmt.Errorf("database schema diverges from %s: missing column %s.%s. Please recreate the database (e.g. docker compose down -v)", baselineFileName, tableName, colName)
+			}
+			if actualDef.udtName != expectedDef.udtName {
+				return fmt.Errorf("database schema diverges from %s: column %s.%s has unexpected type %q (expected %q). Please recreate the database (e.g. docker compose down -v)", baselineFileName, tableName, colName, actualDef.udtName, expectedDef.udtName)
+			}
+			if actualDef.isNullable != expectedDef.isNullable {
+				return fmt.Errorf("database schema diverges from %s: column %s.%s has unexpected nullable status %q (expected %q). Please recreate the database (e.g. docker compose down -v)", baselineFileName, tableName, colName, actualDef.isNullable, expectedDef.isNullable)
+			}
+		}
+
+		for colName := range actualCols {
+			if _, ok := expectedCols[colName]; !ok {
+				return fmt.Errorf("database schema diverges from %s: unexpected extra column %s.%s. Please recreate the database (e.g. docker compose down -v)", baselineFileName, tableName, colName)
+			}
 		}
 	}
 

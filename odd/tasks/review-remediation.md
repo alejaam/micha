@@ -22,7 +22,7 @@ Remediation of 10 audit findings covering backend migration safety, onboarding f
 - [x] T3: Fix theme initial flash with index.html inline script, purify updater, and improve quick toggle icon & cycle (Linked S7, S8) [inline] commit: 8c4117a
 - [x] T4: Refactor OnboardingHouseholdPage to extract duplicated form branches into a shared component (Linked S10) [inline] commit: e7f7557
 - [x] T5: Fix useTheme to fail loudly outside ThemeProvider and update test wrappers (Review R1 Round 1) [inline]
-- [x] T6: Fix reconcileBaseline heuristic and validate actual DB schema against 001_initial_schema.sql (Review R1 Round 1) [inline]
+- [x] T6: Fix reconcileBaseline heuristic and validate actual DB schema bidirectionally (tables, columns, types, nullability) against 001_initial_schema.sql, rejecting extra/residual tables or columns (Review R1 Round 1) [inline]
 - [x] T7: Declare full scope, risks, and 15 changed files in PR #79 description (Review R1 Round 1) [inline]
 
 ## Log
@@ -40,3 +40,4 @@ Remediation of 10 audit findings covering backend migration safety, onboarding f
   10. Duplicated form branches (OnboardingHouseholdPage.jsx:131)
 - L2: User confirmed to implement all 10 fixes in this session.
 - L3: PR #79 round 1 review remediation: fixed useTheme silent fallback, tightened reconcileBaseline heuristic & added validateBaselineSchema, and updated PR #79 scope declaration.
+- L4: Addressed round 1 verification feedback: made validateBaselineSchema bidirectional, checking exact tables, columns, data types, and nullability, rejecting unexpected residual tables (e.g. period_approvals) or columns.
