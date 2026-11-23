@@ -9,6 +9,13 @@ Este proceso es idempotente y apto para bases de datos limpias (zero-state) en l
 - `backend/migrations/001_initial_schema.sql`: Esquema canónico v1 (tablas, constraints, llaves foráneas e índices). Es **100% DDL estructural**. La API nunca se bloquea por datos de catálogo o fixtures.
 - `backend/catalogs/reference/001_subscription_services_mx.sql`: Archivo SQL de referencia con el catálogo oficial de servicios de streaming y bundles en México (MXN) con precios actualizados.
 
+### Bases de Datos Existentes y Reconciliación Baseline
+
+Al consolidar las 33 migraciones anteriores en `001_initial_schema.sql`:
+1. **Bases limpias (zero-state)**: Aplican `001_initial_schema.sql` y registran su checksum SHA-256 automáticamente.
+2. **Bases con las 33 migraciones históricas previas**: Si la base de datos ya aplicó todas las migraciones anteriores hasta `033_add_name_to_users.sql`, el motor reconcilia automáticamente el baseline registrando `001_initial_schema.sql` tras verificar de forma estricta y bidireccional contra `information_schema` que la estructura completa coincida con el esquema pre-consolidación de las 33 migraciones históricas (`validateBaselineSchema`), sin tablas ni columnas extra o residuales, y alinea los tipos de datos y constraints al esquema canónico v1.
+3. **Bases parcialmente migradas (< 033) o con divergencias de esquema**: Para evitar inconsistencias silenciosas en tablas preexistentes, el runner aborta el arranque con un error explícito. En estos casos se requiere recrear la base de datos (`docker compose down -v` o `dropdb`).
+
 ## Arranque de la API
 
 ```bash

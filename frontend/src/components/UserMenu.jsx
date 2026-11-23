@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTheme } from '../context/ThemeContext'
 
 /**
  * UserMenu — avatar dropdown with household switching, health status, and logout.
@@ -18,6 +19,7 @@ export function UserMenu({
     onLogout,
     health,
 }) {
+    const { theme, setTheme } = useTheme()
     const [isOpen, setIsOpen] = useState(false)
     const containerRef = useRef(null)
 
@@ -115,6 +117,54 @@ export function UserMenu({
                             No hay hogares
                         </div>
                     )}
+
+                    <div className="userMenuDivider" />
+
+                    {/* Theme selector */}
+                    <div className="userMenuSectionLabel">
+                        Tema
+                    </div>
+                    <div className="userMenuThemeGroup" role="group" aria-label="Selección de tema">
+                        <button
+                            type="button"
+                            className={
+                                'userMenuThemeBtn' +
+                                (theme === 'auto'
+                                    ? ' userMenuThemeBtnActive'
+                                    : '')
+                            }
+                            onClick={() => setTheme('auto')}
+                            title="Detectar automáticamente según el dispositivo"
+                        >
+                            <span aria-hidden>💻</span> Auto
+                        </button>
+                        <button
+                            type="button"
+                            className={
+                                'userMenuThemeBtn' +
+                                (theme === 'light'
+                                    ? ' userMenuThemeBtnActive'
+                                    : '')
+                            }
+                            onClick={() => setTheme('light')}
+                            title="Modo claro"
+                        >
+                            <span aria-hidden>☀️</span> Claro
+                        </button>
+                        <button
+                            type="button"
+                            className={
+                                'userMenuThemeBtn' +
+                                (theme === 'dark'
+                                    ? ' userMenuThemeBtnActive'
+                                    : '')
+                            }
+                            onClick={() => setTheme('dark')}
+                            title="Modo oscuro"
+                        >
+                            <span aria-hidden>🌙</span> Oscuro
+                        </button>
+                    </div>
 
                     <div className="userMenuDivider" />
 
