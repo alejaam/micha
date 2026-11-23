@@ -25,7 +25,9 @@ const (
 
 type expectedColumnDef struct {
 	udtName    string
+	altUdtName string // optional alternative compatible type (e.g. legacy pre-v1 migration vs canonical v1)
 	isNullable string // "YES" or "NO"
+	optional   bool   // true if column is optional (e.g. legacy installments.card_id)
 }
 
 var expectedBaselineSchema = map[string]map[string]expectedColumnDef{
@@ -61,7 +63,7 @@ var expectedBaselineSchema = map[string]map[string]expectedColumnDef{
 	"household_split_config": {
 		"household_id": {udtName: "text", isNullable: "NO"},
 		"member_id":    {udtName: "text", isNullable: "NO"},
-		"percentage":   {udtName: "numeric", isNullable: "NO"},
+		"percentage":   {udtName: "numeric", altUdtName: "int4", isNullable: "NO"},
 	},
 	"member_invitations": {
 		"id":           {udtName: "text", isNullable: "NO"},
@@ -121,16 +123,17 @@ var expectedBaselineSchema = map[string]map[string]expectedColumnDef{
 		"deleted_at":         {udtName: "timestamptz", isNullable: "YES"},
 	},
 	"installments": {
-		"id":                       {udtName: "text", isNullable: "NO"},
-		"expense_id":               {udtName: "text", isNullable: "NO"},
-		"paid_by_member_id":        {udtName: "text", isNullable: "NO"},
+		"id":                       {udtName: "text", altUdtName: "varchar", isNullable: "NO"},
+		"expense_id":               {udtName: "text", altUdtName: "varchar", isNullable: "NO"},
+		"paid_by_member_id":        {udtName: "text", altUdtName: "varchar", isNullable: "NO"},
+		"card_id":                  {udtName: "text", isNullable: "YES", optional: true},
 		"start_date":               {udtName: "date", isNullable: "NO"},
 		"installment_amount_cents": {udtName: "int8", isNullable: "NO"},
 		"total_amount_cents":       {udtName: "int8", isNullable: "NO"},
 		"total_installments":       {udtName: "int4", isNullable: "NO"},
 		"current_installment":      {udtName: "int4", isNullable: "NO"},
-		"created_at":               {udtName: "timestamptz", isNullable: "NO"},
-		"updated_at":               {udtName: "timestamptz", isNullable: "NO"},
+		"created_at":               {udtName: "timestamptz", altUdtName: "timestamp", isNullable: "NO"},
+		"updated_at":               {udtName: "timestamptz", altUdtName: "timestamp", isNullable: "NO"},
 	},
 	"recurring_expenses": {
 		"id":                   {udtName: "text", isNullable: "NO"},
@@ -245,7 +248,7 @@ func ensureMigrationsTable(ctx context.Context, conn *pgxpool.Conn) error {
 
 // reconcileBaseline checks if the database already ran legacy pre-v1 migrations (001-033)
 // before the baseline consolidation. If fully migrated to 033 and the database schema
-// matches 001_initial_schema.sql, it reconciles the baseline.
+// matches the expected legacy baseline schema (state at migration 033), it reconciles the baseline.
 // If partially migrated or the schema diverges, it aborts startup with an explicit database recreation requirement.
 func reconcileBaseline(ctx context.Context, conn *pgxpool.Conn, dir string) error {
 	baselinePath := filepath.Join(dir, baselineFileName)
@@ -282,6 +285,24 @@ func reconcileBaseline(ctx context.Context, conn *pgxpool.Conn, dir string) erro
 
 	if err := validateBaselineSchema(ctx, conn); err != nil {
 		return fmt.Errorf("validate baseline schema: %w", err)
+	}
+
+	// Align legacy column types and constraints with canonical v1 schema
+	if _, alignErr := conn.Exec(ctx, `
+		ALTER TABLE public.household_split_config ALTER COLUMN percentage TYPE numeric(5,2);
+		ALTER TABLE public.household_split_config DROP CONSTRAINT IF EXISTS household_split_config_percentage_check;
+		ALTER TABLE public.household_split_config ADD CONSTRAINT household_split_config_percentage_check CHECK (percentage >= 0 AND percentage <= 100);
+
+		ALTER TABLE public.installments 
+			ALTER COLUMN id TYPE text,
+			ALTER COLUMN expense_id TYPE text,
+			ALTER COLUMN paid_by_member_id TYPE text,
+			ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC',
+			ALTER COLUMN updated_at TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+		ALTER TABLE public.installments DROP CONSTRAINT IF EXISTS installments_paid_by_member_id_fkey;
+		ALTER TABLE public.installments ADD CONSTRAINT installments_paid_by_member_id_fkey FOREIGN KEY (paid_by_member_id) REFERENCES public.members(id) ON DELETE CASCADE;
+	`); alignErr != nil {
+		return fmt.Errorf("align legacy baseline schema: %w", alignErr)
 	}
 
 	slog.Warn("reconciling baseline migration against existing verified legacy database schema", "baseline", baselineFileName, "legacy_migrations_count", legacyCount)
@@ -362,10 +383,19 @@ func validateBaselineSchema(ctx context.Context, conn *pgxpool.Conn) error {
 		for colName, expectedDef := range expectedCols {
 			actualDef, ok := actualCols[colName]
 			if !ok {
+				if expectedDef.optional {
+					continue
+				}
 				return fmt.Errorf("database schema diverges from %s: missing column %s.%s. Please recreate the database (e.g. docker compose down -v)", baselineFileName, tableName, colName)
 			}
-			if actualDef.udtName != expectedDef.udtName {
-				return fmt.Errorf("database schema diverges from %s: column %s.%s has unexpected type %q (expected %q). Please recreate the database (e.g. docker compose down -v)", baselineFileName, tableName, colName, actualDef.udtName, expectedDef.udtName)
+			typeMatches := actualDef.udtName == expectedDef.udtName ||
+				(expectedDef.altUdtName != "" && actualDef.udtName == expectedDef.altUdtName)
+			if !typeMatches {
+				expectedDesc := fmt.Sprintf("%q", expectedDef.udtName)
+				if expectedDef.altUdtName != "" {
+					expectedDesc = fmt.Sprintf("%q or %q", expectedDef.udtName, expectedDef.altUdtName)
+				}
+				return fmt.Errorf("database schema diverges from %s: column %s.%s has unexpected type %q (expected %s). Please recreate the database (e.g. docker compose down -v)", baselineFileName, tableName, colName, actualDef.udtName, expectedDesc)
 			}
 			if actualDef.isNullable != expectedDef.isNullable {
 				return fmt.Errorf("database schema diverges from %s: column %s.%s has unexpected nullable status %q (expected %q). Please recreate the database (e.g. docker compose down -v)", baselineFileName, tableName, colName, actualDef.isNullable, expectedDef.isNullable)
