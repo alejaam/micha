@@ -157,4 +157,10 @@ describe('ThemeContext', () => {
         expect(result.current.theme).toBe('auto')
         expect(result.current.resolvedTheme).toBe('dark')
     })
+
+    it('throws error when useTheme is called outside ThemeProvider', () => {
+        expect(() => renderHook(() => useTheme())).toThrow(
+            'useTheme must be used within a ThemeProvider',
+        )
+    })
 })

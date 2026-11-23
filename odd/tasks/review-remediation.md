@@ -21,6 +21,9 @@ Remediation of 10 audit findings covering backend migration safety, onboarding f
 - [x] T2: Fix onboarding fixed expenses partial save retry, selection guard, half-filled custom validation, and remove autoFocus (Linked S4, S5, S6, S9) [inline] commit: ceafa23
 - [x] T3: Fix theme initial flash with index.html inline script, purify updater, and improve quick toggle icon & cycle (Linked S7, S8) [inline] commit: 8c4117a
 - [x] T4: Refactor OnboardingHouseholdPage to extract duplicated form branches into a shared component (Linked S10) [inline] commit: e7f7557
+- [x] T5: Fix useTheme to fail loudly outside ThemeProvider and update test wrappers (Review R1 Round 1) [inline]
+- [x] T6: Fix reconcileBaseline heuristic and validate actual DB schema against 001_initial_schema.sql (Review R1 Round 1) [inline]
+- [x] T7: Declare full scope, risks, and 15 changed files in PR #79 description (Review R1 Round 1) [inline]
 
 ## Log
 
@@ -36,3 +39,4 @@ Remediation of 10 audit findings covering backend migration safety, onboarding f
   9. autoFocus on every amount input (OnboardingFixedExpensesPage.jsx:497)
   10. Duplicated form branches (OnboardingHouseholdPage.jsx:131)
 - L2: User confirmed to implement all 10 fixes in this session.
+- L3: PR #79 round 1 review remediation: fixed useTheme silent fallback, tightened reconcileBaseline heuristic & added validateBaselineSchema, and updated PR #79 scope declaration.

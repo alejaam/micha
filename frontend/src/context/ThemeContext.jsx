@@ -107,13 +107,7 @@ export function ThemeProvider({ children }) {
 export function useTheme() {
     const context = useContext(ThemeContext)
     if (!context) {
-        return {
-            theme: 'auto',
-            resolvedTheme: 'light',
-            isDark: false,
-            setTheme: () => {},
-            toggleTheme: () => {},
-        }
+        throw new Error('useTheme must be used within a ThemeProvider')
     }
     return context
 }

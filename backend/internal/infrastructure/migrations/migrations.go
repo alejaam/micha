@@ -16,10 +16,28 @@ import (
 )
 
 const (
-	migrationsTable        = "schema_migrations"
-	baselineFileName       = "001_initial_schema.sql"
-	initialSchemaChecksum  = "b2d77e9dda2ee7d45297eb001bc042bba373c63aa76b80acaa19a030ea9317b8"
+	migrationsTable              = "schema_migrations"
+	baselineFileName             = "001_initial_schema.sql"
+	initialSchemaChecksum        = "b2d77e9dda2ee7d45297eb001bc042bba373c63aa76b80acaa19a030ea9317b8"
+	expectedLegacyMigrationCount = 33
+	finalLegacyMigrationFile     = "033_add_name_to_users.sql"
 )
+
+var expectedBaselineTables = []string{
+	"users",
+	"households",
+	"members",
+	"household_split_config",
+	"member_invitations",
+	"categories",
+	"cards",
+	"periods",
+	"expenses",
+	"installments",
+	"recurring_expenses",
+	"subscription_services",
+	"recurring_expense_catalog_links",
+}
 
 // Apply executes SQL migrations from a directory in lexicographical order.
 // Each file is executed once inside a transaction, tracked with SHA-256 checksum,
@@ -95,8 +113,9 @@ func ensureMigrationsTable(ctx context.Context, conn *pgxpool.Conn) error {
 }
 
 // reconcileBaseline checks if the database already ran legacy pre-v1 migrations (001-033)
-// before the baseline consolidation. If fully migrated to 033, it reconciles the baseline.
-// If partially migrated, it aborts startup with an explicit database recreation requirement.
+// before the baseline consolidation. If fully migrated to 033 and the database schema
+// matches 001_initial_schema.sql, it reconciles the baseline.
+// If partially migrated or the schema diverges, it aborts startup with an explicit database recreation requirement.
 func reconcileBaseline(ctx context.Context, conn *pgxpool.Conn, dir string) error {
 	baselinePath := filepath.Join(dir, baselineFileName)
 	if _, err := os.Stat(baselinePath); os.IsNotExist(err) {
@@ -122,18 +141,89 @@ func reconcileBaseline(ctx context.Context, conn *pgxpool.Conn, dir string) erro
 	}
 
 	var legacy33File string
-	err = conn.QueryRow(ctx, `SELECT filename FROM `+migrationsTable+` WHERE filename LIKE '%033%' OR filename = '033_add_name_to_users.sql' LIMIT 1`).Scan(&legacy33File)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return fmt.Errorf("database contains %d legacy migrations but is missing the final legacy migration (033_add_name_to_users.sql); schema differences cannot be safely resolved. Please recreate the database (e.g. docker compose down -v)", legacyCount)
+	err = conn.QueryRow(ctx, `SELECT filename FROM `+migrationsTable+` WHERE filename = $1`, finalLegacyMigrationFile).Scan(&legacy33File)
+	if errors.Is(err, pgx.ErrNoRows) || legacyCount < expectedLegacyMigrationCount {
+		return fmt.Errorf("database contains %d legacy migrations but requires all %d legacy migrations ending with %s; schema differences cannot be safely resolved. Please recreate the database (e.g. docker compose down -v)", legacyCount, expectedLegacyMigrationCount, finalLegacyMigrationFile)
 	}
 	if err != nil {
-		return fmt.Errorf("check legacy 033 migration: %w", err)
+		return fmt.Errorf("check legacy final migration %s: %w", finalLegacyMigrationFile, err)
 	}
 
-	slog.Warn("reconciling baseline migration against existing legacy database schema", "baseline", baselineFileName, "legacy_migrations_count", legacyCount)
+	if err := validateBaselineSchema(ctx, conn); err != nil {
+		return fmt.Errorf("validate baseline schema: %w", err)
+	}
+
+	slog.Warn("reconciling baseline migration against existing verified legacy database schema", "baseline", baselineFileName, "legacy_migrations_count", legacyCount)
 	if _, insertErr := conn.Exec(ctx, `INSERT INTO `+migrationsTable+` (filename, checksum) VALUES ($1, $2)`, baselineFileName, initialSchemaChecksum); insertErr != nil {
 		return fmt.Errorf("reconcile baseline %s: %w", baselineFileName, insertErr)
 	}
+	return nil
+}
+
+func validateBaselineSchema(ctx context.Context, conn *pgxpool.Conn) error {
+	rows, err := conn.Query(ctx, `
+		SELECT table_name 
+		FROM information_schema.tables 
+		WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+	`)
+	if err != nil {
+		return fmt.Errorf("query existing tables: %w", err)
+	}
+	defer rows.Close()
+
+	existingTables := make(map[string]bool)
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return fmt.Errorf("scan table name: %w", err)
+		}
+		existingTables[name] = true
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate table names: %w", err)
+	}
+
+	for _, table := range expectedBaselineTables {
+		if !existingTables[table] {
+			return fmt.Errorf("database schema diverges from %s: missing table %q. Please recreate the database (e.g. docker compose down -v)", baselineFileName, table)
+		}
+	}
+
+	if existingTables["period_approvals"] {
+		return fmt.Errorf("database schema diverges from %s: obsolete table %q still exists. Please recreate the database (e.g. docker compose down -v)", baselineFileName, "period_approvals")
+	}
+
+	requiredColumns := []struct {
+		table  string
+		column string
+	}{
+		{"users", "name"},
+		{"households", "owner_id"},
+		{"households", "closing_day"},
+		{"households", "period_frequency"},
+		{"expenses", "period_id"},
+		{"expenses", "card_id"},
+		{"expenses", "expense_type"},
+		{"cards", "owner_member_id"},
+		{"recurring_expenses", "is_household_expense"},
+	}
+
+	for _, col := range requiredColumns {
+		var exists bool
+		err := conn.QueryRow(ctx, `
+			SELECT EXISTS (
+				SELECT 1 FROM information_schema.columns 
+				WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2
+			)
+		`, col.table, col.column).Scan(&exists)
+		if err != nil {
+			return fmt.Errorf("check column %s.%s: %w", col.table, col.column, err)
+		}
+		if !exists {
+			return fmt.Errorf("database schema diverges from %s: missing column %s.%s. Please recreate the database (e.g. docker compose down -v)", baselineFileName, col.table, col.column)
+		}
+	}
+
 	return nil
 }
 
