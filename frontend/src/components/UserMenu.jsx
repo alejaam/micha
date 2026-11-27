@@ -1,4 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTheme } from '../context/ThemeContext'
+
+const THEME_OPTIONS = [
+    { value: 'auto', label: 'Auto' },
+    { value: 'light', label: 'Claro' },
+    { value: 'dark', label: 'Oscuro' },
+]
 
 /**
  * UserMenu — avatar dropdown with household switching, health status, and logout.
@@ -20,6 +27,7 @@ export function UserMenu({
 }) {
     const [isOpen, setIsOpen] = useState(false)
     const containerRef = useRef(null)
+    const { theme, setTheme } = useTheme()
 
     const initial = user?.email?.[0]?.toUpperCase() ?? '\u{1F464}'
     const isLive = health === 'ok'
@@ -115,6 +123,29 @@ export function UserMenu({
                             No hay hogares
                         </div>
                     )}
+
+                    <div className="userMenuDivider" />
+
+                    {/* Theme selector (Auto / Claro / Oscuro) */}
+                    <div className="userMenuSectionLabel">Tema</div>
+                    {THEME_OPTIONS.map(({ value, label }) => (
+                        <button
+                            key={value}
+                            type="button"
+                            className={
+                                'userMenuItem' +
+                                (theme === value ? ' userMenuItemActive' : '')
+                            }
+                            role="menuitemradio"
+                            aria-checked={theme === value}
+                            onClick={() => setTheme(value)}
+                        >
+                            {label}
+                            {theme === value && (
+                                <span aria-hidden>&#10003;</span>
+                            )}
+                        </button>
+                    ))}
 
                     <div className="userMenuDivider" />
 

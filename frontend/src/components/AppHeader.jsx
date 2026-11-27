@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import { MoonIcon, SunIcon } from '@heroicons/react/24/outline'
 import { listPeriods } from '../api'
 import { PeriodSelector } from './PeriodSelector'
 import { PeriodStatusRibbon } from './PeriodStatusRibbon'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { UserMenu } from './UserMenu'
 
 const MONTH_NAMES = [
@@ -44,6 +46,7 @@ export function AppHeader({
   onSelectPeriod = null,
 }) {
   const { user } = useAuth()
+  const { resolvedTheme, setTheme } = useTheme()
   const periodName = formatPeriodName(currentPeriod)
 
   const [allPeriods, setAllPeriods] = useState([])
@@ -153,6 +156,17 @@ export function AppHeader({
         >
           <span className={isLoading ? 'spinIcon' : ''} aria-hidden>⟳</span>
           {isLoading ? 'Cargando…' : 'Actualizar'}
+        </button>
+
+        {/* Theme quick toggle */}
+        <button
+          type="button"
+          className="btn btnGhost btnSm themeToggle"
+          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+          aria-label={resolvedTheme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+          title={resolvedTheme === 'dark' ? 'Tema claro' : 'Tema oscuro'}
+        >
+          {resolvedTheme === 'dark' ? <SunIcon aria-hidden /> : <MoonIcon aria-hidden />}
         </button>
 
         <UserMenu user={user} households={households} householdId={householdId} onHouseholdChange={onHouseholdChange} onLogout={onLogout} health={health} />

@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { AppHeader } from '../AppHeader'
 import { PeriodStatusRibbon } from '../PeriodStatusRibbon'
 import { AuthProvider } from '../../context/AuthContext'
+import { ThemeProvider } from '../../context/ThemeContext'
 
 describe('PeriodStatusRibbon', () => {
   it('renders open variant with accessible status text', () => {
@@ -31,20 +32,22 @@ describe('PeriodStatusRibbon', () => {
 describe('AppHeader renders invite member link', () => {
   it('renders the invite member link without lock styling', () => {
     render(
-      <AuthProvider>
-        <MemoryRouter>
-          <AppHeader
-            health="ok"
-            householdId="house-1"
-            households={[{ id: 'house-1', name: 'Home' }]}
-            onHouseholdChange={() => {}}
-            onReload={() => {}}
-            onLogout={() => {}}
-            isLoading={false}
-            periodStatus="closed"
-          />
-        </MemoryRouter>
-      </AuthProvider>,
+      <ThemeProvider>
+        <AuthProvider>
+          <MemoryRouter>
+            <AppHeader
+              health="ok"
+              householdId="house-1"
+              households={[{ id: 'house-1', name: 'Home' }]}
+              onHouseholdChange={() => {}}
+              onReload={() => {}}
+              onLogout={() => {}}
+              isLoading={false}
+              periodStatus="closed"
+            />
+          </MemoryRouter>
+        </AuthProvider>
+      </ThemeProvider>,
     )
 
     const inviteLink = screen.getByRole('link', { name: /invitar nuevo miembro/i })

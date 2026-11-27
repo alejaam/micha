@@ -101,6 +101,69 @@
 
     /* Mobile bottom nav height */
     --nav-height: 72px;
+
+    /* Ink used on top of accent-colored surfaces (primary buttons, avatar, FAB) */
+    --color-on-accent: #ffffff;
+}
+
+/* ─── Dark theme tokens (applied via <html data-theme="dark">) ──────────────── */
+:root[data-theme='dark'] {
+    color-scheme: dark;
+
+    /* Surfaces & borders — slate inverted */
+    --color-bg: #0f172a;
+    --color-bg-subtle: #334155;
+    --color-surface: #1e293b;
+    --color-surface-2: #334155;
+    --color-surface-elevated: rgba(30, 41, 59, 0.85);
+    --color-border: #334155;
+    --color-border-soft: #1e293b;
+
+    /* Text */
+    --color-text-1: #f1f5f9;
+    /* headings   */
+    --color-text-2: #e2e8f0;
+    /* body       */
+    --color-text-3: #94a3b8;
+    /* secondary  */
+    --color-text-4: #64748b;
+    /* muted      */
+
+    /* Anil flips to light tints so accents stay readable on dark surfaces */
+    --color-anil-50: #13222c;
+    --color-anil-100: #1b3240;
+    --color-anil-500: #9ec4d6;
+    --color-anil-600: #86b4c9;
+    --color-anil-700: #6ea4bc;
+
+    /* Rosa / barro mid tones keep working on dark; only soft tints flip */
+    --color-rosa-50: #332023;
+    --color-rosa-100: #452a2f;
+    --color-barro-50: #2e241d;
+    --color-barro-100: #3a2e24;
+
+    /* Semantic soft tints flip to dark */
+    --color-green-50: #0c2a1b;
+    --color-red-50: #2f1214;
+    --color-amber-50: #2d1f08;
+
+    /* Shadows — black-based elevation */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, .3);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, .35);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, .4);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, .45);
+    --shadow-xl: 0 12px 24px rgba(0, 0, 0, .5);
+    --shadow-glow: 0 0 12px rgba(158, 196, 214, .15);
+    --shadow-inner: inset 0 1px 2px rgba(0, 0, 0, .3);
+
+    /* Ink on light accent surfaces flips to dark */
+    --color-on-accent: #0f172a;
+}
+
+:root[data-theme='dark'] body {
+    background-image:
+        radial-gradient(ellipse 80% 60% at 10% -10%, rgba(158, 196, 214, .06) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 50% at 90% 110%, rgba(232, 116, 124, .06) 0%, transparent 50%);
 }
 
 /* ─── Utility classes ────────────────────────────────────────────────────────── */
@@ -466,7 +529,7 @@ ul {
     height: 36px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--color-anil-500), var(--color-anil-600));
-    color: #fff;
+    color: var(--color-on-accent);
     font-weight: var(--fw-bold);
     font-size: 0.9rem;
     display: flex;
@@ -676,7 +739,7 @@ ul {
 /* Primary / filled */
 .btnPrimary {
     background: linear-gradient(145deg, var(--color-anil-500), var(--color-anil-600));
-    color: #fff;
+    color: var(--color-on-accent);
     border-color: var(--color-anil-600);
     box-shadow: var(--shadow-sm), 0 2px 8px rgba(26, 58, 74, .25);
 }
@@ -725,6 +788,13 @@ ul {
 .btnSm {
     padding: 8px 14px;
     font-size: 0.82rem;
+}
+
+/* Theme quick toggle (AppHeader) — icon-only ghost button */
+.themeToggle svg {
+    width: 16px;
+    height: 16px;
+    display: block;
 }
 
 .btnFull {
@@ -1562,7 +1632,7 @@ ul {
     height: 60px;
     border-radius: 50%;
     background: linear-gradient(145deg, var(--color-anil-500), var(--color-anil-600));
-    color: #fff;
+    color: var(--color-on-accent);
     border: none;
     font-size: 1.75rem;
     line-height: 1;
@@ -2101,7 +2171,7 @@ ul {
 .fixedServiceTriggerActive .fixedServiceIcon {
     background: var(--color-anil-500);
     border-color: var(--color-anil-500);
-    color: #fff;
+    color: var(--color-on-accent);
 }
 
 .fixedServiceLabel {
